@@ -206,6 +206,7 @@ class SfValueId (IntEnum):
         Washer_WifiFrequency = 12210,
         Washer_DeviceControl = 12215,
         Washer_StartLedBrightness = 12223,
+        Washer_RemoteUpdate = 12143,
         Dryer_FactoryDefault = 16001,
         Dryer_Language = 16002,
         Dryer_ClockFormat = 16003,

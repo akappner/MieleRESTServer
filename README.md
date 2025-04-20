@@ -169,6 +169,7 @@ H7164        | Oven         |      X     |      ?       |  ?
 TWD360       | Dryer        |      X     |      ?       |  No
 WTD-160	     | Washer/Dryer |      X     |      X       |  No
 WWF360-WPS   | Washer       |      X     |      ?       |  ?
+WWE460-WPS   | Washer       |      X     |      ?       |  ?
 WXF660 (W1)  | Washer       |      X     |      X       |  X
 
 Additional reports appreciated.
