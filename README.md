@@ -28,7 +28,15 @@ Observe the SSID of the local access point:
 
 #### 1b) If the SSID is "Miele@home-{some suffix}", e.g. "Miele@home-TAA1234", connect to the network with your device's serial number shown on its sticker.
 
-Open a DHCP server to give the Miele device an IP. You will need to run an external
+Some Miele devices run their own DHCP server. Try to receive an IP from the Miele device by running 
+
+```
+dhclient -v -i <your_wifi_interface_here>
+```
+
+If successful, observe the IP of the Miele device.
+
+If unsuccessful, open a DHCP server to assign the Miele device an IP. You will need to run an external
 DHCP server on the computer connecting to the Miele access point.
 
 I recommend dnsmasq, e.g.:
@@ -37,7 +45,7 @@ I recommend dnsmasq, e.g.:
 sudo dnsmasq --port 0 --no-daemon --dhcp-range=192.168.1.100,192.168.1.200 --dhcp-leasefile=/dev/null -z --conf-file=/dev/null --interface <your_wifi_interface_here>
 ```
 
-Observe the IP assigned to your Miele device.
+Observe the IP assigned by the DHCP server to your Miele device.
 
 Go to the "helpers" directory.
 
