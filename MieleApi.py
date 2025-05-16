@@ -95,7 +95,7 @@ class SfValueId (IntEnum):
         Washer_BrightnessLightfield = 12023,
         Washer_ContractDisplay = 12024,
         Washer_DisplaySwitchOffTime = 12025,
-        Wahser_ApplianceSwitchOffTime = 12026,
+        Washer_ApplianceSwitchOffTime = 12026,
         Washer_Memory = 12027,
         Washer_WaterInlet = 12028,
         Washer_LongerPrewashCottons = 12029,
@@ -345,7 +345,7 @@ class Status (Enum):
         Default = 144
         Lock = 145
         SuperCoolSuperFreeze = 146
-class ProgramId (Enum):
+class ProgramId (Enum): # EnumPrgId. TODO: fix overlaps with Prog IDs for non-laundry devices.
         NotSelected = 0
         Automatic = 1
         WhitesCottons = 2
@@ -372,6 +372,7 @@ class ProgramId (Enum):
         Smoothing = 38
         CottonsWhiteHygiene = 39
         ProgramFortyCelsius = 59
+        EuropeanUnionEcoMode = 190
 
 class ProgramPhase(Enum):
         NotUsed = 0
