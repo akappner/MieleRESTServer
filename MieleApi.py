@@ -41,7 +41,12 @@ class ProtocolType (IntEnum):
         MeterbusDop1=2,
         MeterbusDop2=3,
         SenseWireDop2=4,
-        
+
+class ProtocolVersion (IntEnum):
+        Unknown=0,
+        Mbus=3,
+        SenseWireHdr=4
+
 class DetergentType (IntEnum):
         NoDetergent=0,
         UltraPhase1=1,
@@ -350,15 +355,20 @@ class ProgramId (Enum): # EnumPrgId. TODO: fix overlaps with Prog IDs for non-la
         Automatic = 1
         WhitesCottons = 2
         MinimumIron = 3
-        Wool = 4
+#        Wool = 4
+        Delicates = 4
         Delicate = 5
         HotAir = 6
         ColdAir = 7
-        Express = 8
+#        Express = 8
+        Wool = 8
         Cotton = 9
         Gentle = 10
         CottonHygiene = 11
-        Cottons40Celsius = 27
+        DrainSpin = 21
+        Shirts = 23
+        Waterproofing = 27
+#        Cottons40Celsius = 27
         Cottons25Celsius = 28
         MinimumIron25Celsius = 29
         SyntheticBedding = 30
@@ -371,7 +381,10 @@ class ProgramId (Enum): # EnumPrgId. TODO: fix overlaps with Prog IDs for non-la
         Reactivate = 37
         Smoothing = 38
         CottonsWhiteHygiene = 39
+        Maintenance = 48
         ProgramFortyCelsius = 59
+        ExpressTwentyMinutes = 122
+        DarkGarmentsDenim = 123
         EuropeanUnionEcoMode = 190
 
 class ProgramPhase(Enum):
