@@ -19,7 +19,7 @@
 #
 import os
 import struct
-import numpy as np
+#import numpy as np
 import hmac
 import hashlib
 import binascii
@@ -115,7 +115,13 @@ class MieleCryptoProvider:
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(plaintext) + encryptor.finalize()
         return ciphertext;
-
+    def sign_bytes (signature_key, payload_bytes):
+        hmac_obj = hmac.new(signature_key, payload_bytes, hashlib.sha256);
+        digest=hmac_obj.hexdigest().upper();
+#        print(digest);
+        return digest;
+    def verify_signature (signature, signature_key, payload_bytes):
+        return signature == MieleCryptoProvider.sign_bytes(signature_key, payload_bytes);
     def sign (self, httpMethod="PUT", host="127.0.0.1", date="Fri, 25 Jan 2025 19:57:40 GMT", acceptHeader="application/vnd.miele.v2+json; charset=utf-8",resourcePath="", contentTypeHeader="",body=""):
 #        payload=f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n{body}";
 #        payload_bytes=payload.encode('utf-8');
@@ -130,18 +136,15 @@ class MieleCryptoProvider:
 #            body=bytes(body, 'utf-8');
 #        payload=f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n";
 #        payload_bytes=payload.encode('utf-8') + body;
-
-        hmac_obj = hmac.new(self.provisioningInfo.get_signature_key(), payload_bytes, hashlib.sha256);
-        digest=hmac_obj.hexdigest().upper();
-        print(digest);
+        digest=MieleCryptoProvider.sign_bytes(self.provisioningInfo.get_signature_key(), payload_bytes);
         return digest;
 
     def get_auth_header (self, httpMethod="PUT", host="127.0.0.1", date="Fri, 25 Jan 2025 19:57:40 GMT", acceptHeader="application/vnd.miele.v2+json; charset=utf-8",resourcePath="", contentTypeHeader="", body=""):
-        signature=self.sign(httpMethod, host, date, acceptHeader, resourcePath, contentTypeHeader, body=body);
-        header= f"Authorization: MieleH256 {self.provisioningInfo.groupid}:{signature}"
+        signature=self.sign(httpMethod, host, date, acceptHeader, resourcePath, contentTypeHeader, body=body); #this provides signature and IV
+#        header= f"Authorization: MieleH256 {self.provisioningInfo.groupid}:{signature}"
         header= f"MieleH256 {self.provisioningInfo.groupid}:{signature}"
         return header;
-    def pad_body_bytes (self, payload):
+    def pad_body_bytes (payload):
         blocksize=16;
         if (len(payload) % blocksize == 0): #no alignment needed
             return payload;
@@ -149,7 +152,7 @@ class MieleCryptoProvider:
         print (f"padding with {padding} bytes")
         return payload.ljust(len(payload) + padding, b'\x20');
 #        return payload;
-    def pad_body_str (self, payload):
+    def pad_body_str (payload):
         if (len(payload)==0):
             return "";
         if (payload[-1]!="}"):
@@ -167,10 +170,10 @@ class MieleCryptoProvider:
         contentTypeHeader="application / vnd.miele.v1 + json; charset = utf - 8"
         date="Thu, 01 Jan 1970 02:09:22 GMT" # the device is not looking at this either
         if (isinstance (payload, str)):
-            payload=self.pad_body_str(payload);
+            payload=MieleCryptoProvider.pad_body_str(payload);
             print(f"STring payload: " + payload);
         else:
-            payload=self.pad_body_bytes(payload);
+            payload=MieleCryptoProvider.pad_body_bytes(payload);
         authHeader=self.get_auth_header(host=host, httpMethod=httpMethod, date=date, resourcePath=resourcePath, acceptHeader=acceptHeader, contentTypeHeader=contentTypeHeader, body=payload)
         if (len (payload) > 0):
             iv = self.iv_from_auth_header(authHeader);
