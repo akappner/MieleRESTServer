@@ -174,6 +174,7 @@ G3385	     | Dishwasher   |      X     |      ?       |  ?
 G7364	     | Dishwasher   |      X     |      X       |  ?
 G7366	     | Dishwasher   |      X     |      X       |  No
 H7164        | Oven         |      X     |      ?       |  ?
+H7240BM	     | Oven / MW    |      X     |      ?       |  ?
 TWD360       | Dryer        |      X     |      ?       |  No
 WTD-160	     | Washer/Dryer |      X     |      X       |  No
 WWE460-WPS   | Washer       |      X     |      X       |  No
