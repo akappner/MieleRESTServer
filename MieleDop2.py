@@ -279,3 +279,35 @@ class MieleAttributeParser():
             fields.append(f"short stop, inner exception {e}, hex={hex} bytes={len(hex)}, {numberOfFields-len(fields)} left in header (numbering correction={fieldNumberingCorrection}, padding bytes expected {padding_bytes_expected}, fields expected {numberOfFields}, remaining payload {binascii.hexlify(remainingPayload)}");
         return fields;
             
+def hexdecode_main():
+    import sys
+    from MieleDop2Structures import DOP2Annotators
+    node=int(sys.argv[1]);
+    leaf=int(sys.argv[2]);
+    hex=binascii.unhexlify(sys.argv[3]);
+    print(f"MieleDop2.py called directly, decoding {len(hex)} DOP2 hex bytes")
+    
+    parser=MieleAttributeParser();
+    currentStruct=parser.parseBytes(hex);
+    print([str(x) for x in currentStruct])
+    i=None;
+    for annotator in DOP2Annotators:
+        if (annotator.getLeaf()==[int(node), int(leaf)]):
+            print(f"Decoding packet as {annotator}");
+
+            i=annotator(currentStruct);
+            try:
+                i.readFields();
+            except:
+                pass;
+    print(i);
+#             print(annotator);
+
+#    print(str(currentStruct));
+    
+if __name__ == "__main__":
+    hexdecode_main();
+
+
+
+
