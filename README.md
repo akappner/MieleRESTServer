@@ -175,10 +175,13 @@ Users have reported the following devices to be compatible:
 | G7360        | Dishwasher   | X          | X            | No   |
 | G7364        | Dishwasher   | X          | X            | ?    |
 | G7366        | Dishwasher   | X          | X            | No   |
+| G7607	       | Dishwasher   | X          | X            | No   |
 | H7164        | Oven         | X          | ?            | ?    |
 | H7240BM      | Oven / MW    | X          | ?            | ?    |
+| H7560BP      | Oven         | X          | ?            | ?    |
 | TWD360       | Dryer        | X          | ?            | No   |
 | WTD-160      | Washer/Dryer | X          | X            | No   |
+| WSD663       | Washer       | X          | X            | No   |
 | WWE460-WPS   | Washer       | X          | X            | No   |
 | WWF360-WPS   | Washer       | X          | ?            | ?    |
 | WWD660 WCS   | Washer       | X          | ?            | ?    |
