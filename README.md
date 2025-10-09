@@ -178,7 +178,7 @@ Users have reported the following devices to be compatible:
 | G7607	       | Dishwasher   | X          | X            | No   |
 | H7164        | Oven         | X          | ?            | ?    |
 | H7240BM      | Oven / MW    | X          | ?            | ?    |
-| H7560BP      | Oven         | X          | ?            | ?    |
+| H7560BP      | Oven         | X          | ?            | X    |
 | TWD360       | Dryer        | X          | ?            | No   |
 | WTD-160      | Washer/Dryer | X          | X            | No   |
 | WSD663       | Washer       | X          | X            | No   |
