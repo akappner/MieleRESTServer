@@ -150,8 +150,8 @@ class DOP2_PS_Context (DOP2Annotator): # on a washer, this has a "ContextParaWM"
     def getLeaf():
         return [2, 1574]
     def readFields(self):
-        # on an oven, this has field 4 as ContextParaCA
-        pass;
+        # on an oven, this has field 4 as ContextParaCA and field 7 as AttributesCCA
+        self["usedSelectionParameter"]=self.getAtIndex(8);
 class DOP2CS_DeviceContext (DOP2Annotator): #TBD
     def getLeaf():
         return [999,999];
@@ -192,6 +192,17 @@ class DOP2DeviceContext (DOP2Annotator): #GLOBAL_DeviceContext -- not sure yet
 #        self["sessionOwnerEnum"]=self.getAtIndex(10);
 #        self["mobileStartActive"]=self.getBoolAtIndex(11);
 #        self["requestTimeSync"]=self.getBoolAtIndex(13);
+class DOP2FeatureList (DOP2Annotator): # GLOBAL_FeatureList
+    def getLeaf():
+        return [2, 348] #acknowledge action!
+    def readFields(self):
+#        self["counterId"]=self.getAtIndex(1);
+#        self["counterValue"]=self.getAtIndex(2);
+         self["deviceId"]=self.getAtIndex(1)
+         self["hasCamera"]=self.getBoolAtIndex(6)
+#         self["featuresWashingMashine"]=self.getAtIndex(130);
+#         self["featuresCookingAppliance"]=self.getAtIndex(131);
+
 class DOP2NotificationAcknowledge (DOP2Annotator): # CS_OperationCycleCounter (this shares a signature with "OperationRuntimeCounter)
     def getLeaf():
         return [2, 138] #acknowledge action!
