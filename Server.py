@@ -204,9 +204,11 @@ class Dop2LeafAPI(Resource):
         self.reqparse.add_argument('endpoint', type=str, required=True, help='',location='json');
         self.reqparse.add_argument('unit', type=int, required=True, help='',location='json');
         self.reqparse.add_argument('attribute', type=int, required=True, help='',location='json');
-    def post(self, endpoint, unit, attribute, idx1, idx2):
+    def post(self, endpoint, unit, attribute, idx1=0, idx2=0):
         endpoint=endpoints[endpoint];
         payload=request.get_data();
+        if (request.headers.get("Content-Type","")=="text/plain"):
+            payload=binascii.unhexlify(payload);
         print(f"PUT {unit}/{attribute}, payload={binascii.hexlify(payload)}")
 ##        b="000e000e008200010001000100010400";
 #        b="FFFF000e007a00010001000200010b0000000000000000000209000000002020"
@@ -223,7 +225,7 @@ class Dop2LeafAPI(Resource):
 #        except:
 #            parser=MieleAttributeParser();
 #            return [str(x) for x in parser.parseBytes(response)];
-    def get(self, endpoint, unit, attribute, idx1, idx2):
+    def get(self, endpoint, unit, attribute, idx1=0, idx2=0):
 #        return self.put(endpoint, unit, attribute);
         endpoint=endpoints[endpoint];
         print(f"GET {unit}/attribute?idx1={idx1}&idx2={idx2}")
@@ -334,7 +336,11 @@ if __name__ == '__main__':
     api.add_resource(SetDeviceActionAPI, '/wakeup/<string:endpoint>')
     api.add_resource(CommandPassthroughAPI, '/command/<string:endpoint>/<string:command>')
 
-    api.add_resource(Dop2LeafAPI, '/dop2leaf/<string:endpoint>/<int:unit>/<int:attribute>/<int:idx1>/<int:idx2>')
+    api.add_resource(Dop2LeafAPI, 
+        '/dop2leaf/<string:endpoint>/<int:unit>/<int:attribute>',
+        '/dop2leaf/<string:endpoint>/<int:unit>/<int:attribute>/<int:idx1>',
+        '/dop2leaf/<string:endpoint>/<int:unit>/<int:attribute>/<int:idx1>/<int:idx2>'
+)
     api.add_resource(Dop2SettingAPI, '/dop2setting/<string:endpoint>/<string:setting>')
 
     if (cmdargs.webui):
