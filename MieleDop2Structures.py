@@ -106,14 +106,15 @@ class DOP2SoftwareIds (DOP2Annotator): #SYS_SoftwareIds
     def readFields (self):
         self["numberValidSoftwareIds"]=self.getAtIndex(1);
 
-class DOP2NotificationShow (DOP2Annotator): #GLOBAL_NTFCTN_Show
-    def getLeaf():
-        return [2, 131];
-    def readFields(self): #TODO
-        pass;
+#class DOP2NotificationShow (DOP2Annotator): #GLOBAL_NTFCTN_Show
+#    def getLeaf():
+#        return [1, 333]; #also [9,333] or  [15,333]
+#    def readFields(self): #TODO
+#        pass;
 class DOP2FileInfo (DOP2Annotator): #FTFileInfo
     def getLeaf():
-        return [15, 1588];
+        return [15, 333]; 
+#        return [15, 1588];
     def readFields(self):
         self["fileName"]=self.getStringAtIndex(1);
         self["sha256"]=self.getBytesAtIndex(2);
@@ -149,6 +150,7 @@ class DOP2_PS_Context (DOP2Annotator): # on a washer, this has a "ContextParaWM"
     def getLeaf():
         return [2, 1574]
     def readFields(self):
+        # on an oven, this has field 4 as ContextParaCA
         pass;
 class DOP2CS_DeviceContext (DOP2Annotator): #TBD
     def getLeaf():
@@ -169,15 +171,24 @@ class DOP2ProgramList (DOP2Annotator): # Global_ProgramList .. not the same as C
 #        self["temperature"]=self.getArrayToStrAtIndex(4);
 #        self["temperatureInfo"]=self.getArrayToStrAtIndex(5);
 
+class DOP2SecondDeviceContext (DOP2Annotator): #Global_DeviceContext2ndDevice
+    def getLeaf():
+        return [2, 391];
+    def readFields(self):
+        self["deviceCombinedState"]=self.getAtIndex(1);
+        self["supportedUserRequest"]=self.getAtIndex(11);
 class DOP2DeviceContext (DOP2Annotator): #GLOBAL_DeviceContext -- not sure yet
     def getLeaf():
         return [2,1585];
     def readFields(self):
         self["deviceCombinedState"]=self.getAtIndex(1);
-#       self["programSelectionAttributes"]=self.getAtIndex(5); #5/1 is programID, 5/2 is programPhaseId
-#        self["deviceAttributes"]=self.getAtIndex(6);
+#       self["programSelectionAttributesWasherDryer"]=self.getAtIndex(5); #5/1 is programID, 5/2 is programPhaseId
 
-#        self["progAttributes"]=self.getAtIndex(2);
+#        self["programAttributesWasherDryer"]=self.getAtIndex(2);
+#        self["deviceAttributesWasherDryer"]=self.getAtIndex(6);
+#         self["programSelectionAttributesCCA"]=self.getAtIndex(7);
+#         self["deviceAttributesCCA"]=self.getAtIndex(8);
+#        self["supportedUserRequests"]=self.getAtIndex(9);
 #        self["sessionOwnerEnum"]=self.getAtIndex(10);
 #        self["mobileStartActive"]=self.getBoolAtIndex(11);
 #        self["requestTimeSync"]=self.getBoolAtIndex(13);
@@ -345,6 +356,11 @@ class DOP2SoftwareBuild (DOP2Annotator): #CDV_SoftwareBuild
         self["id"] = self.getAtIndex(3);
         self["version"]=self.getAtIndex(4);
 
+class DOP2FTShellBuffer (DOP2Annotator):
+    def getLeaf():
+        return [9, 296];
+    def readFields(self):
+        self["size"]=self.getAtIndex(1);
 class DOP2SysObjectId (DOP2Annotator):
     def getLeaf():
         return [1, 19]
@@ -417,3 +433,6 @@ DOP2UserRequest,
 DOP2SoftwareIds,
 DOP2SysObjectId,
 DOP2XKMConfigIP ]
+
+
+
