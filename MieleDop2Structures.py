@@ -84,6 +84,30 @@ class DOP2LastUpdateInfo (DOP2Annotator): #FT_LastUpdateInfo
     def readFields(self):
         self["filename"]=self.getStringAtIndex(1);
 
+class ProgramInfoCA (DOP2Annotator):
+    def getLeaf():
+        return [2,213];
+    def readFields(self):
+        self["startDelay"]=self.getAtIndex(5);
+
+class ProgramStepInfoCA (DOP2Annotator):
+    def getLeaf():
+        return [2,214];
+    def readFields(self):
+        self["operationMode"]=self.getAtIndex(5);
+
+class ProgramName (DOP2Annotator):
+    def getLeaf():
+        return [2,216];
+    def readFields(self):
+        self["programName"]=self.getAtIndex(3);
+class ProgramInstructionsCA (DOP2Annotator):
+    def getLeaf():
+        return [2,257];
+    def readFields(self):
+        self["infoId"]=self.getAtIndex(1);
+        self["messageId"]=self.getAtIndex(2);
+
 class DOP2UserRequest (DOP2Annotator): # GLOBAL_USER_REQ_Request referenced in ExecuteWmWdAction -- this does not show up if device is sleeping
     def getLeaf():
         return [2, 1583]; #sometimes 2, 1583?
@@ -137,7 +161,7 @@ class DOP2RSAPublicKey (DOP2Annotator): #FT_PublicKey
         self["rsaPublicKey"]=self.getBytesAtIndex(1);
 
 class DOP2DeviceCombinedState (DOP2Annotator): #TBD -- deviceCombiState
-    def getLeaf():
+    def getLeaf(): # can be sent? E8(1) must be included
         return [2,1586];
     def readFields(self):
 #        self["applianceState"]=self.getAtIndex(1);
@@ -156,9 +180,12 @@ class DOP2CS_DeviceContext (DOP2Annotator): #TBD
 class DOP2_PS_Select (DOP2Annotator): #GLOBAL_PS_SELECT -- some fields are missing if no selection is made
     def getLeaf():
         return [2, 1577]
-    def readFields (self):
-        self["programId"]=self.getAtIndex(1);
-        self["selectionParameter"]=self.getAtIndex(3);
+    def readFields (self): # fields E16(1), E8(3) and optionally Struct(7) must be included 
+        self["programId"]=self.getAtIndex(1); #PrgId enum
+        self["selectionParameter"]=self.getAtIndex(2); #SelectionParameter. 
+        self["selectionType"]=self.getAtIndex(3); #SelectionType. 0 for initial as configured
+        self["selectionParameterCa"]=self.getAtIndex(7); #optional
+        self["selectionParameterHood"]=self.getAtIndex(10); #optional -- only for oven, not even present in washer
 class DOP2ProgramList (DOP2Annotator): # Global_ProgramList .. not the same as CS_ProgramLIst
     def getLeaf():
         return [2, 1584];
@@ -176,15 +203,15 @@ class DOP2DeviceContext (DOP2Annotator): #GLOBAL_DeviceContext -- not sure yet
         self["deviceCombinedState"]=self.getAtIndex(1);
 #       self["programSelectionAttributes"]=self.getAtIndex(5); #5/1 is programID, 5/2 is programPhaseId
 #        self["deviceAttributes"]=self.getAtIndex(6);
-
+        #self["psAttributesCCA"]=self.getAtIndex(7);
 #        self["progAttributes"]=self.getAtIndex(2);
 #        self["sessionOwnerEnum"]=self.getAtIndex(10);
 #        self["mobileStartActive"]=self.getBoolAtIndex(11);
 #        self["requestTimeSync"]=self.getBoolAtIndex(13);
 class DOP2NotificationAcknowledge (DOP2Annotator): # CS_OperationCycleCounter (this shares a signature with "OperationRuntimeCounter)
     def getLeaf():
-        return [2, 138] #acknowledge action!
-    def readFields(self):
+        return [2, 138] #acknowledge action! can be 5 for 2nd device
+    def readFields(self): #E16(1), E16(2), U32(3), E16(4) and E8(5) mmust be included
 #        self["counterId"]=self.getAtIndex(1);
 #        self["counterValue"]=self.getAtIndex(2);
          self["notificationMessageId"]=self.getAtIndex(2)

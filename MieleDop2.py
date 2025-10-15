@@ -235,7 +235,6 @@ class MieleAttributeParser():
         unitId = (response[2] << 8) + response[3];
         attributeId = ( ( response[4] << 8 )* 1 + response[5]);
         padding_bytes_expected=len(response)-payloadLength-2;
-
         ## todo: add check that padding is 0x20 only
 
         payload=response[8:len(response)-padding_bytes_expected]
@@ -246,6 +245,7 @@ class MieleAttributeParser():
 #            return Dop2Payload (unitId, attributeId, []);
         
         numberOfFields=(payload[3]) + (payload[4] << 8);
+        print(f"Decoding {unitId}/{attributeId}, {payloadLength} stated length, {numberOfFields} root fields");
 
         fields=[];
         remainingPayload=payload[5:];

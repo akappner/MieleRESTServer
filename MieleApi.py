@@ -53,6 +53,33 @@ class DetergentType (IntEnum):
         UltraPhase2=2,
         UltraWhite=3,
         UltraColor=4
+class UserRequestOven (IntEnum):
+        Nop=0,
+        Start=1,
+        Stop=2,
+        Pause=3,
+        StartDelay=8,
+        DoorOpen=11,
+        DoorClose=12,
+        LightOn=13,
+        LightOff=14,
+        FactorySettingReset=15,
+        SwitchOn=16,
+        Next=17,
+        Back=18,
+        SwitchOff=19,
+        ResetPinCode=20,
+        KeepAlive=21,
+        Step=22,
+        StartRemoteUpdateInstall=23,
+        ProgramStop=54,
+        ProgramAbort=55,
+        ProgramFinalize=56,
+        ProgramSave=61,
+        MotorizedFrontPanelOpen=65,
+        MotorizedFrontPanelClose=66,
+        HoldingBreak=68,
+        HoldingStart=69,
 
 class UserRequest (IntEnum):
         NoRequest=0,
@@ -350,6 +377,11 @@ class Status (Enum):
         Default = 144
         Lock = 145
         SuperCoolSuperFreeze = 146
+
+class ProgramIdOven (IntEnum):
+        OvenHotAirPlus=13,
+        OvenIntenseBaking=14
+
 class ProgramId (Enum): # EnumPrgId. TODO: fix overlaps with Prog IDs for non-laundry devices.
         NotSelected = 0
         Automatic = 1
