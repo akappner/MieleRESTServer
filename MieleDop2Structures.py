@@ -64,7 +64,7 @@ class DOP2Annotator(dict):
             raise Exception("not an IP");
         return f"{tup[0]}.{tup[1]}.{tup[2]}.{tup[3]}"
 
-class DOP2_SF_Value (DOP2Annotator): #GLOBAL_SF_Value, referenced as "SetSettings"
+class DOP2_SF_Value (DOP2Annotator): #GLOBAL_SF_Value, referenced as "SetSettings", values come from EnumSfId
     def getLeaf():
         return [2, 105];
     def readFields (self):
@@ -142,6 +142,14 @@ class DOP2NotificationShow (DOP2Annotator): #GLOBAL_NTFCTN_Show
         return [2, 131]; #also [1,131]
     def readFields(self): #TODO
         pass;
+class DOP2FileList (DOP2Annotator): #FT_FileList
+    def getLeaf():
+        return [1, 333]; # also [9, 333]
+    def readFields():
+        self["fileName"]=self.getStringAtIndex(1);
+        self["sha256"]=self.getBytesAtIndex(2);
+        self["description"]=self.getStringAtIndex(3);
+        self["fileAccessMode"]=self.getAtIndex(4);
 class DOP2FileInfo (DOP2Annotator): #FTFileInfo
     def getLeaf():
         return [15, 1588];
@@ -161,7 +169,7 @@ class DOP2FileWrite (DOP2Annotator): #FT_FileWrite
         self["size"]=self.getStringAtIndex(4);
         self["data"]=self.getStringAtIndex(5);
 
-
+#1, 154 -- "1" appears to be program
 class DOP2FileTransfer (DOP2Annotator): #FT_FileTransfer
     def getLeaf():
         return [15, 336];
@@ -246,14 +254,14 @@ class DOP2HoursOfOperation (DOP2Annotator): #CS_HoursOfOperation
             self[prefix+x]=self.getAtIndex(count);
 class DOP2PartName (DOP2Annotator): #CS_Barcode
     def getLeaf():
-        return [2, 173];
+        return [2, 173]; #can also be [1, 173]
     def readFields(self):
         self["partName"]=self.getStringAtIndex(1);
         self["code"]=self.getStringAtIndex(2);
 
 class DOP2DateOfTest (DOP2Annotator): #CS_DateOfTest
     def getLeaf():
-        return [2, 174];
+        return [2, 174]; #can also be [8,174]
     def readFields(self):
         self["partName"]=self.getStringAtIndex(1);
         self["dateOfTest"]=self.getStringAtIndex(2);
@@ -331,6 +339,7 @@ class DOP2DeviceIdent (DOP2Annotator): # GLOBAL_DeviceIdent
         self["protocolType"]=self.getEnumAsStrAtIndex(2, ProtocolType);
         self["supportedFunctions"]=self.getArrayToStrAtIndex(3)
         self["supportedApplications"]=self.getArrayToStrAtIndex(5);
+        self["deviceUnits"]=self.getArrayToStrAtIndex(7);
 
 class DOP2_SF_List (DOP2Annotator): #GLOBAL_SF_LIST.. this sometimes comes back empty when machine is in standby?
     def getLeaf():
