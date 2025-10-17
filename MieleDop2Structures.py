@@ -84,6 +84,13 @@ class DOP2LastUpdateInfo (DOP2Annotator): #FT_LastUpdateInfo
     def readFields(self):
         self["filename"]=self.getStringAtIndex(1);
 
+class DOPUpdateContainerInformation(DOP2Annotator): #FT_UpcoContainerInfo
+    def getLeaf():
+        return [15, 397];
+    def readFields (self):
+        self["updateState"]=self.getAtIndex(1);
+        self["crc32"]=self.getAtIndex(11);
+
 class ProgramInfoCA (DOP2Annotator):
     def getLeaf():
         return [2,213];
@@ -132,7 +139,7 @@ class DOP2SoftwareIds (DOP2Annotator): #SYS_SoftwareIds
 
 class DOP2NotificationShow (DOP2Annotator): #GLOBAL_NTFCTN_Show
     def getLeaf():
-        return [2, 131];
+        return [2, 131]; #also [1,131]
     def readFields(self): #TODO
         pass;
 class DOP2FileInfo (DOP2Annotator): #FTFileInfo
@@ -153,6 +160,20 @@ class DOP2FileWrite (DOP2Annotator): #FT_FileWrite
         self["address"]=self.getStringAtIndex(3);
         self["size"]=self.getStringAtIndex(4);
         self["data"]=self.getStringAtIndex(5);
+
+
+class DOP2FileTransfer (DOP2Annotator): #FT_FileTransfer
+    def getLeaf():
+        return [15, 336];
+    def readFields(self):
+        self["fileName"]=self.getStringAtIndex(1);
+        self["fileOperation"]=self.getAtIndex(2); #open=0,write=1,read=7
+        self["fileOperationStatus"]=self.getAtIndex(3);
+        self["offset"]=self.getStringAtIndex(4);
+        self["fileSize"]=self.getAtIndex(5);
+        self["dataLength"]=self.getAtIndex(6);
+        self["dummy"]=self.getAtIndex(7);
+        self["data"]=self.getAtIndex(8);
 
 class DOP2RSAPublicKey (DOP2Annotator): #FT_PublicKey
     def getLeaf():
@@ -355,6 +376,12 @@ class DOP2SensorData (DOP2Annotator): #CDV_SensorData
         self["steamUnitTemperature"]=self.getValueWithInterpretationAtIndex(15);
         self["sensCoinerPayment"]=self.getValueWithInterpretationAtIndex(16);
 
+class DOP2XKMRequest (DOP2Annotator):
+    def getLeaf ():
+        return [14,130]
+    def readFields(self):
+        self["request"]=self.getEnumAtIndex(1); #reset=1
+
 class DOP2XKMConfigSSIDList (DOP2Annotator):
     def getLeaf ():
         return [14,110]
@@ -387,6 +414,20 @@ class DOP2XKMState (DOP2Annotator):
     def readFields (self):
         self["state"]=self.getAtIndex(1);
         self["signalQuality"]=self.getAtIndex(2);
+
+class DOP2XKMIdent (DOP2Annotator):
+    def getLeaf():
+        return [14, 1565]
+    def readFields (self):
+        self["applicationType"]=self.getAtIndex(2);
+        self["moduleType"]=self.getAtIndex(3);
+
+        self["softwareVersion"]=self.getStringAtIndex(4);
+        self["softwareId"]=self.getAtIndex(5);
+        self["macAddressWifi"]=self.getStringAtIndex(6);
+        self["applicationScope"]=self.getAtIndex(7);
+        self["macAddressLan"]=self.getStringAtIndex(8);
+
 
 class DOP2XKMIdentLabel (DOP2Annotator):
     def getLeaf():
