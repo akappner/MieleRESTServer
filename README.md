@@ -64,7 +64,7 @@ prevented from doing so.
 Run the pairing script with the IP of your Miele device. Example:
 
 ```bash
-./provision-wifi.sh 10.0.0.5
+bash ./provision-wifi.sh
 ```
 
 If successful, the Miele device will close its access point and connect to the
@@ -78,13 +78,16 @@ provisioning script attempts both, HTTP first -- one or the other will fail.
 Generate device keys using the provided "generate-keys.py" script.
 
 ```bash
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ./generate-keys.py > helpers/keys.json
 ```
 
 Then run the provisioning script with the IP of your Miele device. Example:
 
 ```bash
-./provision-key.sh 192.168.1.50 ./keys.json
+./helpers/provision-key.sh 192.168.1.50 ./keys.json
 ```
 
 This will upload the generated device key to your Miele device. After this step,
