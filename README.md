@@ -49,7 +49,7 @@ Observe the IP assigned by the DHCP server to your Miele device.
 
 Go to the "helpers" directory.
 
-```bash
+```
 cd helpers/
 ```
 
@@ -63,8 +63,7 @@ prevented from doing so.
 
 Run the pairing script with the IP of your Miele device. Example:
 
-```bash
-./provision-wifi.sh 10.0.0.5
+```./provision-wifi.sh 192.168.0.1
 ```
 
 If successful, the Miele device will close its access point and connect to the
@@ -77,13 +76,16 @@ provisioning script attempts both, HTTP first -- one or the other will fail.
 
 Generate device keys using the provided "generate-keys.py" script.
 
-```bash
-./generate-keys.py > helpers/keys.json
+```
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+../generate-keys.py > ./keys.json
 ```
 
 Then run the provisioning script with the IP of your Miele device. Example:
 
-```bash
+```
 ./provision-key.sh 192.168.1.50 ./keys.json
 ```
 
@@ -105,7 +107,8 @@ config to include the route to save the auto-detection step on startup.
 
 ### 4) Install the server 
 
-```bash
+```
+cd ../
 sudo ./install.sh
 ```
 
