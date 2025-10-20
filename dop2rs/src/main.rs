@@ -6,13 +6,6 @@ use num_enum::TryFromPrimitive;
 #[command(about = "DOP2 Recursive-descent parser")]
 #[command(version)]
 
-#[derive(Debug)]
-struct ImmediateDopField {
-    value: u8,
-}
-impl ImmediateDopField {
-     
-}
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
@@ -62,6 +55,28 @@ struct TaggedDopField {
     value: Dop2Payloads,
 }
 #[derive(Debug)]
+struct DopArray <T : Dop2PayloadExpressible>
+{
+    count : u16,
+    elements : Vec<T>
+}
+
+impl<T : Dop2PayloadExpressible> Dop2PayloadExpressible for DopArray<T>
+{
+     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> 
+    {
+        let count = parser.take_u16().unwrap();
+        let mut elements : Vec<T> = Vec::new();
+        for x in 0..count
+        {
+//            println!("Array element {} of {}, datatype {}", x, count);
+            let element = T::parse(parser);
+            elements.insert(x.into(), *element.unwrap());
+        }
+        Ok(Box::new(DopArray{count, elements}))
+    }
+}
+#[derive(Debug)]
 enum Dop2Payloads {
     boolean(bool),
     U8(u8),
@@ -71,7 +86,7 @@ enum Dop2Payloads {
 
     I8(u8),
     I16(u16),
-    I32(u32),
+    I32(i32),
     I64(u64),
 
     E8(u8),
@@ -80,7 +95,25 @@ enum Dop2Payloads {
     E64(u64),
 
     MString(String),
-    StringU8 (String)
+    StringU8 (String),
+
+    ArrayU8 (DopArray<u8>),
+    ArrayU16 (DopArray<u16>),
+    ArrayU32 (DopArray<u32>),
+    ArrayU64 (DopArray<u64>),
+
+//    ArrayI8 (DopArray<u8>),
+    ArrayI16 (DopArray<u16>),
+    ArrayI32 (DopArray<i32>),
+//    ArrayI64 (DopArray<u64>),
+
+    ArrayE8 (DopArray<u8>),
+    ArrayE16 (DopArray<u16>),
+
+    MStruct (Dop2Struct),
+    AStruct (DopArray<Dop2Struct>)
+//    ArrayE32(DopArray<u32>),
+//    ArrayE64(DopArray<u64>),
 }
         
 #[derive(Debug)]
@@ -160,7 +193,7 @@ impl_from_bytes!(u16);
 impl_from_bytes!(u32);
 impl_from_bytes!(u64);
 
-
+impl_from_bytes!(i32);
 
 impl TaggedDopField {
     fn parse(parser: &mut Dop2Parser) -> Result<TaggedDopField, String> {
@@ -178,6 +211,10 @@ impl TaggedDopField {
             {
                 Dop2Payloads::U8 (*u8::parse(parser).unwrap())
             },
+            Dop2Type::U8 =>
+            {
+                Dop2Payloads::U8 (*u8::parse(parser).unwrap())
+            },
             Dop2Type::U16 =>
             {
                 Dop2Payloads::U16 (*u16::parse(parser).unwrap())
@@ -190,9 +227,18 @@ impl TaggedDopField {
             {
                 Dop2Payloads::I16 (*u16::parse(parser).unwrap())
             }
+            Dop2Type::E16 =>
+            {
+                Dop2Payloads::E16 (*u16::parse(parser).unwrap())
+            }
+            Dop2Type::U32 =>
+            {
+                Dop2Payloads::U32 (*u32::parse(parser).unwrap())
+            }
+
             Dop2Type::I32 =>
             {
-                Dop2Payloads::I32 (*u32::parse(parser).unwrap())
+                Dop2Payloads::I32 (*i32::parse(parser).unwrap())
             }
             Dop2Type::I64 =>
             {
@@ -206,9 +252,35 @@ impl TaggedDopField {
             {
                 Dop2Payloads::StringU8 (*String::parse(parser).unwrap())
             }
-            Dop2Type::ArrayE8 =>
+
+            Dop2Type::ArrayI16 =>
             {
-                todo!();
+                Dop2Payloads::ArrayI16 (*DopArray::parse(parser).unwrap())
+            }
+            Dop2Type::ArrayI32 =>
+            {
+                Dop2Payloads::ArrayI32 (*DopArray::parse(parser).unwrap())
+            }
+                Dop2Type::ArrayE8 =>
+            {
+                Dop2Payloads::ArrayE8 (*DopArray::parse(parser).unwrap())
+            }
+            Dop2Type::ArrayE16 =>
+            {
+                Dop2Payloads::ArrayE16 (*DopArray::parse(parser).unwrap())
+            }
+
+            Dop2Type::ArrayU64 =>
+            {
+                Dop2Payloads::ArrayU64 (*DopArray::parse(parser).unwrap())
+            }
+            Dop2Type::Struct =>
+            {
+                Dop2Payloads::MStruct (*Dop2Struct::parse(parser).unwrap())
+            }
+              Dop2Type::AStruct =>
+            {
+                Dop2Payloads::AStruct (*DopArray::parse(parser).unwrap())
             }
             garbage => 
             {
@@ -218,6 +290,27 @@ impl TaggedDopField {
         };
         
         Ok(TaggedDopField { tag, fieldIndex, value })
+    }
+}
+
+#[derive(Debug)]
+struct Dop2Struct{
+    declared_fields: u16,
+    fields: Vec<TaggedDopField>,
+}
+
+impl Dop2PayloadExpressible for Dop2Struct
+{
+    fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
+        let declared_fields = parser.take_u16()?;
+        let mut fields = Vec::new();
+        println!("Parsing fields");
+        for x in 1..declared_fields+1 {
+            println!("Parsing field {} of {}", x, declared_fields);
+            let tagged_field = TaggedDopField::parse(parser)?;
+            fields.push(tagged_field);
+        }
+        Ok(Box::new(Dop2Struct {declared_fields, fields}))
     }
 }
 impl RootNode {
@@ -320,6 +413,8 @@ mod tests {
         oven_2_1586: &'static str,
         oven_9_19: &'static str,
         oven_ident: &'static str,
+        oven_2_114: &'static str,
+        oven_1_391: &'static str,
     }
     
     static TEST_PAYLOADS: TestPayloads = TestPayloads {
@@ -328,7 +423,10 @@ mod tests {
         oven_2_1586: "0016000206320000000000030001040400020405000304012020202020202020", // devicecombistate, 3 E8, padding
         oven_9_19: "00230009001300000001000500010500ab0002050001000305fb00000405fb0000050500002020202020202020202020", // U16s with padding
     //001c000e007a00010001000200010b0000000068e814fd000209000000002020 //Unsigned64
-        oven_ident: "004e000e061d0001000100080002040000030400000412000530392e31340005051a390006120008001d63fffeaf152f0007040000081200080000000000000000000914000a00000000000000000000"
+        oven_ident: "004e000e061d0001000100080002040000030400000412000530392e31340005051a390006120008001d63fffeaf152f0007040000081200080000000000000000000914000a00000000000000000000",
+        oven_2_114: "009f0002007200000000000200010226000217004603f903f303fa03ee03f1001e0021001b001c001d001a000a000b000c00150018001903e800030005000400160011000e0012042e042d04590464045a046b046904520453046504560457046c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000202020202020202020202020202020",
+        oven_1_391: "02c1000101870000000000090001100003000104000002040000030400000710001a0001070000000207000000031000030001020000020500000003040000041000030001020000020500000003040000051000030001020000020500000003040000061000030001020000020500000003040000071000030001020000020500000003040000081000030001020000020200000304000009100003000102000002020000030400000a0400000b0200000c100003000102000002020000030400000d100003000102000002020000030400000e10000300010200000202000003040000100400001210000300010200000205000000030400001308000000000014070000001510000300010200000205000000030400001610000300010200000202000003040000171000030001020000020500000003040000181000030001020000020200000304000019100003000102000002020000030400001a1000030001020000020b000000000000000000030400001c070000001d1000030001020000020b000000000000000000030400000810001e000208000000000003080000000000040800000000000508000000000006080000000000070400000804000009100003000104000002040000030400000b0400000c050000000d0800000000000e0800000000000f0200001004000011040000120100001301000014010000150100001608000000000017050000001805000000190200001a0100001b0100001c0100001d050000001e050000001f100003000101000002010000030100002010000400010100000201000003010000040100000917000e00000000000000000000000000000000000000000000000000000000000a0400000b0100000c070000000d0100001110000700010100000208000000000003080000000000040800000000000512000c00000000000000000000000000060500000007080000000020202020202020202020202020", // struct with U8s
+        oven_1_209: "0050000100d1000000000002000121000200020001010000020b000000000000000000020001010000020b000000000000000000022100020002000104000002090000015c000200010401000209000000002020202020202020202020202020" // Struct[]
     };
     
     #[test]
