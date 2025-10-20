@@ -1,5 +1,5 @@
 [package]
-name = "my_rust_project"
+name = "dop2rs"
 version = "0.1.0"
 edition = "2024"
 

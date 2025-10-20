@@ -201,8 +201,6 @@ impl TaggedDopField {
         let tag_byte = parser.take_u8()?;
         let tag = Dop2Type::try_from_primitive(tag_byte)
             .map_err(|_| format!("Invalid Dop2Type value: 0x{:02X}", tag_byte))?;
-       // let value = ImmediateDopField {value: parser.take_u8()?};
-        // INSERT_YOUR_CODE
         let value = match tag {
             Dop2Type::Bool => {
                 Dop2Payloads::boolean(*bool::parse(parser).unwrap())
@@ -325,9 +323,9 @@ impl RootNode {
         let _ = parser.take(4); // skip the length field
         let declared_fields = parser.take_u16()?;
         let mut fields = Vec::new();
-        println!("Parsing fields");
+       // println!("Parsing fields");
         for x in 1..declared_fields+1 {
-            println!("Parsing field {} of {}", x, declared_fields);
+        //    println!("Parsing field {} of {}", x, declared_fields);
             let tagged_field = TaggedDopField::parse(parser)?;
             fields.push(tagged_field);
         }
@@ -345,8 +343,6 @@ impl Dop2Parser {
     fn new(payload: Vec<u8>) -> Self {
         Self { payload }
     }
-    /// Strips off `n` bytes from the beginning of the payload and returns them as a vector.
-    /// Returns an error if there are not enough bytes.
     fn take(&mut self, n: usize) -> Result<Vec<u8>, &'static str> {
         if self.payload.len() < n {
             return Err("Not enough bytes in payload");
@@ -363,7 +359,7 @@ impl Dop2Parser {
         let bytes = self.take(1)?;
         Ok(bytes[0])
     }
-    /// Returns true if the parser has no remaining payload
+
     fn is_empty(&self) -> bool {
         self.payload.is_empty()
     }
@@ -395,8 +391,6 @@ fn main() {
     };
     
     println!("Hex string: {}", args.hex_string);
-   // println!("Unit: {:?}", args.unit);
-    //println!("Attribute: {:?}", args.attribute);
 
     let mut parser = Dop2Parser::new(bytes);
     let root_node = RootNode::parse(&mut parser).unwrap();
