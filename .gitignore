@@ -1,2 +1,4 @@
 __pycache__/
 venv_MieleRESTServer/
+dop2rs/target/
+dop2rs/Cargo.lock
