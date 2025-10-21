@@ -314,9 +314,9 @@ impl Dop2PayloadExpressible for Dop2Struct
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
         let declared_fields = parser.take_u16()?;
         let mut fields = Vec::new();
-        println!("Parsing fields");
+        //println!("Parsing fields");
         for x in 1..declared_fields+1 {
-            println!("Parsing field {} of {}", x, declared_fields);
+           // println!("Parsing field {} of {}", x, declared_fields);
             let tagged_field = TaggedDopField::parse(parser)?;
             fields.push(tagged_field);
         }
@@ -326,7 +326,7 @@ impl Dop2PayloadExpressible for Dop2Struct
 
 impl RootNode {
     fn parse(parser: &mut Dop2Parser) -> Result<RootNode, String> {
-        let declared_length = parser.take_u16().unwrap();
+        let declared_length = parser.take_u16().unwrap(); // only for validation, not needed for further parsing
 
         let unit = parser.take_u16()?;
         let attribute = parser.take_u16()?; 
@@ -334,16 +334,11 @@ impl RootNode {
         let idx1 = parser.take_u16().unwrap();
         let idx2 = parser.take_u16().unwrap();
 
-        let declared_fields = parser.take_u16()?;
-        let mut fields = Vec::new();
+        let root_struct = *Dop2Struct::parse(parser).unwrap();
 
-        for x in 1..declared_fields+1 {
-            let tagged_field = TaggedDopField::parse(parser)?;
-            fields.push(tagged_field);
-        }
         let padding = DopPadding::parse(parser).unwrap();
         assert!(parser.is_empty());
-        let root_struct = Dop2Struct {declared_fields, fields};
+
         Ok(RootNode { unit, attribute, declared_length, idx1, idx2, root_struct, padding })
     }
 
