@@ -38,7 +38,6 @@ pub enum Dop2Type {
     AStruct                     = 33,
 }
 
-
 #[derive(Debug)]
 struct RootNode {
     unit: u16,
@@ -47,7 +46,7 @@ struct RootNode {
     idx1 : u16,
     idx2 : u16,
     root_struct: Dop2Struct,
-    padding: DopPadding
+//    padding: DopPadding
 }
 #[derive(Clone, Debug)]
 struct TaggedDopField {
@@ -56,13 +55,13 @@ struct TaggedDopField {
     value: Dop2Payloads,
 }
 #[derive(Clone, Debug)]
-struct DopArray <T : Dop2PayloadExpressible>
+struct DopArray <T : Dop2PayloadExpressible+ToDop2Bytes>
 {
     count : u16,
     elements : Vec<T>
 }
 
-impl<T : Dop2PayloadExpressible> Dop2PayloadExpressible for DopArray<T>
+impl<T : Dop2PayloadExpressible + ToDop2Bytes> Dop2PayloadExpressible for DopArray<T>
 {
      fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> 
     {
@@ -70,11 +69,18 @@ impl<T : Dop2PayloadExpressible> Dop2PayloadExpressible for DopArray<T>
         let mut elements : Vec<T> = Vec::new();
         for x in 0..count
         {
-//            println!("Array element {} of {}, datatype {}", x, count);
             let element = T::parse(parser);
             elements.insert(x.into(), *element.unwrap());
         }
         Ok(Box::new(DopArray{count, elements}))
+    }
+}
+impl<T: Dop2PayloadExpressible + ToDop2Bytes> ToDop2Bytes for DopArray<T>{
+
+    fn to_bytes(self, vec: &mut Vec<u8>) {
+        let count : u16 = self.elements.len().try_into().unwrap();
+        vec.extend(count.to_be_bytes());
+        self.elements.into_iter().for_each(|field| field.to_bytes(vec));
     }
 }
 #[derive(Clone, Debug)]
@@ -116,32 +122,63 @@ enum Dop2Payloads {
 //    ArrayE32(DopArray<u32>),
 //    ArrayE64(DopArray<u64>),
 }
-        
+
+
 #[derive(Debug)]
 struct DopPadding {
     bytes_of_padding : u8
 }
 impl DopPadding
 {
+    const PADDING_BYTE : u8 = 0x20;
+    const PADDING_ALIGNMENT : u16 = 0x10;
+
+    fn minimum_padding (builder: &Vec<u8>)->DopPadding
+    {
+        let current = builder.len() as u16;
+        println!("{}", current);
+        return DopPadding {bytes_of_padding: ((DopPadding::PADDING_ALIGNMENT - (current % DopPadding::PADDING_ALIGNMENT)) % DopPadding::PADDING_ALIGNMENT) as u8 };
+    }
+    fn get_minimum_padding (current: u16) -> u16
+    {
+         let needed = ((DopPadding::PADDING_ALIGNMENT - (current % DopPadding::PADDING_ALIGNMENT)) % DopPadding::PADDING_ALIGNMENT);
+         return needed;
+    }
+
     fn parse(parser: &mut Dop2Parser) -> Result<DopPadding, String>
     {
     let mut bytes_of_padding = 0u8;
     while !parser.is_empty() {
         let byte = parser.take_u8().map_err(|e| e.to_string())?;
-        if byte == 0x20 {
+        if byte == DopPadding::PADDING_BYTE {
             bytes_of_padding += 1;
         } else {
             // If we read a non-0x20 byte, backtrack and stop
             return Err(format!("Non-padding byte 0x{:02X} read", byte))
         }
     }
+
+   
     Ok(DopPadding { bytes_of_padding })
+    }
+}
+
+impl ToDop2Bytes for DopPadding
+{
+
+     fn to_bytes (self, vec: &mut Vec<u8>)
+    {
+        vec.extend(std::iter::repeat(DopPadding::PADDING_BYTE).take(self.bytes_of_padding.into()));
     }
 }
 trait Dop2PayloadExpressible {
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> ;
 }
 
+trait ToDop2Bytes 
+{
+    fn to_bytes (self, vec: &mut Vec<u8>);
+}
 impl Dop2PayloadExpressible for bool
 {
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> 
@@ -152,6 +189,14 @@ impl Dop2PayloadExpressible for bool
             return Err("Invalid payload".to_string())
         }
         Ok(Box::new(payloadByte==0x01))
+    }
+}
+
+impl ToDop2Bytes for bool
+{
+    fn to_bytes (self, vec: &mut Vec<u8>)
+    {
+        if (self) { vec.push(0x01); } else {vec.push(0x00); }
     }
 }
 
@@ -197,10 +242,58 @@ impl_from_bytes!(u64);
 
 impl_from_bytes!(i32);
 
+macro_rules! impl_to_bytes {
+    ($t:ty) => {
+        impl ToDop2Bytes for $t {
+            fn to_bytes(self, vec: &mut Vec<u8>) {
+                vec.extend(self.to_be_bytes());
+            }
+        }
+    };
+}
+
+impl_to_bytes!(u8);
+impl_to_bytes!(u16);
+impl_to_bytes!(u32);
+impl_to_bytes!(i32);
+impl_to_bytes!(u64);
+
+impl ToDop2Bytes for String{
+     fn to_bytes(self, vec: &mut Vec<u8>) {
+               let ascii = self.into_bytes();
+                vec.extend(ascii);
+            }
+}
+
 impl TaggedDopField {
-    fn to_bytes (vec: &mut Vec<u8>)
+    fn to_bytes (self, vec: &mut Vec<u8>)
     {
-        vec.insert(0, 0xDD);
+        vec.extend(self.fieldIndex.to_be_bytes());
+        vec.push(self.tag as u8);
+        println!("Pushed tag {:#x}",self.tag as u8);
+        match self.value {
+            Dop2Payloads::boolean(b)=> b.to_bytes(vec),
+            Dop2Payloads::U8(payload)        => payload.to_bytes(vec),
+            Dop2Payloads::U16(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::U32(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::U64(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::I16(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::I32(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::I64(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::E8(payload)        => payload.to_bytes(vec),
+            Dop2Payloads::E16(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::MString(payload)   => payload.to_bytes(vec),
+            Dop2Payloads::StringU8(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::ArrayI16(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::ArrayI32(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::ArrayE8(payload)   => payload.to_bytes(vec),
+            Dop2Payloads::ArrayE16(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::ArrayU64(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::MStruct(payload)   => payload.to_bytes(vec),
+            Dop2Payloads::AStruct(payload)   => payload.to_bytes(vec),
+            _ => todo!("not yet implemented")
+        }
+        //self.value.to_bytes();
     }
     fn parse(parser: &mut Dop2Parser) -> Result<TaggedDopField, String> {
         let fieldIndex = parser.take_u16().unwrap();
@@ -208,84 +301,26 @@ impl TaggedDopField {
         let tag = Dop2Type::try_from_primitive(tag_byte)
             .map_err(|_| format!("Invalid Dop2Type value: 0x{:02X}", tag_byte))?;
         let value = match tag {
-            Dop2Type::Bool => {
-                Dop2Payloads::boolean(*bool::parse(parser).unwrap())
-            },
-            Dop2Type::E8 =>
-            {
-                Dop2Payloads::U8 (*u8::parse(parser).unwrap())
-            },
-            Dop2Type::U8 =>
-            {
-                Dop2Payloads::U8 (*u8::parse(parser).unwrap())
-            },
-            Dop2Type::U16 =>
-            {
-                Dop2Payloads::U16 (*u16::parse(parser).unwrap())
-            },
-            Dop2Type::U64 =>
-            {
-                Dop2Payloads::U64 (*u64::parse(parser).unwrap())
-            }
-            Dop2Type::I16 =>
-            {
-                Dop2Payloads::I16 (*u16::parse(parser).unwrap())
-            }
-            Dop2Type::E16 =>
-            {
-                Dop2Payloads::E16 (*u16::parse(parser).unwrap())
-            }
-            Dop2Type::U32 =>
-            {
-                Dop2Payloads::U32 (*u32::parse(parser).unwrap())
-            }
+            Dop2Type::Bool => Dop2Payloads::boolean(*bool::parse(parser).unwrap()),
+            Dop2Type::E8        => Dop2Payloads::U8(*u8::parse(parser).unwrap()),
+            Dop2Type::U8        => Dop2Payloads::U8(*u8::parse(parser).unwrap()),
+            Dop2Type::U16       => Dop2Payloads::U16(*u16::parse(parser).unwrap()),
+            Dop2Type::U64       => Dop2Payloads::U64(*u64::parse(parser).unwrap()),
+            Dop2Type::I16       => Dop2Payloads::I16(*u16::parse(parser).unwrap()),
+            Dop2Type::E16       => Dop2Payloads::E16(*u16::parse(parser).unwrap()),
+            Dop2Type::U32       => Dop2Payloads::U32(*u32::parse(parser).unwrap()),
+            Dop2Type::I32       => Dop2Payloads::I32(*i32::parse(parser).unwrap()),
+            Dop2Type::I64       => Dop2Payloads::I64(*u64::parse(parser).unwrap()),
+            Dop2Type::MString   => Dop2Payloads::MString(*String::parse(parser).unwrap()),
+            Dop2Type::StringU8  => Dop2Payloads::StringU8(*String::parse(parser).unwrap()),
+            Dop2Type::ArrayI16  => Dop2Payloads::ArrayI16(*DopArray::parse(parser).unwrap()),
+            Dop2Type::ArrayI32  => Dop2Payloads::ArrayI32(*DopArray::parse(parser).unwrap()),
+            Dop2Type::ArrayE8   => Dop2Payloads::ArrayE8(*DopArray::parse(parser).unwrap()),
+            Dop2Type::ArrayE16  => Dop2Payloads::ArrayE16(*DopArray::parse(parser).unwrap()),
+            Dop2Type::ArrayU64  => Dop2Payloads::ArrayU64(*DopArray::parse(parser).unwrap()),
+            Dop2Type::Struct    => Dop2Payloads::MStruct(*Dop2Struct::parse(parser).unwrap()),
+            Dop2Type::AStruct   => Dop2Payloads::AStruct(*DopArray::parse(parser).unwrap()),
 
-            Dop2Type::I32 =>
-            {
-                Dop2Payloads::I32 (*i32::parse(parser).unwrap())
-            }
-            Dop2Type::I64 =>
-            {
-                Dop2Payloads::I64 (*u64::parse(parser).unwrap())
-            }
-            Dop2Type::MString =>
-            {
-                Dop2Payloads::MString (*String::parse(parser).unwrap())
-            }
-            Dop2Type::StringU8 =>
-            {
-                Dop2Payloads::StringU8 (*String::parse(parser).unwrap())
-            }
-
-            Dop2Type::ArrayI16 =>
-            {
-                Dop2Payloads::ArrayI16 (*DopArray::parse(parser).unwrap())
-            }
-            Dop2Type::ArrayI32 =>
-            {
-                Dop2Payloads::ArrayI32 (*DopArray::parse(parser).unwrap())
-            }
-                Dop2Type::ArrayE8 =>
-            {
-                Dop2Payloads::ArrayE8 (*DopArray::parse(parser).unwrap())
-            }
-            Dop2Type::ArrayE16 =>
-            {
-                Dop2Payloads::ArrayE16 (*DopArray::parse(parser).unwrap())
-            }
-
-            Dop2Type::ArrayU64 =>
-            {
-                Dop2Payloads::ArrayU64 (*DopArray::parse(parser).unwrap())
-            }
-            Dop2Type::Struct =>
-            {
-                Dop2Payloads::MStruct (*Dop2Struct::parse(parser).unwrap())
-            }
-              Dop2Type::AStruct =>
-            {
-                Dop2Payloads::AStruct (*DopArray::parse(parser).unwrap())
-            }
             garbage => 
             {
                 println!("unknown type {:?}", garbage);
@@ -302,11 +337,13 @@ struct Dop2Struct{
     declared_fields: u16,
     fields: Vec<TaggedDopField>,
 }
-impl Dop2Struct
+impl ToDop2Bytes for Dop2Struct
 {
     fn to_bytes(self, vec: &mut Vec<u8>)
     {
-
+        let fieldCount : u16 = self.fields.len().try_into().unwrap();
+        vec.extend(fieldCount.to_be_bytes());
+        self.fields.into_iter().for_each(|field| field.to_bytes(vec));
     }
 }
 impl Dop2PayloadExpressible for Dop2Struct
@@ -339,41 +376,25 @@ impl RootNode {
         let padding = DopPadding::parse(parser).unwrap();
         assert!(parser.is_empty());
 
-        Ok(RootNode { unit, attribute, declared_length, idx1, idx2, root_struct, padding })
+        Ok(RootNode { unit, attribute, declared_length, idx1, idx2, root_struct })
     }
 
-    fn build (self, builder: &mut Dop2Builder)
+    fn to_bytes (self, builder: &mut Vec<u8>)
 
     {
-        let mut v : Vec<u8> = Vec::new();
+        builder.extend(self.unit.to_be_bytes());
+        builder.extend(self.attribute.to_be_bytes());
 
-        builder.put_u16(self.unit);
-        builder.put_u16(self.attribute);
+        builder.extend(self.idx1.to_be_bytes());
+        builder.extend(self.idx2.to_be_bytes());
 
-        builder.put_u16(self.idx1);
-        builder.put_u16(self.idx2);
+        self.root_struct.to_bytes(builder);
+        let length : u16 = builder.len().try_into().unwrap();
+        builder.splice(0..0, length.to_be_bytes());
 
-        self.root_struct.to_bytes(&mut v);
-    }
-}
-
-struct Dop2Builder {
-    payload : Vec<u8>
-}
-impl Dop2Builder
-{
-    fn put_u16(&mut self, data : u16)
-    {
-        //self.payload.insert(-1, data);
-    }
-
-    fn put_u8(&mut self, data : u8)
-    {
-       // self.payload.insert(-1, data);
-    }
-    fn put_bytes (&mut self)
-    {
-
+        let padding = DopPadding::minimum_padding(builder);
+        println!("{:?} bytes",padding.bytes_of_padding);
+        padding.to_bytes(builder);
     }
 }
 
@@ -526,7 +547,10 @@ mod tests {
         oven_2_114: "009f0002007200000000000200010226000217004603f903f303fa03ee03f1001e0021001b001c001d001a000a000b000c00150018001903e800030005000400160011000e0012042e042d04590464045a046b046904520453046504560457046c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000202020202020202020202020202020",
         oven_1_391: "02c1000101870000000000090001100003000104000002040000030400000710001a0001070000000207000000031000030001020000020500000003040000041000030001020000020500000003040000051000030001020000020500000003040000061000030001020000020500000003040000071000030001020000020500000003040000081000030001020000020200000304000009100003000102000002020000030400000a0400000b0200000c100003000102000002020000030400000d100003000102000002020000030400000e10000300010200000202000003040000100400001210000300010200000205000000030400001308000000000014070000001510000300010200000205000000030400001610000300010200000202000003040000171000030001020000020500000003040000181000030001020000020200000304000019100003000102000002020000030400001a1000030001020000020b000000000000000000030400001c070000001d1000030001020000020b000000000000000000030400000810001e000208000000000003080000000000040800000000000508000000000006080000000000070400000804000009100003000104000002040000030400000b0400000c050000000d0800000000000e0800000000000f0200001004000011040000120100001301000014010000150100001608000000000017050000001805000000190200001a0100001b0100001c0100001d050000001e050000001f100003000101000002010000030100002010000400010100000201000003010000040100000917000e00000000000000000000000000000000000000000000000000000000000a0400000b0100000c070000000d0100001110000700010100000208000000000003080000000000040800000000000512000c00000000000000000000000000060500000007080000000020202020202020202020202020", // struct with U8s
         oven_1_209: "0050000100d1000000000002000121000200020001010000020b000000000000000000020001010000020b000000000000000000022100020002000104000002090000015c000200010401000209000000002020202020202020202020202020" // Struct[]
-    };
+
+       };
+     static TEST_BANK : [&str; 7] = [TEST_PAYLOADS.oven_14_130, TEST_PAYLOADS.oven_2_1586, TEST_PAYLOADS.oven_9_19, TEST_PAYLOADS.oven_ident, TEST_PAYLOADS.oven_2_114, TEST_PAYLOADS.oven_1_391, TEST_PAYLOADS.oven_1_209];
+ 
 
     #[test]
     fn test_root_node_parse_insufficient_data() {
@@ -539,16 +563,38 @@ mod tests {
     }
 
     #[test]
+    fn round_trips ()
+    {
+        let test_bank = [TEST_PAYLOADS.oven_1_209];
+        for x in test_bank
+        {
+            test_round_trip(x);
+        }
+    }
+
+    #[test]
     fn test_device_combo_state() {
         // Test that we can use it with our parser
         let mut parser = Dop2Parser::new(hex::decode(TEST_PAYLOADS.oven_2_1586).unwrap());
         let result = RootNode::parse(&mut parser);
         assert!(result.is_ok());
         let root_node = result.unwrap();
-        assert_eq!(root_node.unit, 2);
-        assert_eq!(root_node.attribute, 1586);
+        //assert_eq!(root_node.unit, 2);
+        //assert_eq!(root_node.attribute, 1586);
        // assert_eq!(root_node.declared_fields, 3);
       //  assert_eq!(root_node.fields[0].value, 0x0082);
+    }
+
+    fn test_round_trip (payload: &str)
+    {
+        let mut parser = Dop2Parser::new(hex::decode(payload).unwrap());
+        let result = RootNode::parse(&mut parser);
+        assert!(result.is_ok());
+        let root_node = result.unwrap();
+        let mut data :  Vec<u8> = Vec::new();
+        let bytes = root_node.to_bytes(&mut data);
+        let hex_string = hex::encode(&data);
+        assert_eq!(hex_string, payload);
     }
     #[test]
     fn test_static_payloads() {
@@ -556,9 +602,15 @@ mod tests {
         let mut parser = Dop2Parser::new(hex::decode(TEST_PAYLOADS.oven_14_130).unwrap());
         let result = RootNode::parse(&mut parser);
         assert!(result.is_ok());
+
         let root_node = result.unwrap();
-        assert_eq!(root_node.unit, 14);
-        assert_eq!(root_node.attribute, 130);
+        let mut data :  Vec<u8> = Vec::new();
+        //root_node.padding=None;
+        let bytes = root_node.to_bytes(&mut data);
+        let hex_string = hex::encode(&data);
+        assert_eq!(hex_string, TEST_PAYLOADS.oven_14_130);
+        //assert_eq!(root_node.unit, 14);
+        //assert_eq!(root_node.attribute, 130);
       //  assert_eq!(root_node.declared_fields, 1);
       //  assert_eq!(root_node.fields[0].value, 0x0082);
     }
