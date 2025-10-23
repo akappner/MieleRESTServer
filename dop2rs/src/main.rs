@@ -28,13 +28,19 @@ pub enum Dop2Type {
     Struct                      = 16,
     ArrayBool                   = 17,
     ArrayU8                    = 18,
+    ArrayI8                     = 19,
     ArrayE8                     = 20,
     ArrayU16                    = 21,
     ArrayI16                    = 22,
     ArrayE16                    = 23,
     ArrayU32                    = 24,
     ArrayI32                    = 25,
+    ArrayE32                    = 26,
     ArrayU64                    = 27,
+    ArrayI64                    = 28,
+    ArrayE64                    = 29,
+    ArrayF32                    = 30,
+    ArrayD64                    = 31,
     MString                     = 32,  
     AStruct                     = 33,
 }
@@ -110,18 +116,18 @@ enum Dop2Payloads {
     ArrayU32 (DopArray<u32>),
     ArrayU64 (DopArray<u64>),
 
-//    ArrayI8 (DopArray<u8>),
-    ArrayI16 (DopArray<u16>),
+    ArrayI8 (DopArray<i8>),
+    ArrayI16 (DopArray<i16>),
     ArrayI32 (DopArray<i32>),
 //    ArrayI64 (DopArray<u64>),
 
     ArrayE8 (DopArray<u8>),
     ArrayE16 (DopArray<u16>),
+    ArrayE32 (DopArray<u32>),
+    ArrayE64(DopArray<u64>),
 
     MStruct (Dop2Struct),
     AStruct (DopArray<Dop2Struct>)
-//    ArrayE32(DopArray<u32>),
-//    ArrayE64(DopArray<u64>),
 }
 
 
@@ -241,7 +247,10 @@ impl_from_bytes!(u16);
 impl_from_bytes!(u32);
 impl_from_bytes!(u64);
 
+impl_from_bytes!(i8);
+impl_from_bytes!(i16);
 impl_from_bytes!(i32);
+impl_from_bytes!(i64);
 
 macro_rules! impl_to_bytes {
     ($t:ty) => {
@@ -256,8 +265,11 @@ macro_rules! impl_to_bytes {
 impl_to_bytes!(u8);
 impl_to_bytes!(u16);
 impl_to_bytes!(u32);
-impl_to_bytes!(i32);
 impl_to_bytes!(u64);
+
+impl_to_bytes!(i8);
+impl_to_bytes!(i16);
+impl_to_bytes!(i32);
 
 impl ToDop2Bytes for String{
      fn to_bytes(self, vec: &mut Vec<u8>) {
@@ -316,6 +328,7 @@ impl TaggedDopField {
             Dop2Type::I64       => Dop2Payloads::I64(*u64::parse(parser).unwrap()),
             Dop2Type::MString   => Dop2Payloads::MString(*String::parse(parser).unwrap()),
             Dop2Type::ArrayU8  => Dop2Payloads::ArrayU8(*DopArray::parse(parser).unwrap()),
+            Dop2Type::ArrayI8  => Dop2Payloads::ArrayI8(*DopArray::parse(parser).unwrap()),
             Dop2Type::ArrayI16  => Dop2Payloads::ArrayI16(*DopArray::parse(parser).unwrap()),
             Dop2Type::ArrayI32  => Dop2Payloads::ArrayI32(*DopArray::parse(parser).unwrap()),
             Dop2Type::ArrayU32  => Dop2Payloads::ArrayU32(*DopArray::parse(parser).unwrap()),
