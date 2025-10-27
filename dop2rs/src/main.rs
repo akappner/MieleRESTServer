@@ -4,6 +4,8 @@ use clap::Parser;
 use num_enum::TryFromPrimitive;
 use derive_more::From;
 
+mod crypto;
+
 #[derive(Parser)]
 #[command(name = "hex_parser")]
 #[command(about = "DOP2 Recursive-descent parser")]

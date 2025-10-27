@@ -12,3 +12,10 @@ proc-macro2 = "1.0.103"
 quote = "1.0.41"
 struct_iterable = "0.1.1"
 derive_more = { version = "2.0.1", features=["full"] }
+aes = "0.8.4"
+cbc = { version = "0.1.2", features=["alloc"] }
+rand = "0.9.2"
+rustcrypto = "0.0.0"
+hmac = "0.12.1"
+sha2 = {version = "0.10.9", features=["oid"]}
+
