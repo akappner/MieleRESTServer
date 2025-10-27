@@ -1,5 +1,8 @@
+#![feature(derive_from)]
+
 use clap::Parser;
 use num_enum::TryFromPrimitive;
+use derive_more::{From, Into, Display};
 
 #[derive(Parser)]
 #[command(name = "hex_parser")]
@@ -40,7 +43,7 @@ pub enum Dop2Type {
     ArrayI64                    = 28,
     ArrayE64                    = 29,
     ArrayF32                    = 30,
-    ArrayD64                    = 31,
+    ArrayF64                    = 31,
     MString                     = 32,  
     AStruct                     = 33,
 }
@@ -90,6 +93,50 @@ impl<T: Dop2PayloadExpressible + ToDop2Bytes> ToDop2Bytes for DopArray<T>{
         self.elements.into_iter().for_each(|field| field.to_bytes(vec));
     }
 }
+
+macro_rules! newtype_int {
+    ($name:ident, $inner:ty) => {
+
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
+        struct $name($inner);
+
+//        impl From<$inner> for $name {
+ //           fn from(value: $inner) -> Self { $name(value) }
+  //      }
+
+ //       impl From<$name> for $inner {
+  //          fn from(value: $name) -> Self { value.0 }
+   //     }
+        impl ToDop2Bytes for $name {
+            fn to_bytes(self, vec: &mut Vec<u8>) {
+                vec.extend(self.0.to_be_bytes());
+            }
+        }
+
+        impl Dop2PayloadExpressible for $name {
+            fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
+                let n = std::mem::size_of::<$inner>();
+                let bytes = parser.take(n);
+                let mut value: $inner = 0;
+                for (i, b) in bytes.unwrap().into_iter().enumerate()
+                {
+                    //println!("{}", b);
+                    value |= ((b as $inner) << ((n - 1 - i) * 8));
+                }
+
+                Ok(Box::new(value.into()))
+            }
+        }
+
+
+    };
+}
+
+newtype_int!(E8, u8);
+newtype_int!(E16, u16);
+newtype_int!(E32, u32);
+newtype_int!(E64, u64);
+
 #[derive(Clone, Debug)]
 enum Dop2Payloads {
     boolean(bool),
@@ -98,15 +145,15 @@ enum Dop2Payloads {
     U32(u32),
     U64(u64),
 
-    I8(u8),
-    I16(u16),
+    I8(i8),
+    I16(i16),
     I32(i32),
-    I64(u64),
+    I64(i64),
 
-    E8(u8),
-    E16(u16),
-    E32(u32),
-    E64(u64),
+    E8(E8),
+    E16(E16),
+    E32(E32),
+    E64(E64),
 
     MString(String),
     //StringU8 (String),
@@ -270,6 +317,8 @@ impl_to_bytes!(u64);
 impl_to_bytes!(i8);
 impl_to_bytes!(i16);
 impl_to_bytes!(i32);
+impl_to_bytes!(i64);
+
 
 impl ToDop2Bytes for String{
      fn to_bytes(self, vec: &mut Vec<u8>) {
@@ -279,11 +328,14 @@ impl ToDop2Bytes for String{
 }
 
 impl TaggedDopField {
+    static GARBAGE : Vec<&'static dyn ToDop2Bytes>
     fn to_bytes (self, vec: &mut Vec<u8>)
     {
         vec.extend(self.fieldIndex.to_be_bytes());
         vec.push(self.tag as u8);
         println!("Pushed tag {:#x}",self.tag as u8);
+//        let gag : Box<dyn ToDop2Bytes> = Box::new (self.value);
+        
         match self.value {
             Dop2Payloads::boolean(b)=> b.to_bytes(vec),
             Dop2Payloads::U8(payload)        => payload.to_bytes(vec),
@@ -316,16 +368,16 @@ impl TaggedDopField {
             .map_err(|_| format!("Invalid Dop2Type value: 0x{:02X}", tag_byte))?;
         let value = match tag {
             Dop2Type::Bool => Dop2Payloads::boolean(*bool::parse(parser).unwrap()),
-            Dop2Type::E8        => Dop2Payloads::U8(*u8::parse(parser).unwrap()),
+            Dop2Type::E8        => Dop2Payloads::E8(*E8::parse(parser).unwrap()),
             Dop2Type::U8        => Dop2Payloads::U8(*u8::parse(parser).unwrap()),
             Dop2Type::U16       => Dop2Payloads::U16(*u16::parse(parser).unwrap()),
             Dop2Type::U64       => Dop2Payloads::U64(*u64::parse(parser).unwrap()),
-            Dop2Type::I8       => Dop2Payloads::I8(*u8::parse(parser).unwrap()),
-            Dop2Type::I16       => Dop2Payloads::I16(*u16::parse(parser).unwrap()),
-            Dop2Type::E16       => Dop2Payloads::E16(*u16::parse(parser).unwrap()),
+            Dop2Type::I8       => Dop2Payloads::I8(*i8::parse(parser).unwrap()),
+            Dop2Type::I16       => Dop2Payloads::I16(*i16::parse(parser).unwrap()),
+            Dop2Type::E16       => Dop2Payloads::E16(*E16::parse(parser).unwrap()),
             Dop2Type::U32       => Dop2Payloads::U32(*u32::parse(parser).unwrap()),
             Dop2Type::I32       => Dop2Payloads::I32(*i32::parse(parser).unwrap()),
-            Dop2Type::I64       => Dop2Payloads::I64(*u64::parse(parser).unwrap()),
+            Dop2Type::I64       => Dop2Payloads::I64(*i64::parse(parser).unwrap()),
             Dop2Type::MString   => Dop2Payloads::MString(*String::parse(parser).unwrap()),
             Dop2Type::ArrayU8  => Dop2Payloads::ArrayU8(*DopArray::parse(parser).unwrap()),
             Dop2Type::ArrayI8  => Dop2Payloads::ArrayI8(*DopArray::parse(parser).unwrap()),
@@ -470,17 +522,35 @@ fn main() {
             std::process::exit(1);
         }
     };
-    
-    println!("Hex string: {}", args.hex_string);
-
     let mut parser = Dop2Parser::new(bytes);
     let root_node = RootNode::parse(&mut parser).unwrap();
     println!("{root_node:#?}");
+
+    match root_node.attribute
+    {
+        1577 => 
+        { 
+             let decoded = payloads::PS_Select::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+             println!("{decoded:#?}");
+         },
+        1586 => 
+        { 
+             let decoded = payloads::DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+             println!("{decoded:#?}");
+         }
+
+        _ => { println!("no decoding for attribute"); }
+    }
 }
 
 mod payloads {
 
     use super::*;
+use proc_macro2::TokenStream;
+use quote::quote;
+use syn::{parse_macro_input, Data, DeriveInput, Fields, Meta, Lit};
+
+use struct_iterable::Iterable;
 
     #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
@@ -513,26 +583,115 @@ enum UserRequestOven {
     HoldingStart = 69,
 }
 
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+#[repr(u16)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, From)]
 enum ProgramIdOven {
+    NoProgram = 0,
     OvenHotAirPlus = 13,
     OvenIntenseBaking = 14,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum XKMRequest {
+    NoProgram = 0,
+}
 
-    struct PS_Select {
+#[repr(u8)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
+enum ApplianceState
+{
+    Unknown,
+    Off,
+    Synchronizing,
+    Initializing,
+    Normal,
+    Demonstration,
+    Service,
+    Error,
+    CheckAppliance,
+    Standby,
+    Supervisory,
+    ShowWindow
+}
+#[repr(u8)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
+enum OperationState
+{
+    Unknown,
+    EndOfLine,
+    Service,
+    Settings,
+    InitialSettings,
+    SelectProgram,
+    RunDelay,
+}
+#[repr(u8)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
+enum ProcessState
+{
+    Unknown,
+    NoProgram,
+    ProgramSelected,
+    ProgramStart,
+    ProgramRunning
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeviceCombiState {
+        applianceState : ApplianceState,
+        operationState : OperationState,
+        processState : ProcessState
+}
+
+#[derive(Debug,Clone)]
+pub struct DemarshalingError
+{
+     
+}
+
+impl DeviceCombiState
+{
+        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
+        {
+            if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
+            {
+                if let Dop2Payloads::E8(applianceState) = x.fields[0].value &&
+                   let Dop2Payloads::E8(operationState) = x.fields[1].value &&
+                  let Dop2Payloads::E8(processState) = x.fields[2].value 
+                {
+                    return Ok(DeviceCombiState{applianceState: applianceState.0.try_into().unwrap(),
+                             operationState: operationState.0.try_into().unwrap(), 
+                             processState: processState.0.try_into().unwrap()} )
+                }
+                else 
+                { 
+                    println!("{:?}", x);
+                    return Err("Entity mismatch while deserializing field".to_string())
+                }
+            }
+            Err("Entity mismatch".to_string())
+        }
+
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PS_Select {
         programId : ProgramIdOven
-    }
+}
     impl PS_Select
     {
-        fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
+        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
-            if let Dop2Payloads::MStruct(x)=payload
+            if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
             {
-                if let Dop2Payloads::E8(programId) = x.fields[0].value
+                if let Dop2Payloads::E16(programId) = x.fields[0].value
                 {
-                return Ok(PS_Select{programId: programId.try_into().unwrap()})
+                    let intermediate : E16 = programId.try_into().unwrap();
+                    return Ok(PS_Select{programId: intermediate.0.try_into().unwrap() })
+                }
+                else 
+                {
+                    return Err("Entity mismatch while deserializing field".to_string())
                 }
             }
             Err("Entity mismatch".to_string())
