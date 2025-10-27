@@ -2,7 +2,7 @@
 
 use clap::Parser;
 use num_enum::TryFromPrimitive;
-use derive_more::{From, Into, Display};
+use derive_more::From;
 
 #[derive(Parser)]
 #[command(name = "hex_parser")]
@@ -48,6 +48,7 @@ pub enum Dop2Type {
     AStruct                     = 33,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 struct RootNode {
     unit: u16,
@@ -61,9 +62,12 @@ struct RootNode {
 #[derive(Clone, Debug)]
 struct TaggedDopField {
     tag: Dop2Type,
-    fieldIndex : u16,
+    field_index : u16,
     value: Dop2Payloads,
 }
+
+
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 struct DopArray <T : Dop2PayloadExpressible+ToDop2Bytes>
 {
@@ -139,7 +143,7 @@ newtype_int!(E64, u64);
 
 #[derive(Clone, Debug)]
 enum Dop2Payloads {
-    boolean(bool),
+    Boolean(bool),
     U8(u8),
     U16(u16),
     U32(u32),
@@ -193,11 +197,6 @@ impl DopPadding
         println!("{}", current);
         return DopPadding {bytes_of_padding: ((DopPadding::PADDING_ALIGNMENT - (current % DopPadding::PADDING_ALIGNMENT)) % DopPadding::PADDING_ALIGNMENT) as u8 };
     }
-    fn get_minimum_padding (current: u16) -> u16
-    {
-         let needed = ((DopPadding::PADDING_ALIGNMENT - (current % DopPadding::PADDING_ALIGNMENT)) % DopPadding::PADDING_ALIGNMENT);
-         return needed;
-    }
 
     fn parse(parser: &mut Dop2Parser) -> Result<DopPadding, String>
     {
@@ -237,12 +236,12 @@ impl Dop2PayloadExpressible for bool
 {
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> 
     {
-        let payloadByte = parser.take_u8().unwrap();
-        if (payloadByte >= 0x02)
+        let payload_byte = parser.take_u8().unwrap();
+        if payload_byte >= 0x02
         {
             return Err("Invalid payload".to_string())
         }
-        Ok(Box::new(payloadByte==0x01))
+        Ok(Box::new(payload_byte==0x01))
     }
 }
 
@@ -250,7 +249,7 @@ impl ToDop2Bytes for bool
 {
     fn to_bytes (self, vec: &mut Vec<u8>)
     {
-        if (self) { vec.push(0x01); } else {vec.push(0x00); }
+        if self { vec.push(0x01); } else {vec.push(0x00); }
     }
 }
 
@@ -260,8 +259,8 @@ impl Dop2PayloadExpressible for String
     {
         let length = parser.take_u16().unwrap();
         let mut result = String::new();
-        let stringBytes = parser.take(length.into());
-        for b in stringBytes.unwrap().into_iter() {
+        let string_bytes = parser.take(length.into());
+        for b in string_bytes.unwrap().into_iter() {
             // ASCII byte → char conversion
             result.push(b as char);
 
@@ -330,43 +329,50 @@ impl ToDop2Bytes for String{
 impl TaggedDopField {
     fn to_bytes (self, vec: &mut Vec<u8>)
     {
-        vec.extend(self.fieldIndex.to_be_bytes());
+        vec.extend(self.field_index.to_be_bytes());
         vec.push(self.tag as u8);
         println!("Pushed tag {:#x}",self.tag as u8);
 //        let gag : Box<dyn ToDop2Bytes> = Box::new (self.value);
         
         match self.value {
-            Dop2Payloads::boolean(b)=> b.to_bytes(vec),
+            Dop2Payloads::Boolean(b)=> b.to_bytes(vec),
             Dop2Payloads::U8(payload)        => payload.to_bytes(vec),
             Dop2Payloads::U16(payload)       => payload.to_bytes(vec),
             Dop2Payloads::U32(payload)       => payload.to_bytes(vec),
             Dop2Payloads::U64(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::I8(payload)       => payload.to_bytes(vec),
             Dop2Payloads::I16(payload)       => payload.to_bytes(vec),
             Dop2Payloads::I32(payload)       => payload.to_bytes(vec),
             Dop2Payloads::I64(payload)       => payload.to_bytes(vec),
             Dop2Payloads::E8(payload)        => payload.to_bytes(vec),
             Dop2Payloads::E16(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::E32(payload)       => payload.to_bytes(vec),
+            Dop2Payloads::E64(payload)       => payload.to_bytes(vec),
             Dop2Payloads::MString(payload)   => payload.to_bytes(vec),
             Dop2Payloads::ArrayU8(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::ArrayU16(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::ArrayI8(payload)  => payload.to_bytes(vec),
             Dop2Payloads::ArrayI16(payload)  => payload.to_bytes(vec),
             Dop2Payloads::ArrayI32(payload)  => payload.to_bytes(vec),
             Dop2Payloads::ArrayE8(payload)   => payload.to_bytes(vec),
             Dop2Payloads::ArrayE16(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::ArrayE32(payload)  => payload.to_bytes(vec),
+            Dop2Payloads::ArrayE64(payload)  => payload.to_bytes(vec),
             Dop2Payloads::ArrayU32(payload)  => payload.to_bytes(vec),
             Dop2Payloads::ArrayU64(payload)  => payload.to_bytes(vec),
             Dop2Payloads::MStruct(payload)   => payload.to_bytes(vec),
             Dop2Payloads::AStruct(payload)   => payload.to_bytes(vec),
-            _ => todo!("not yet implemented")
+         //   _ => todo!("not yet implemented")
         }
         //self.value.to_bytes();
     }
     fn parse(parser: &mut Dop2Parser) -> Result<TaggedDopField, String> {
-        let fieldIndex = parser.take_u16().unwrap();
+        let field_index = parser.take_u16().unwrap();
         let tag_byte = parser.take_u8()?;
         let tag = Dop2Type::try_from_primitive(tag_byte)
             .map_err(|_| format!("Invalid Dop2Type value: 0x{:02X}", tag_byte))?;
         let value = match tag {
-            Dop2Type::Bool => Dop2Payloads::boolean(*bool::parse(parser).unwrap()),
+            Dop2Type::Bool => Dop2Payloads::Boolean(*bool::parse(parser).unwrap()),
             Dop2Type::E8        => Dop2Payloads::E8(*E8::parse(parser).unwrap()),
             Dop2Type::U8        => Dop2Payloads::U8(*u8::parse(parser).unwrap()),
             Dop2Type::U16       => Dop2Payloads::U16(*u16::parse(parser).unwrap()),
@@ -376,7 +382,9 @@ impl TaggedDopField {
             Dop2Type::E16       => Dop2Payloads::E16(*E16::parse(parser).unwrap()),
             Dop2Type::U32       => Dop2Payloads::U32(*u32::parse(parser).unwrap()),
             Dop2Type::I32       => Dop2Payloads::I32(*i32::parse(parser).unwrap()),
+            Dop2Type::E32       => Dop2Payloads::E32(*E32::parse(parser).unwrap()),
             Dop2Type::I64       => Dop2Payloads::I64(*i64::parse(parser).unwrap()),
+            Dop2Type::E64       => Dop2Payloads::E64(*E64::parse(parser).unwrap()),
             Dop2Type::MString   => Dop2Payloads::MString(*String::parse(parser).unwrap()),
             Dop2Type::ArrayU8  => Dop2Payloads::ArrayU8(*DopArray::parse(parser).unwrap()),
             Dop2Type::ArrayI8  => Dop2Payloads::ArrayI8(*DopArray::parse(parser).unwrap()),
@@ -386,6 +394,8 @@ impl TaggedDopField {
             Dop2Type::ArrayU16   => Dop2Payloads::ArrayU16(*DopArray::parse(parser).unwrap()),
             Dop2Type::ArrayE8   => Dop2Payloads::ArrayE8(*DopArray::parse(parser).unwrap()),
             Dop2Type::ArrayE16  => Dop2Payloads::ArrayE16(*DopArray::parse(parser).unwrap()),
+            Dop2Type::ArrayE32  => Dop2Payloads::ArrayE32(*DopArray::parse(parser).unwrap()),
+            Dop2Type::ArrayE64  => Dop2Payloads::ArrayE64(*DopArray::parse(parser).unwrap()),
             Dop2Type::ArrayU64  => Dop2Payloads::ArrayU64(*DopArray::parse(parser).unwrap()),
             Dop2Type::Struct    => Dop2Payloads::MStruct(*Dop2Struct::parse(parser).unwrap()),
             Dop2Type::AStruct   => Dop2Payloads::AStruct(*DopArray::parse(parser).unwrap()),
@@ -397,10 +407,12 @@ impl TaggedDopField {
             }
         };
         
-        Ok(TaggedDopField { tag, fieldIndex, value })
+        Ok(TaggedDopField { tag, field_index, value })
     }
 }
 
+
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 struct Dop2Struct{
     declared_fields: u16,
@@ -410,8 +422,8 @@ impl ToDop2Bytes for Dop2Struct
 {
     fn to_bytes(self, vec: &mut Vec<u8>)
     {
-        let fieldCount : u16 = self.fields.len().try_into().unwrap();
-        vec.extend(fieldCount.to_be_bytes());
+        let field_count : u16 = self.fields.len().try_into().unwrap();
+        vec.extend(field_count.to_be_bytes());
         self.fields.into_iter().for_each(|field| field.to_bytes(vec));
     }
 }
@@ -421,7 +433,7 @@ impl Dop2PayloadExpressible for Dop2Struct
         let declared_fields = parser.take_u16()?;
         let mut fields = Vec::new();
         //println!("Parsing fields");
-        for x in 1..declared_fields+1 {
+        for _x in 1..declared_fields+1 {
            // println!("Parsing field {} of {}", x, declared_fields);
             let tagged_field = TaggedDopField::parse(parser)?;
             fields.push(tagged_field);
@@ -442,7 +454,7 @@ impl RootNode {
 
         let root_struct = *Dop2Struct::parse(parser).unwrap();
 
-        let padding = DopPadding::parse(parser).unwrap();
+        let _padding = DopPadding::parse(parser).unwrap();
         assert!(parser.is_empty());
 
         Ok(RootNode { unit, attribute, declared_length, idx1, idx2, root_struct })
@@ -527,15 +539,15 @@ fn main() {
 
     match root_node.attribute
     {
-        payloads::XKM_Request::ATTRIBUTE => 
+        payloads::XkmRequest::ATTRIBUTE => 
         { 
-             let decoded = payloads::XKM_Request::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+             let decoded = payloads::XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
              println!("{decoded:#?}");
          },
 
-        payloads::PS_Select::ATTRIBUTE => 
+        payloads::PsSelect::ATTRIBUTE => 
         { 
-             let decoded = payloads::PS_Select::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+             let decoded = payloads::PsSelect::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
              println!("{decoded:#?}");
          },
         payloads::DeviceCombiState::ATTRIBUTE => 
@@ -549,14 +561,7 @@ fn main() {
 }
 
 mod payloads {
-
     use super::*;
-use proc_macro2::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields, Meta, Lit};
-
-use struct_iterable::Iterable;
-
 #[repr(u8)]
 enum UnitIds {
     UnknownOne = 1,
@@ -610,7 +615,7 @@ enum ProgramIdOven {
 
 #[repr(u8)]
 #[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
-enum XKMRequest {
+enum XkmRequestId {
     None = 0,
     Reset = 1,
     FactoryReset = 2,
@@ -662,16 +667,11 @@ enum ProcessState
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DeviceCombiState {
-        applianceState : ApplianceState,
-        operationState : OperationState,
-        processState : ProcessState
+        appliance_state : ApplianceState,
+        operation_state : OperationState,
+        process_state : ProcessState
 }
 
-#[derive(Debug,Clone)]
-pub struct DemarshalingError
-{
-     
-}
 
 impl DeviceCombiState
 {
@@ -681,13 +681,13 @@ impl DeviceCombiState
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
             {
-                if let Dop2Payloads::E8(applianceState) = x.fields[0].value &&
-                   let Dop2Payloads::E8(operationState) = x.fields[1].value &&
-                  let Dop2Payloads::E8(processState) = x.fields[2].value 
+                if let Dop2Payloads::E8(appliance_state) = x.fields[0].value &&
+                   let Dop2Payloads::E8(operation_state) = x.fields[1].value &&
+                  let Dop2Payloads::E8(process_state) = x.fields[2].value 
                 {
-                    return Ok(DeviceCombiState{applianceState: applianceState.0.try_into().unwrap(),
-                             operationState: operationState.0.try_into().unwrap(), 
-                             processState: processState.0.try_into().unwrap()} )
+                    return Ok(DeviceCombiState{appliance_state: appliance_state.0.try_into().unwrap(),
+                             operation_state: operation_state.0.try_into().unwrap(), 
+                             process_state: process_state.0.try_into().unwrap()} )
                 }
                 else 
                 { 
@@ -701,10 +701,10 @@ impl DeviceCombiState
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct XKM_Request {
-        requestId : XKMRequest
+pub struct XkmRequest {
+        request_id : XkmRequestId
 }
-    impl XKM_Request
+    impl XkmRequest
     {
         pub const ATTRIBUTE : u16 = 130; // typically unit 14
     
@@ -712,9 +712,9 @@ pub struct XKM_Request {
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
             {
-                if let Dop2Payloads::E8(requestId) = x.fields[0].value
+                if let Dop2Payloads::E8(request_id) = x.fields[0].value
                 {
-                    return Ok(XKM_Request{requestId: requestId.0.try_into().unwrap() })
+                    return Ok(XkmRequest{request_id: request_id.0.try_into().unwrap() })
                 }
                 else 
                 {
@@ -728,10 +728,10 @@ pub struct XKM_Request {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PS_Select {
-        programId : ProgramIdOven
+pub struct PsSelect {
+        program_id : ProgramIdOven
 }
-    impl PS_Select
+    impl PsSelect
     {
         pub const ATTRIBUTE : u16 = 1577;
 
@@ -739,10 +739,10 @@ pub struct PS_Select {
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
             {
-                if let Dop2Payloads::E16(programId) = x.fields[0].value
+                if let Dop2Payloads::E16(program_id) = x.fields[0].value
                 {
-                    let intermediate : E16 = programId.try_into().unwrap();
-                    return Ok(PS_Select{programId: intermediate.0.try_into().unwrap() })
+                    let intermediate : E16 = program_id.try_into().unwrap();
+                    return Ok(PsSelect{program_id: intermediate.0.try_into().unwrap() })
                 }
                 else 
                 {
@@ -755,6 +755,7 @@ pub struct PS_Select {
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 mod tests {
     use super::*;
 
@@ -810,7 +811,7 @@ mod tests {
         let mut parser = Dop2Parser::new(hex::decode(TEST_PAYLOADS.oven_2_1586).unwrap());
         let result = RootNode::parse(&mut parser);
         assert!(result.is_ok());
-        let root_node = result.unwrap();
+        let _root_node = result.unwrap();
         //assert_eq!(root_node.unit, 2);
         //assert_eq!(root_node.attribute, 1586);
        // assert_eq!(root_node.declared_fields, 3);
@@ -824,7 +825,7 @@ mod tests {
         assert!(result.is_ok());
         let root_node = result.unwrap();
         let mut data :  Vec<u8> = Vec::new();
-        let bytes = root_node.to_bytes(&mut data);
+        let _bytes = root_node.to_bytes(&mut data);
         let hex_string = hex::encode(&data);
         assert_eq!(hex_string, payload);
     }
@@ -838,7 +839,7 @@ mod tests {
         let root_node = result.unwrap();
         let mut data :  Vec<u8> = Vec::new();
         //root_node.padding=None;
-        let bytes = root_node.to_bytes(&mut data);
+        let _bytes = root_node.to_bytes(&mut data);
         let hex_string = hex::encode(&data);
         assert_eq!(hex_string, TEST_PAYLOADS.oven_14_130);
         //assert_eq!(root_node.unit, 14);
