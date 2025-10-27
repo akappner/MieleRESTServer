@@ -328,7 +328,6 @@ impl ToDop2Bytes for String{
 }
 
 impl TaggedDopField {
-    static GARBAGE : Vec<&'static dyn ToDop2Bytes>
     fn to_bytes (self, vec: &mut Vec<u8>)
     {
         vec.extend(self.fieldIndex.to_be_bytes());
@@ -528,12 +527,18 @@ fn main() {
 
     match root_node.attribute
     {
-        1577 => 
+        payloads::XKM_Request::ATTRIBUTE => 
+        { 
+             let decoded = payloads::XKM_Request::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+             println!("{decoded:#?}");
+         },
+
+        payloads::PS_Select::ATTRIBUTE => 
         { 
              let decoded = payloads::PS_Select::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
              println!("{decoded:#?}");
          },
-        1586 => 
+        payloads::DeviceCombiState::ATTRIBUTE => 
         { 
              let decoded = payloads::DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
              println!("{decoded:#?}");
@@ -551,6 +556,18 @@ use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields, Meta, Lit};
 
 use struct_iterable::Iterable;
+
+#[repr(u8)]
+enum UnitIds {
+    UnknownOne = 1,
+    MainDevice = 2,
+    UnknownThree = 3, // seen in oven
+    UnknownEight = 8, // seen in oven
+    UnknownNine = 9, // seen in oven
+    UnknownTwelve = 12, // seen in oven
+    CommunicationsModule = 14,
+    Filesystem = 15,
+}
 
     #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
@@ -591,9 +608,16 @@ enum ProgramIdOven {
     OvenIntenseBaking = 14,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[repr(u8)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
 enum XKMRequest {
-    NoProgram = 0,
+    None = 0,
+    Reset = 1,
+    FactoryReset = 2,
+    OpenSoftAccessPointEndUser = 3,
+    OpenSoftAccessPointCustomerService = 45,
+    Shutdown = 46,
+    MieleSmartConnect = 47,
 }
 
 #[repr(u8)]
@@ -651,6 +675,8 @@ pub struct DemarshalingError
 
 impl DeviceCombiState
 {
+        pub const ATTRIBUTE : u16 = 1586;
+
         pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
@@ -675,11 +701,40 @@ impl DeviceCombiState
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct XKM_Request {
+        requestId : XKMRequest
+}
+    impl XKM_Request
+    {
+        pub const ATTRIBUTE : u16 = 130; // typically unit 14
+    
+        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
+        {
+            if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
+            {
+                if let Dop2Payloads::E8(requestId) = x.fields[0].value
+                {
+                    return Ok(XKM_Request{requestId: requestId.0.try_into().unwrap() })
+                }
+                else 
+                {
+                    println!("{:?}", x.fields[0].value);                   
+                    return Err("Entity mismatch while deserializing XKMRequest field".to_string())
+                }
+            }
+            Err("Entity mismatch".to_string())
+        }
+
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PS_Select {
         programId : ProgramIdOven
 }
     impl PS_Select
     {
+        pub const ATTRIBUTE : u16 = 1577;
+
         pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
