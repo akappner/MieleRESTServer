@@ -333,7 +333,7 @@ impl TaggedDopField {
     {
         vec.extend(self.field_index.to_be_bytes());
         vec.push(self.tag as u8);
-        println!("Pushed tag {:#x}",self.tag as u8);
+      //  println!("Pushed tag {:#x}",self.tag as u8);
 //        let gag : Box<dyn ToDop2Bytes> = Box::new (self.value);
         
         match self.value {
@@ -476,7 +476,7 @@ impl RootNode {
         builder.splice(0..0, length.to_be_bytes());
 
         let padding = DopPadding::minimum_padding(builder);
-        println!("{:?} bytes",padding.bytes_of_padding);
+       // println!("{:?} bytes of padding",padding.bytes_of_padding);
         padding.to_bytes(builder);
     }
 }
