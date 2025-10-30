@@ -94,11 +94,81 @@ type encryptor = cbc::Encryptor<aes::Aes256>;
 type decryptor = cbc::Decryptor<aes::Aes256>;
 type signer = Hmac<Sha256>;
 
+struct MieleResponseSignatureInfo
+{
+    statusCode : u8,
+    contentType : String,
+    date : String,
+    decryptedPayload : Vec<u8>
+}
+struct MieleRequestSignatureInfo
+{
+    httpMethod : String,
+    host : String,
+    request_uri: String,
+    contentType: String,
+    acceptHeader: String,
+    date: String,
+    payload : Vec<u8>
+}
+
+impl MieleResponseSignatureInfo
+{
+    fn to_bytes (&self) -> Vec<u8>
+    {
+        let newline : u8  = b'\n';
+        let mut bytes : Vec<u8> = Vec::new();
+        bytes.extend_from_slice(self.statusCode.to_string().as_bytes());
+        bytes.push(newline);
+
+        bytes.extend_from_slice(self.contentType.as_bytes());
+        bytes.push(newline);
+
+        bytes.extend_from_slice(self.date.as_bytes());
+        bytes.push(newline);
+        
+        bytes.extend_from_slice(&self.decryptedPayload);   
+        //bytes.push(0);     
+
+        return bytes;   
+    }
+}
+impl MieleRequestSignatureInfo
+{
+    fn to_bytes (&self) -> Vec<u8>
+    {
+        let newline : u8  = b'\n';
+        let mut bytes : Vec<u8> = Vec::new();
+        bytes.extend_from_slice(self.httpMethod.as_bytes());
+        bytes.push(newline);
+
+        bytes.extend_from_slice(self.host.as_bytes());
+        bytes.extend_from_slice(self.request_uri.as_bytes());
+        //bytes.push(b'/');
+        bytes.push(newline);
+
+        bytes.extend_from_slice(self.contentType.as_bytes());
+        bytes.push(newline);
+
+        bytes.extend_from_slice(self.acceptHeader.as_bytes());
+        bytes.push(newline);
+
+       
+
+        bytes.extend_from_slice(self.date.as_bytes());
+        bytes.push(newline);
+        
+       // bytes.extend_from_slice(&self.payload);   
+        //bytes.push(0);     
+
+        return bytes;   
+    }
+}
 impl MieleCryptoContext 
 {
     fn default() -> Self
     {
-        return MieleCryptoContext {group_id: GroupId{0: [0x31; 8]}, group_key: MieleKey{0: [0x31; 64]}};
+        return MieleCryptoContext {group_id: GroupId{0: [0x31; 8]}, group_key: MieleKey{0: [0x11; 64]}};
     }
     fn random () -> Self
     {
@@ -170,14 +240,55 @@ mod tests {
         
 //        let ciphertext = hex::decode("f6eebe5e2bf7c5064c4d61c0da55c7e80010f700bd8b5d5c958e8165ab025bd5f65a002044ef3e573d2bfd1ee3eef862cb96115100307c472b5c7389793a6d713249b056231f0040e865b7931033e679f46c6a97ba6f58840050d58d0dc367e557f675d4092fb3254cb60060e9c0e4ca99b5c0a34df73a8802004cf90070b7fca41d0cbc521792df8ae4a0fc3e0e0080fefbc1d6550a7a66c13334680de6066c").unwrap();
         let ciphertext = hex::decode("8dc821a1c9eced3fa98fd74e0d6629b9ee41543376ea08dec33acca7949f6b1f812e2b828dae8c72f7ae0fa7670fa38a0ec8fe10e42988df0f09fa0815c2e2ee").unwrap();
-       
         let plaintext = context.decrypt(ciphertext, &header.signature.get_aes_iv());
-
-        //assert_eq!(hex::encode(context.signature(&plaintext)), hex::encode(header.signature.hmac.0));
         println!("{:?}", plaintext);
         println!("{:?}", str::from_utf8(&plaintext).unwrap());
         assert_eq!(&plaintext, "{\"DeviceAction\": 2                                             }".to_string().as_bytes());
 
        
+    }
+    #[test]
+    fn test_decrypt_and_validate ()
+    {
+        let context: MieleCryptoContext = MieleCryptoContext::default();
+        let header = MieleHeader::from_http_header("1111111111111111:DD361380F1AB6BC95C3A42144DA458CB58A204A4A509E14B59B7690D1846AAE3".to_string());
+        let payload : Vec<u8> = hex::decode("f6eebe5e2bf7c5064c4d61c0da55c7e8f700bd8b5d5c958e8165ab025bd5f65a44ef3e573d2bfd1ee3eef862cb9611517c472b5c7389793a6d713249b056231fe865b7931033e679f46c6a97ba6f5884d58d0dc367e557f675d4092fb3254cb6e9c0e4ca99b5c0a34df73a8802004cf9b7fca41d0cbc521792df8ae4a0fc3e0efefbc1d6550a7a66c13334680de6066c").unwrap();
+        let plaintext = context.decrypt(payload, &header.signature.get_aes_iv());
+        let plaintext_str=str::from_utf8(&plaintext).unwrap();
+        println!("{:?}", plaintext_str);
+        
+        let headerFields = MieleResponseSignatureInfo {statusCode: 200, contentType: "application/vnd.miele.v1+json; charset=utf-8".to_string(), date: "Sat, 16 Aug 2025 02:37:30 GMT".to_string(), decryptedPayload: plaintext_str.as_bytes().into()};
+        let sig = context.signature(&headerFields.to_bytes());
+        assert_eq!(sig, header.signature.hmac.0);
+    }
+    #[test]
+    fn test_signature() {
+        let testKey = hex::decode("123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE").unwrap();
+        let context = MieleCryptoContext {group_id: GroupId::from_hex("123456789ABCDEFE"), group_key: MieleKey{0: testKey.try_into().unwrap()} } ;
+        //let context = MieleCryptoContext::default();
+        let headerFields : MieleRequestSignatureInfo = MieleRequestSignatureInfo {httpMethod: "GET".to_string(), host:"127.0.0.1".to_string(), request_uri: "/Devices/000177753917/DOP2/2/1585?idx1=0&idx2=1".to_string(), contentType: "application / vnd.miele.v1 + json; charset = utf - 8".to_string(), acceptHeader: "application/vnd.miele.v1+json".to_string(), date: "Thu, 01 Jan 1970 02:09:22 GMT".to_string(), payload: vec!()};
+      //  let header = MieleHeader::from_http_header("1111111111111111:731BAE233DA2EA585D4641BCBBD14CBDA64E74B2C48617F177E1280F56B70C48".to_string());
+        
+        //let signed_payload = headerFields.to_bytes();
+         //assert_eq!(hex::encode(context.signature(&signed_payload)), hex::encode(header.signature.hmac.0));
+        // this works -- let payload = hex::decode("4745540a31302e302e302e31312f446576696365732f3030303138373638333139322f444f50322f322f313538353f696478313d3026696478323d310a6170706c69636174696f6e202f20766e642e6d69656c652e7631202b206a736f6e3b2063686172736574203d20757466202d20380a6170706c69636174696f6e2f766e642e6d69656c652e76312b6a736f6e0a5468752c203031204a616e20313937302030323a30393a323220474d540a").unwrap();
+         let payload = headerFields.to_bytes();
+         assert_eq!(hex::encode(context.signature(&payload)).to_uppercase(), "DBC5C3BD007CDDF0214645E4FF27F517AFA1025AA9E3C1030BB15AE2A4210D91");
+    }
+
+    #[test]
+    fn test_signature_received() {
+        let c = "application/vnd.miele.v1 + json".to_string();
+        let h : String = "".to_string();
+       // let testKey = hex::decode("123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE").unwrap();
+        let context = MieleCryptoContext::default();
+        let headerFields = MieleResponseSignatureInfo {statusCode: 200, contentType: c, date: "Fri, 15 Aug 2025 19:37:29 GMT".to_string(), decryptedPayload: "".as_bytes().into()};
+      //  let header = MieleHeader::from_http_header("1111111111111111:731BAE233DA2EA585D4641BCBBD14CBDA64E74B2C48617F177E1280F56B70C48".to_string());
+        
+        //let signed_payload = headerFields.to_bytes();
+         //assert_eq!(hex::encode(context.signature(&signed_payload)), hex::encode(header.signature.hmac.0));
+        // this works -- let payload = hex::decode("4745540a31302e302e302e31312f446576696365732f3030303138373638333139322f444f50322f322f313538353f696478313d3026696478323d310a6170706c69636174696f6e202f20766e642e6d69656c652e7631202b206a736f6e3b2063686172736574203d20757466202d20380a6170706c69636174696f6e2f766e642e6d69656c652e76312b6a736f6e0a5468752c203031204a616e20313937302030323a30393a323220474d540a").unwrap();
+         let payload = headerFields.to_bytes();
+         assert_eq!(hex::encode(context.signature(&payload)).to_uppercase(), "731BAE233DA2EA585D4641BCBBD14CBDA64E74B2C48617F177E1280F56B70C48");
     }
 }
