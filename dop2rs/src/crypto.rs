@@ -89,26 +89,26 @@ struct MieleCryptoContext
     group_key : MieleKey,
 }
 
-type encryptor = cbc::Encryptor<aes::Aes256>;
-type decryptor = cbc::Decryptor<aes::Aes256>;
-type signer = Hmac<Sha256>;
+type Encryptor = cbc::Encryptor<aes::Aes256>;
+type Decryptor = cbc::Decryptor<aes::Aes256>;
+type Signer = Hmac<Sha256>;
 
-struct MieleResponseSignatureInfo
+pub struct MieleResponseSignatureInfo
 {
-    statusCode : u8,
-    contentType : String,
-    date : String,
-    decryptedPayload : Vec<u8>
+    pub statusCode : u8,
+    pub contentType : String,
+    pub date : String,
+    pub decryptedPayload : Vec<u8>
 }
-struct MieleRequestSignatureInfo
+pub struct MieleRequestSignatureInfo
 {
-    httpMethod : String,
-    host : String,
-    request_uri: String,
-    contentType: String,
-    acceptHeader: String,
-    date: String,
-    payload : Vec<u8>
+    pub httpMethod : String,
+    pub host : String,
+    pub request_uri: String,
+    pub contentType: String,
+    pub acceptHeader: String,
+    pub date: String,
+    pub payload : Vec<u8>
 }
 
 impl MieleResponseSignatureInfo
@@ -171,12 +171,12 @@ impl MieleCryptoContext
     }
     fn random () -> Self
     {
-        let mut rng = rand::rng();
+        let rng = rand::rng();
         return MieleCryptoContext {group_id: GroupId::random(), group_key: MieleKey::random()};
     }
     fn signature (&self, buffer: &[u8])->[u8; 32]
     {
-        let mut mac = signer::new_from_slice(&self.group_key.0).unwrap();
+        let mut mac = Signer::new_from_slice(&self.group_key.0).unwrap();
         //mac.update(buffer);
         mac.update(&buffer);
         //return mac.finalize().into_bytes();   
@@ -186,12 +186,12 @@ impl MieleCryptoContext
     fn decrypt (&self, buffer : Vec<u8>, iv : &AesIv)-> Vec<u8>
     {
        // println!("buffer len: {:?}", buffer.len());
-        let mut d: cbc::Decryptor<Aes256> = decryptor::new_from_slices(&self.group_key.get_aes_key(), &iv.0).unwrap();
+        let d: cbc::Decryptor<Aes256> = Decryptor::new_from_slices(&self.group_key.get_aes_key(), &iv.0).unwrap();
         return d.decrypt_padded_vec_mut::<NoPadding>(buffer.as_slice())
 .unwrap()    }
     fn encrypt (&self, buffer : Vec<u8>, iv : &AesIv)->Vec<u8>
     {
-        let mut e: cbc::Encryptor<Aes256> = encryptor::new_from_slices(&self.group_key.get_aes_key(), &iv.0).unwrap();
+        let e: cbc::Encryptor<Aes256> = Encryptor::new_from_slices(&self.group_key.get_aes_key(), &iv.0).unwrap();
         return e.encrypt_padded_vec_mut::<NoPadding>(buffer.as_slice());
     }
 }
@@ -246,7 +246,7 @@ mod tests {
        
     }
     #[test]
-    fn test_decrypt_and_validate ()
+    fn test_response_decrypt_verify_sig ()
     {
         let context: MieleCryptoContext = MieleCryptoContext::default();
         let header = MieleHeader::from_http_header("1111111111111111:DD361380F1AB6BC95C3A42144DA458CB58A204A4A509E14B59B7690D1846AAE3".to_string());
@@ -258,10 +258,10 @@ mod tests {
         
         let headerFields = MieleResponseSignatureInfo {statusCode: 200, contentType: "application/vnd.miele.v1+json; charset=utf-8".to_string(), date: "Sat, 16 Aug 2025 02:37:30 GMT".to_string(), decryptedPayload: plaintext_str.as_bytes().into()};
         let sig = context.signature(&headerFields.to_bytes());
-     //   assert_eq!(sig, header.signature.hmac.0);
+        assert_eq!(sig, header.signature.hmac.0);
     }
     #[test]
-    fn test_signature() {
+    fn test_request_signature() {
         let testKey = hex::decode("123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE").unwrap();
         let context = MieleCryptoContext {group_id: GroupId::from_hex("123456789ABCDEFE"), group_key: MieleKey{0: testKey.try_into().unwrap()} } ;
         //let context = MieleCryptoContext::default();

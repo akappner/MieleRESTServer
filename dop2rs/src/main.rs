@@ -5,6 +5,7 @@ use num_enum::TryFromPrimitive;
 use derive_more::From;
 
 mod crypto;
+mod device_api;
 
 #[derive(Parser)]
 #[command(name = "hex_parser")]
