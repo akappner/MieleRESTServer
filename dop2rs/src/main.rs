@@ -5,6 +5,7 @@ use num_enum::TryFromPrimitive;
 use derive_more::From;
 
 use dop2marshal::AssocTypes;
+use crate::payloads::Dop2ParseTreeExpressible;
 
 mod crypto;
 mod device_api;
@@ -674,13 +675,13 @@ enum ProcessState
 pub struct DeviceCombiState {
         #[dop2field(1, Dop2Payloads::E8)]
         appliance_state : ApplianceState,
-        #[dop2field(2, i8)]
+        #[dop2field(2, Dop2Payloads::E8)]
         operation_state : OperationState,
-        #[dop2field(3, i8)]
+        #[dop2field(3, Dop2Payloads::E8)]
         process_state : ProcessState
 }
 
-trait Dop2ParseTreeExpressible : Sized
+pub trait Dop2ParseTreeExpressible : Sized
 {
     fn from_parse_tree(payload: Dop2Payloads) -> Result<Self, String>;
 }
@@ -688,7 +689,7 @@ trait Dop2ParseTreeExpressible : Sized
 impl DeviceCombiState
 {
         pub const ATTRIBUTE : u16 = 1586;
-
+/*
         pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
@@ -709,11 +710,12 @@ impl DeviceCombiState
             }
             Err("Entity mismatch".to_string())
         }
-
+*/
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct XkmRequest {
+    #[dop2field(1, Dop2Payloads::E8)]
         request_id : XkmRequestId
 }
     impl XkmRequest

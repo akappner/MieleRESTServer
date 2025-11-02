@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use syn::{parse_macro_input, punctuated::Punctuated, DeriveInput, Expr, ExprLit, Lit, Type, token::Comma};
+use syn::{parse_macro_input, punctuated::Punctuated, DeriveInput, Expr, ExprLit, Lit, Type, token::Comma, ExprPath};
 
 #[proc_macro_derive(AssocTypes, attributes(dop2field))]
 pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
@@ -33,6 +33,7 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
 
     let mut marker_defs = Vec::new();
     let mut impls = Vec::new();
+    let mut constructor_fragments = Vec::new();
 
     for field in fields.iter() {
         let field_ident = match &field.ident {
@@ -65,7 +66,15 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
                     .into();
                 }
 
-                // Extract first two as Type, third as integer literal
+                let enum_expr = match &args[1] {
+                    Expr::Path(ExprPath { path, .. }) => path.clone(),
+                    _ => {
+                        return syn::Error::new_spanned(&args[2], 
+                            "third argument must be a path expression like MyEnum::Variant")
+                            .to_compile_error()
+                            .into();
+                    }
+                };
 
                 let number = match &args[0] {
                     Expr::Lit(ExprLit { lit: Lit::Int(litint), .. }) => litint,
@@ -91,12 +100,15 @@ let in_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
                 });
 
                 impls.push(quote! {
-                    impl #trait_ident<#marker_ident> for #struct_name {
-                        type In = #in_ty;
-                        type Out = #in_ty;
-                        const N: usize = #number;
-                    }
+                    let #enum_expr(#field_ident) = x.fields[#number-1].value && 
                 });
+                if (constructor_fragments.len() > 0 )
+                {
+                    constructor_fragments.push(quote!{,});
+                }
+                constructor_fragments.push(quote! {
+                    #field_ident: #field_ident.0.try_into().unwrap()
+                })
         } }
     }
 
@@ -108,12 +120,22 @@ let in_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
  //       }
          impl Dop2ParseTreeExpressible for #struct_name 
 {
-         fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String> { return Err("".to_string()); }
+         fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String> { 
+        
+         if let Dop2Payloads::MStruct(x)=payload && #(#impls)* 1==1 {
+            let y = Self {#(#constructor_fragments)*  }; 
+            return Ok(y);
+            //return Err("success".to_string());
+         }
+         else
+         {
+            return Err("failed converting type".to_string());
+         }
+        }
 }
         // generated marker structs and impls
 //        #(#marker_defs)*
 
- //       #(#impls)*
     };
 
     TokenStream::from(expanded)
