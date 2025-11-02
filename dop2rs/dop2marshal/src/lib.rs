@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use syn::{parse_macro_input, punctuated::Punctuated, DeriveInput, Expr, ExprLit, Lit, Type, token::Comma, ExprPath};
+use syn::{parse_macro_input, punctuated::Punctuated, DeriveInput, Expr, ExprLit, Lit, Type, token::Comma, ExprPath, TypePath};
 
 #[proc_macro_derive(AssocTypes, attributes(dop2field))]
 pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
@@ -40,7 +40,7 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
             Some(id) => id,
             None => continue,
         };
-
+        
         // Find an attribute named "assoc_type"
         for attr in &field.attrs {
             if attr.path().is_ident("dop2field") { // only parse our attribute
@@ -91,24 +91,46 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
 let in_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
 //let out_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
 
-
+let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
+    path.segments.last().map(|seg| seg.ident == "Option").unwrap_or(false)
+} else {
+    false
+};
 
                 let marker_ident = format_ident!("{}{}", marker_prefix, field_ident);
 
                 marker_defs.push(quote! {
                     pub struct #marker_ident;
                 });
+                // TODO: Remove this "clone" -- should be avoidable by restructuring this loop
+                // let Dop2Payloads::E8(appliance_state) = x.fields[0].value 
 
+                if (is_option)
+                {
+                    impls.push(quote! {
+                        let #enum_expr(#field_ident) = x.fields.get(#number-1).map(|s| s.value) && 
+                    });
+                    if (constructor_fragments.len() > 0 )
+                    {
+                        constructor_fragments.push(quote!{,});
+                    }
+                    constructor_fragments.push(quote! {
+                        #field_ident: #field_ident.try_into().unwrap()
+                    })
+                }
+                else 
+                {
                 impls.push(quote! {
-                    let #enum_expr(#field_ident) = x.fields[#number-1].value && 
+                    let #enum_expr(#field_ident) = x.fields.get(#number-1).unwrap().value.clone() && 
                 });
                 if (constructor_fragments.len() > 0 )
                 {
                     constructor_fragments.push(quote!{,});
                 }
                 constructor_fragments.push(quote! {
-                    #field_ident: #field_ident.0.try_into().unwrap()
+                    #field_ident: #field_ident.try_into().unwrap()
                 })
+            }
         } }
     }
 
