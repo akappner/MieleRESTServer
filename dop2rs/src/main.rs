@@ -560,7 +560,12 @@ fn main() {
         { 
              let decoded = payloads::DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
              println!("{decoded:#?}");
-         }
+        },
+        payloads::DeviceContextSecondDevice::ATTRIBUTE =>
+{
+    let decoded = payloads::DeviceContextSecondDevice::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
 
         _ => { println!("no decoding for attribute"); }
     }
@@ -612,7 +617,7 @@ enum UserRequestOven {
 }
 
 #[repr(u16)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, From)]
+#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive)]
 enum ProgramIdOven {
     NoProgram = 0,
     OvenHotAirPlus = 13,
@@ -671,6 +676,28 @@ enum ProcessState
     ProgramRunning
 }
 
+macro_rules! impl_tryfrom_wrapper {
+    ($enum:ty, $wrapper:ty) => {
+        impl TryFrom<$wrapper> for $enum {
+            type Error = ();
+
+            fn try_from(value: $wrapper) -> Result<Self, <$enum as TryFrom<$wrapper>>::Error> {
+                <$enum>::try_from(value.0).map_err(|_| ())
+            }
+        }
+    };
+}
+impl_tryfrom_wrapper!(ProcessState, E8);
+
+impl_tryfrom_wrapper!(OperationState, E8);
+
+impl_tryfrom_wrapper!(ProgramIdOven, E16);
+
+impl_tryfrom_wrapper!(ApplianceState, E8);
+
+impl_tryfrom_wrapper!(XkmRequestId, E8);
+
+
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DeviceCombiState {
         #[dop2field(1, Dop2Payloads::E8)]
@@ -684,6 +711,23 @@ pub struct DeviceCombiState {
 pub trait Dop2ParseTreeExpressible : Sized
 {
     fn from_parse_tree(payload: Dop2Payloads) -> Result<Self, String>;
+}
+impl TryFrom<Dop2Struct> for DeviceCombiState 
+{
+    type Error = String;
+
+    fn try_from(value: Dop2Struct) -> Result<Self, Self::Error> {
+        return DeviceCombiState::from_parse_tree (Dop2Payloads::MStruct(value))
+    }
+}
+
+impl TryFrom<Dop2Struct> for PSAttributesCCA 
+{
+    type Error = String;
+
+    fn try_from(value: Dop2Struct) -> Result<Self, Self::Error> {
+        return PSAttributesCCA::from_parse_tree (Dop2Payloads::MStruct(value))
+    }
 }
 
 impl DeviceCombiState
@@ -712,7 +756,31 @@ impl DeviceCombiState
         }
 */
 }
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct DeviceContextSecondDevice 
+{
+        #[dop2field(1, Dop2Payloads::MStruct )]
+        state : DeviceCombiState,
+  //      #[dop2field(13, Dop2Payloads::Boolean )]
+   //     requestTimeSync : bool,
+  //      #[dop2field(7, Dop2Payloads::MStruct )]
+    //    prog : PSAttributesCCA
+       //    #[dop2field(12, Dop2Payloads::Boolean )]
+        // mobileStartActive : bool
+  //     #[dop2field(12, Dop2Payloads::E16 )]
+    //    showMeHowId : ProgramIdOven
+}
 
+impl DeviceContextSecondDevice
+{
+    pub const ATTRIBUTE : u16 = 391;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct PSAttributesCCA {
+ //   #[dop2field(1, Dop2Payloads::E16 )]
+   // progPhase : E16,
+}
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct XkmRequest {
     #[dop2field(1, Dop2Payloads::E8)]
@@ -741,8 +809,9 @@ pub struct XkmRequest {
 
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PsSelect {
+       #[dop2field(1, Dop2Payloads::E16)]
         program_id : ProgramIdOven
 }
     impl PsSelect
