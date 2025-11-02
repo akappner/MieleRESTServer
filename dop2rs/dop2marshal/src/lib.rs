@@ -106,7 +106,10 @@ let in_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
 //        pub trait #trait_ident<Marker> {
 //            type Ty;
  //       }
-
+         impl Dop2ParseTreeExpressible for #struct_name 
+{
+         fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String> { return Err("".to_string()); }
+}
         // generated marker structs and impls
 //        #(#marker_defs)*
 
