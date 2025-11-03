@@ -108,7 +108,7 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                 if (is_option)
                 {
                     impls.push(quote! {
-                        let #enum_expr(#field_ident) = x.fields.get(#number-1).map(|s| s.value) && 
+                        let #enum_expr(#field_ident) = x.get_field(#number).clone() && 
                     });
                     if (constructor_fragments.len() > 0 )
                     {
@@ -121,7 +121,7 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                 else 
                 {
                 impls.push(quote! {
-                    let #enum_expr(#field_ident) = x.fields.get(#number-1).unwrap().value.clone() && 
+                    let Some(#enum_expr(#field_ident)) = x.get_payload(#number) && 
                 });
                 if (constructor_fragments.len() > 0 )
                 {
@@ -143,14 +143,24 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
          impl Dop2ParseTreeExpressible for #struct_name 
 {
          fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String> { 
-        
-         if let Dop2Payloads::MStruct(x)=payload && #(#impls)* 1==1 {
+         println!("destructuring macro:");
+         if let Dop2Payloads::MStruct(x)=payload 
+         {
+           // println!("{:?}", &x.fields.map(|x| s.field));
+            if #(#impls)* 1==1 {
             let y = Self {#(#constructor_fragments)*  }; 
             return Ok(y);
             //return Err("success".to_string());
+            }
+            else
+            {
+               
+                return Err("failed converting type".to_string());
+            }
          }
          else
          {
+            //println!("{:?}", &payload);
             return Err("failed converting type".to_string());
          }
         }

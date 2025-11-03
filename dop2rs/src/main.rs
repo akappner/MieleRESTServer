@@ -65,13 +65,19 @@ struct RootNode {
     root_struct: Dop2Struct,
 //    padding: DopPadding
 }
+impl RootNode 
+{
+    fn has_more_siblings(&self)->bool
+    {
+        return self.idx1 == self.idx2;
+    }
+}
 #[derive(Clone, Debug)]
 struct TaggedDopField {
     tag: Dop2Type,
     field_index : u16,
     value: Dop2Payloads,
 }
-
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
@@ -424,6 +430,16 @@ struct Dop2Struct{
     declared_fields: u16,
     fields: Vec<TaggedDopField>,
 }
+impl Dop2Struct {
+    fn get_field (&self, id: u16)->Option<TaggedDopField>
+    {
+        self.fields.iter().find(|x| x.field_index==id).cloned() // TODO: check for duplicate indices and remove the clone
+    }
+    fn get_payload (&self, id: u16)->Option<Dop2Payloads>
+    {
+        self.get_field(id).map(|x| x.value.clone())
+    }
+}
 impl ToDop2Bytes for Dop2Struct
 {
     fn to_bytes(self, vec: &mut Vec<u8>)
@@ -542,7 +558,7 @@ fn main() {
     let mut parser = Dop2Parser::new(bytes);
     let root_node = RootNode::parse(&mut parser).unwrap();
     println!("{root_node:#?}");
-
+/*
     match root_node.attribute
     {
         payloads::XkmRequest::ATTRIBUTE => 
@@ -561,14 +577,18 @@ fn main() {
              let decoded = payloads::DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
              println!("{decoded:#?}");
         },
-        payloads::DeviceContextSecondDevice::ATTRIBUTE =>
+        _ => { println!("no decoding for attribute");
+    }
+}
+     */
+    if (payloads::DeviceContextSecondDevice::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
     let decoded = payloads::DeviceContextSecondDevice::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 
-        _ => { println!("no decoding for attribute"); }
-    }
+       
+    
 }
 
 mod payloads {
@@ -763,23 +783,27 @@ pub struct DeviceContextSecondDevice
         state : DeviceCombiState,
   //      #[dop2field(13, Dop2Payloads::Boolean )]
    //     requestTimeSync : bool,
-  //      #[dop2field(7, Dop2Payloads::MStruct )]
-    //    prog : PSAttributesCCA
-       //    #[dop2field(12, Dop2Payloads::Boolean )]
-        // mobileStartActive : bool
-  //     #[dop2field(12, Dop2Payloads::E16 )]
-    //    showMeHowId : ProgramIdOven
+        #[dop2field(7, Dop2Payloads::MStruct )]
+        prog : PSAttributesCCA,
+          #[dop2field(11, Dop2Payloads::Boolean )]
+         mobileStartActive : bool,
+       #[dop2field(12, Dop2Payloads::E16 )]
+        showMeHowId : ProgramIdOven
 }
 
 impl DeviceContextSecondDevice
 {
-    pub const ATTRIBUTE : u16 = 391;
+    pub const ATTRIBUTE_IDS : &[u16] = &[391, ];
+    
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PSAttributesCCA {
- //   #[dop2field(1, Dop2Payloads::E16 )]
-   // progPhase : E16,
+    #[dop2field(1, Dop2Payloads::E16 )]
+    progPhase : E16,
+
+    #[dop2field(2, Dop2Payloads::E16 )]
+    progSubPhase : E16,
 }
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct XkmRequest {
@@ -788,6 +812,7 @@ pub struct XkmRequest {
 }
     impl XkmRequest
     {
+        pub const ATTRIBUTE_IDS : &[u16] = &[130, 1585];
         pub const ATTRIBUTE : u16 = 130; // typically unit 14
     
         pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
