@@ -1,4 +1,5 @@
 #![feature(derive_from)]
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 use clap::Parser;
 use num_enum::TryFromPrimitive;
@@ -6,6 +7,8 @@ use derive_more::From;
 
 use dop2marshal::AssocTypes;
 use crate::payloads::Dop2ParseTreeExpressible;
+
+use paste::paste;
 
 mod crypto;
 mod device_api;
@@ -54,6 +57,23 @@ pub enum Dop2Type {
     AStruct                     = 33,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Dop2TimestampUtc(DateTime<Utc>);
+
+impl TryFrom<u64> for Dop2TimestampUtc {
+    type Error = &'static str;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        if value > i64::MAX as u64 {
+            return Err("timestamp out of range");
+        }
+
+        let naive = NaiveDateTime::from_timestamp(value as i64, 0);
+        Ok(Dop2TimestampUtc(DateTime::<Utc>::from_utc(naive, Utc)))
+    }
+}
+
+
 #[allow(dead_code)]
 #[derive(Debug)]
 struct RootNode {
@@ -72,7 +92,7 @@ impl RootNode
         return self.idx1 == self.idx2;
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct TaggedDopField {
     tag: Dop2Type,
     field_index : u16,
@@ -80,11 +100,20 @@ struct TaggedDopField {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct DopArray <T : Dop2PayloadExpressible+ToDop2Bytes>
 {
     count : u16,
     elements : Vec<T>
+}
+
+impl<T> Into<Vec<T>> for DopArray<T>
+where
+    T: Dop2PayloadExpressible + ToDop2Bytes,
+{
+    fn into(self) -> Vec<T> {
+        self.elements
+    }
 }
 
 impl<T : Dop2PayloadExpressible + ToDop2Bytes> Dop2PayloadExpressible for DopArray<T>
@@ -153,7 +182,7 @@ newtype_int!(E16, u16);
 newtype_int!(E32, u32);
 newtype_int!(E64, u64);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum Dop2Payloads {
     Boolean(bool),
     U8(u8),
@@ -184,8 +213,8 @@ enum Dop2Payloads {
     ArrayI32 (DopArray<i32>),
 //    ArrayI64 (DopArray<u64>),
 
-    ArrayE8 (DopArray<u8>),
-    ArrayE16 (DopArray<u16>),
+    ArrayE8 (DopArray<E8>),
+    ArrayE16 (DopArray<E16>),
     ArrayE32 (DopArray<u32>),
     ArrayE64(DopArray<u64>),
 
@@ -193,6 +222,202 @@ enum Dop2Payloads {
     AStruct (DopArray<Dop2Struct>)
 }
 
+/*
+macro_rules! MakeAnnotatedValueType {
+($concrete_type) => {
+paste! {
+struct [<Garbage $concrete_type>] {
+
+    #[dop2field(1, Dop2Payloads::U8)]
+    requestMask : u8,
+    #[dop2field(2, T)]
+    value : $concrete_type, 
+    #[dop2field(3, Dop2Payloads::E16)]
+    interpretation: E16
+}
+}
+}
+}*/
+/*
+macro_rules! MakeAnnotatedValueType {
+($payload:path, $concrete_type:ty) => {
+paste! {
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+struct [<Garbage $concrete_type>] {
+#[dop2field(1, Dop2Payloads::U8)]
+requestMask : u8,
+
+#[dop2field(2, $payload )]
+value: $concrete_type,
+#[dop2field(3, Dop2Payloads::E16)]
+interpretation: E16
+
+}
+}
+};
+}
+*/
+/*
+macro_rules! MakeAnnotatedValueType {
+    ($name:ident, $payload:path, $concrete_type:ty) => {
+//            paste!{
+        #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+        struct $name {
+            #[dop2field(1, Dop2Payloads::U8)]
+            requestMask: u8,
+            #[dop2field(2, $payload )]
+            value: $concrete_type,
+            #[dop2field(3, Dop2Payloads::E16)]
+            interpretation: E16,
+//}
+        }
+    };
+}
+
+MakeAnnotatedValueType!(GarbageU16, Dop2Payloads::U16, u16);
+*/
+
+#[repr(u8)]
+#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive)]
+pub enum ValueInterpretation {
+    None = 0,
+    Percentage = 1,
+    TemperatureC1 = 2,
+    TemperatureC100 = 3,
+    TemperatureF100 = 4,
+    DurationSec = 5,
+    DurationMin = 6,
+    Step = 7,
+    WeightGram = 8,
+    Numerical = 9,
+    Date = 10,
+    MicrowavePowerSteps = 11,
+    RfPower = 12,
+    RfEnergy = 13,
+    RfMode = 14,
+    Browning = 15,
+    DegreeOfCooking = 16,
+    TimeFormat = 17,
+    TimePresentation = 18,
+    Language = 19,
+    BurstOfSteam = 20,
+    DisplayScheme = 21,
+    DisplayInStandby = 22,
+    Lighting = 23,
+    TemperatureUnit = 24,
+    WeightUnit = 25,
+    StartScreen = 26,
+    WaterHardness = 27,
+    TestState = 28,
+    TimeUtc = 29,
+    VoltageAndFrequency = 30,
+    StartPoint = 31,
+    EndPoint = 32,
+    ParameterShape = 33,
+    StartPointOrRightNow = 34,
+    WaterLevelMmws = 35,
+    WaterInletWay = 36,
+    DrumSpeedRpm = 37,
+    OnOff = 38,
+    DoorSwitch = 39,
+    DoorLockSwitch = 40,
+    WpsSwitch = 41,
+    TwindosContainer1Switch = 42,
+    TwindosContainer2Switch = 43,
+    EcoWaterLiter = 44,
+    EcoEnergyKwh = 45,
+    EcoEnergyWatt = 46,
+    StartPointOnlyRightNow = 47,
+    TemperatureF1 = 48,
+    DrumSpeed10Rpm = 49,
+    OperationMode = 50,
+    Name = 51,
+    TimeBackground = 52,
+    DisplayBrightness = 53,
+    DisplayContrast = 54,
+    VolumeSignalTonesLevel = 55,
+    VolumeKeyTone = 56,
+    MotoePosition = 57,
+    DoorExtOpeningEnabled = 58,
+    WawPosition = 59,
+    WawDirection = 60,
+    CookingShelfs3 = 80,
+    CookingShelfs4 = 81,
+    CookingShelfs5 = 82,
+    CookingShelfs6 = 83,
+    PerformanceMode = 90,
+    Altitude = 91,
+    ProfileChange = 92,
+    MicrowavePower = 96,
+    Variant = 97,
+    SensorGroup = 98,
+    TimerDayOfWeekAssignment = 99,
+    TimeUtc0 = 100,
+    ActiveUser = 101,
+    TemperatureText = 102,
+    WeightTenthOfGram = 103,
+    TimeDisplay = 104,
+    DeviceHeight = 105,
+    DeviceWidth = 106,
+    AutoDosCartridgeType = 107,
+    RinseAidCapacityMl = 108,
+    Knock2Open = 109,
+    CountryVariant = 110,
+    NetworkingCountry = 111,
+    CountryLanguage = 112,
+    Lbs = 120,
+    EnergyWh = 121,
+    CoolAirBlowersFollowUp = 122,
+    CookingProgramId = 123,
+    Extend = 124,
+    ApproximationLightOption = 125,
+    BurstsOfSteamType = 126,
+    Lbs100 = 127,
+    DurationSecOrUndefined = 128,
+    WaterHardnessDh = 129,
+    FlowMlMin = 130,
+    TimeIn100Ms = 131,
+    Concentration = 132,
+    WaterSource = 133,
+    TempCalibration = 134,
+    FoodProbeSelection = 135,
+    FoodProbeSerialNumber = 136,
+    LiquidQuantityLiters = 137,
+    LiquidQuantity100Milliliters = 138,
+    LiquidQuantityMilliliters = 139,
+    Day = 140,
+    Program = 141,
+    SpinSpeed10RpmText = 142,
+    Percent10 = 143,
+    Temperature10C = 144,
+    LiquidQuantity500Milliliters = 145,
+    Percent100 = 146,
+    Temperature10F = 147,
+    Quantity10Liters = 148,
+    MicroSiemens10PerCm = 149,
+    MicroSiemensPerCm = 150,
+}
+
+macro_rules! MakeAnnotatedValueType {
+    ($name:ident, $variant:ident, $concrete_type:ty) => {
+        #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+        struct $name {
+            #[dop2field(1, Dop2Payloads::U8)]
+            requestMask: u8,
+            #[dop2field(2, Dop2Payloads::$variant)]
+            value: $concrete_type,
+            #[dop2field(3, Dop2Payloads::E8)]
+            interpretation: ValueInterpretation,
+        }
+
+    };
+
+}
+
+MakeAnnotatedValueType!(AnnotatedU8, U8, u8);
+MakeAnnotatedValueType!(AnnotatedU16, U16, u16);
+MakeAnnotatedValueType!(AnnotatedU64, U64, u64);
+MakeAnnotatedValueType!(AnnotatedTimeStamp, U64, Dop2TimestampUtc);
 
 #[derive(Debug)]
 struct DopPadding {
@@ -425,7 +650,7 @@ impl TaggedDopField {
 
 
 #[allow(dead_code)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct Dop2Struct{
     declared_fields: u16,
     fields: Vec<TaggedDopField>,
@@ -581,9 +806,15 @@ fn main() {
     }
 }
      */
-    if (payloads::DeviceContextSecondDevice::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    if (payloads::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::DeviceContextSecondDevice::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloads::DeviceContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
+
+    else if (payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::DateTimeInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 
@@ -644,6 +875,99 @@ enum ProgramIdOven {
     OvenIntenseBaking = 14,
 }
 
+#[repr(u16)]
+#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive)]
+pub enum UserRequestId {
+    None = 0,
+    Start = 1,
+    Stop = 2,
+    Pause = 3,
+    StartSuperFreezing = 4,
+    StopSuperFreezing = 5,
+    StartSuperCooling = 6,
+    StopSuperCooling = 7,
+    StartDelay = 8,
+    DoorOpen = 11,
+    DoorClose = 12,
+    LightOn = 13,
+    LightOff = 14,
+    FactorySettings = 15,
+    SwitchOn = 16,
+    Next = 17,
+    Back = 18,
+    SwitchOff = 19,
+    ResetPincode = 20,
+    KeepAlive = 21,
+    Step = 22,
+    StartRemoteUpdateInstall = 23,
+    CheckSupervisorCode = 24,
+    ChangeSupervisorCode = 25,
+    ResetSupervisorCode = 26,
+    SupervisorCodeLocked = 27,
+    StopProgramEndSignal = 28,
+    CheckDoorCode = 29,
+    ChangeDoorCode = 30,
+    TracePersistenceActivate = 51,
+    TracePersistenceDeactivate = 52,
+    ProgramStop = 54,
+    ProgramAbort = 55,
+    ProgramFinalize = 56,
+    ProgramClose = 57,
+    BurstOfSteamStart = 59,
+    BurstOfSteamStop = 60,
+    ProgramSave = 61,
+    IncrementQuickMwDuration = 62,
+    FasciaPanelOpen = 65,
+    FasciaPanelClose = 66,
+    Backward = 67,
+    HoldingBreak = 68,
+    HoldingStart = 69,
+    QuickMwStart = 70,
+    PopcornStart = 71,
+    ContinueCookingStart = 72,
+    RfStart = 74,
+    RfStop = 75,
+    CsActuatorOff = 76,
+    CsActuatorOn = 77,
+    AbortPhase1 = 78,
+    AbortPhase2 = 79,
+    AbortPhase3 = 80,
+    AbortPhase4 = 81,
+    DoubleDispense = 82,
+    SaveDispensePhase1 = 83,
+    SaveDispensePhase2 = 84,
+    SaveDispensePhase3 = 85,
+    SaveDispensePhase4 = 86,
+    ParameterSave = 87,
+    ShowFooterInfo = 88,
+    StartDrying = 89,
+    AbortPhase5 = 90,
+    AbortPhase6 = 91,
+    AbortPhase7 = 92,
+    AbortPhase8 = 93,
+    MobileKeyPressed = 94,
+    ProgramStepInfo = 95,
+    ProgramInstructionInfo = 96,
+    BackwardTwoSteps = 97,
+    JumpToFoodIq = 98,
+    PushToTalkStart = 99,
+    PushToTalkBreak = 100,
+    EnterSoftAccessPoint = 104,
+    ProgressStart = 105,
+    ProgressStop = 106,
+    ProgressOk = 107,
+    ShopWindowSequenceAllowed = 108,
+    SwitchApplianceOnDemoMode = 109,
+    StartOwnProgramModification = 110,
+    EnableWiFi = 111,
+    DisableWiFi = 112,
+    StartLocal = 113,
+    ResetInitialGrinding = 114,
+    GlobalMax = 50,
+    ReservedInvalid = 32767,
+}
+
+
 #[repr(u8)]
 #[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
 enum XkmRequestId {
@@ -695,9 +1019,10 @@ enum ProcessState
     ProgramStart,
     ProgramRunning
 }
-
+/*
 macro_rules! impl_tryfrom_wrapper {
-    ($enum:ty, $wrapper:ty) => {
+    ($enum:ty, $wrapper:ty) => 
+{
         impl TryFrom<$wrapper> for $enum {
             type Error = ();
 
@@ -705,8 +1030,43 @@ macro_rules! impl_tryfrom_wrapper {
                 <$enum>::try_from(value.0).map_err(|_| ())
             }
         }
-    };
+        impl TryFrom<DopArray<$wrapper>> for Vec<$enum>
+	{
+            type Error = ();
+	fn try_from (value: DopArray<$wrapper>) -> Result <Self, <$enum as TryFrom<$wrapper>>::Error>
+         {
+         Err("garbage2")
 }
+
+}
+}*/
+
+macro_rules! impl_tryfrom_wrapper {
+($enum:ty, $wrapper:ty) => {
+impl TryFrom<$wrapper> for $enum {
+type Error = ();
+
+        fn try_from(value: $wrapper) -> Result<Self, <$enum as TryFrom<$wrapper>>::Error> {
+            <$enum>::try_from(value.0).map_err(|_| ())
+        }
+    }
+
+    impl TryFrom<DopArray<$wrapper>> for Vec<$enum> {
+        type Error = ();
+
+        fn try_from(value: DopArray<$wrapper>) -> Result<Self, Self::Error> {
+            value
+                .elements
+                .into_iter()
+                .map(|elem| <$enum>::try_from(elem))
+                .collect()
+        }
+    }
+};
+
+}
+
+
 impl_tryfrom_wrapper!(ProcessState, E8);
 
 impl_tryfrom_wrapper!(OperationState, E8);
@@ -717,6 +1077,11 @@ impl_tryfrom_wrapper!(ApplianceState, E8);
 
 impl_tryfrom_wrapper!(XkmRequestId, E8);
 
+impl_tryfrom_wrapper!(UserRequestId, E16);
+
+impl_tryfrom_wrapper!(ValueInterpretation, E8);
+
+//impl_tryfrom_wrapper!(Dop2TimestampUtc, u64);
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DeviceCombiState {
@@ -732,6 +1097,8 @@ pub trait Dop2ParseTreeExpressible : Sized
 {
     fn from_parse_tree(payload: Dop2Payloads) -> Result<Self, String>;
 }
+
+/*
 impl TryFrom<Dop2Struct> for DeviceCombiState 
 {
     type Error = String;
@@ -748,7 +1115,31 @@ impl TryFrom<Dop2Struct> for PSAttributesCCA
     fn try_from(value: Dop2Struct) -> Result<Self, Self::Error> {
         return PSAttributesCCA::from_parse_tree (Dop2Payloads::MStruct(value))
     }
+}*/
+
+macro_rules! impl_tryfrom_dop2struct {
+($target:ty) => {
+impl TryFrom<Dop2Struct> for $target {
+type Error = String;
+
+        fn try_from(value: Dop2Struct) -> Result<Self, Self::Error> {
+            <$target>::from_parse_tree(Dop2Payloads::MStruct(value))
+        }
+    }
+};
 }
+
+impl_tryfrom_dop2struct!(DeviceCombiState);
+impl_tryfrom_dop2struct!(PSAttributesCCA);
+impl_tryfrom_dop2struct!(DeviceAttributesCCA);
+
+
+impl_tryfrom_dop2struct!(AnnotatedU8);
+impl_tryfrom_dop2struct!(AnnotatedU16);
+//impl_tryfrom_dop2struct!(AnnotatedU32);
+impl_tryfrom_dop2struct!(AnnotatedU64);
+impl_tryfrom_dop2struct!(AnnotatedTimeStamp);
+
 
 impl DeviceCombiState
 {
@@ -777,25 +1168,39 @@ impl DeviceCombiState
 */
 }
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct DeviceContextSecondDevice 
+pub struct DeviceContext // can be for main device or second device -- same struct 
 {
         #[dop2field(1, Dop2Payloads::MStruct )]
         state : DeviceCombiState,
-  //      #[dop2field(13, Dop2Payloads::Boolean )]
-   //     requestTimeSync : bool,
         #[dop2field(7, Dop2Payloads::MStruct )]
         prog : PSAttributesCCA,
-          #[dop2field(11, Dop2Payloads::Boolean )]
-         mobileStartActive : bool,
+        #[dop2field(8, Dop2Payloads::MStruct )]
+        deviceAttributes : DeviceAttributesCCA,
+        #[dop2field(9, Dop2Payloads::ArrayE16 )]
+        supportedUserRequests : Vec<UserRequestId>,
+        #[dop2field(11, Dop2Payloads::Boolean)]
+        mobileStartActive : bool,
        #[dop2field(12, Dop2Payloads::E16 )]
-        showMeHowId : ProgramIdOven
+        showMeHowId : ProgramIdOven,
+        #[dop2field(13, Dop2Payloads::Boolean )]
+        requestTimeSync : bool,
+
 }
 
-impl DeviceContextSecondDevice
+impl DeviceContext
 {
-    pub const ATTRIBUTE_IDS : &[u16] = &[391, ];
+    pub const ATTRIBUTE_IDS : &[u16] = &[391, 1585];
     
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct DeviceAttributesCCA {
+//    #[dop2field(1, Dop2Payloads::U32 )]
+//    milkCleaningCntr : u32,
+    #[dop2field(11, Dop2Payloads::E8 )]
+    doorLock : E8,
+}
+
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PSAttributesCCA {
@@ -804,6 +1209,32 @@ pub struct PSAttributesCCA {
 
     #[dop2field(2, Dop2Payloads::E16 )]
     progSubPhase : E16,
+        #[dop2field(3, Dop2Payloads::MStruct )]
+        progress : AnnotatedU16,
+
+        #[dop2field(6, Dop2Payloads::MStruct )]
+        displayTemperature : AnnotatedU16,
+
+
+        #[dop2field(7, Dop2Payloads::MStruct )]
+        displayCoreTemperature : AnnotatedU16,
+
+        #[dop2field(21, Dop2Payloads::MStruct )]
+        temperatureSetpoint : AnnotatedU16,
+
+        #[dop2field(22, Dop2Payloads::MStruct )]
+        moistureSetpoint : AnnotatedU8,
+
+        #[dop2field(24, Dop2Payloads::MStruct )]
+        powerSetpoint : AnnotatedU8,
+
+
+        #[dop2field(26, Dop2Payloads::MStruct )]
+        startTime : AnnotatedTimeStamp,
+
+        #[dop2field(29, Dop2Payloads::MStruct )]
+        nextActionTime : AnnotatedTimeStamp,
+
 }
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct XkmRequest {
@@ -812,7 +1243,7 @@ pub struct XkmRequest {
 }
     impl XkmRequest
     {
-        pub const ATTRIBUTE_IDS : &[u16] = &[130, 1585];
+        pub const ATTRIBUTE_IDS : &[u16] = &[130];
         pub const ATTRIBUTE : u16 = 130; // typically unit 14
     
         pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
@@ -832,6 +1263,19 @@ pub struct XkmRequest {
             Err("Entity mismatch".to_string())
         }
 
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct DateTimeInfo {
+       #[dop2field(1, Dop2Payloads::U64)]
+        utc_time : Dop2TimestampUtc,
+       #[dop2field(2, Dop2Payloads::I32)]
+        utc_offset : i32
+}
+
+impl DateTimeInfo 
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[122];
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]

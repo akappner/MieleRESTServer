@@ -69,7 +69,7 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
                 let enum_expr = match &args[1] {
                     Expr::Path(ExprPath { path, .. }) => path.clone(),
                     _ => {
-                        return syn::Error::new_spanned(&args[2], 
+                        return syn::Error::new_spanned(&args[1], 
                             "third argument must be a path expression like MyEnum::Variant")
                             .to_compile_error()
                             .into();
