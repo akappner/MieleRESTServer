@@ -26,3 +26,5 @@ async-trait = "0.1.89"
 dop2marshal = { path = "./dop2marshal" }
 paste = "1.0.15"
 chrono = "0.4.42"
+strum = "0.27.2"
+strum_macros = "0.27.2"

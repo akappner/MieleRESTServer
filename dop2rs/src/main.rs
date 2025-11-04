@@ -6,12 +6,16 @@ use num_enum::TryFromPrimitive;
 use derive_more::From;
 
 use dop2marshal::AssocTypes;
+use payloads::XkmRequest;
 use crate::payloads::Dop2ParseTreeExpressible;
 
 use paste::paste;
 
 mod crypto;
 mod device_api;
+
+use strum_macros::{EnumIter, EnumString};
+
 
 #[derive(Parser)]
 #[command(name = "hex_parser")]
@@ -771,9 +775,46 @@ struct Args {
    // attribute: Option<u16>,
 }
 
+struct ParseHex 
+{
+    hex_string: String,
+}
+
+
+
+
+use crate::payloads::{XkmRequestId, UserRequestOven, ProgramIdOven};
+use strum::IntoEnumIterator;
+use std::str::FromStr;
+
 fn main() {
     let args = Args::parse();
-    
+
+    let commandVerbsXkm = XkmRequestId::iter().map(|x| x.to_string());
+    let commandVerbsProgram = ProgramIdOven::iter().map(|x| x.to_string());
+    let commandVerbsUserRequest = UserRequestOven::iter().map(|x| x.to_string());
+    let mut it : Vec<String> = commandVerbsXkm.chain(commandVerbsProgram).chain(commandVerbsUserRequest).collect();
+    let sorted = it.sort();
+    println!("{:?}", it);
+
+    let command = &args.hex_string;
+
+    if let Ok(xkm)=XkmRequestId::from_str(command)
+    {
+        println!("Sending XKM command {:?}", xkm);
+        let request : XkmRequest = payloads::XkmRequest{request_id: xkm};
+    }
+    else if let Ok(programId)=ProgramIdOven::from_str(command)
+    {
+        println!("Sending PS command {:?}", programId);
+        let request : payloads::PsSelect = payloads::PsSelect { program_id: programId };
+    }
+    else if let Ok(userRequestId)=UserRequestOven::from_str(command)
+    {
+        println!("Sending UserRequest command {:?}", userRequestId);
+        let request = payloads::UserRequest {request_id: userRequestId};
+    }
+    else {
     let bytes = match hex::decode(&args.hex_string) {
         Ok(bytes) => bytes,
         Err(e) => {
@@ -784,6 +825,8 @@ fn main() {
     let mut parser = Dop2Parser::new(bytes);
     let root_node = RootNode::parse(&mut parser).unwrap();
     println!("{root_node:#?}");
+    
+
 /*
     match root_node.attribute
     {
@@ -824,8 +867,14 @@ fn main() {
     let decoded = payloads::FailureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
+else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::UserRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
 
-       
+
+    }       
     
 }
 
@@ -843,9 +892,9 @@ enum UnitIds {
     Filesystem = 15,
 }
 
-    #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
-enum UserRequestOven {
+    #[repr(u16)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display)]
+pub enum UserRequestOven {
     Nop = 0,
     Start = 1,
     Stop = 2,
@@ -861,7 +910,7 @@ enum UserRequestOven {
     Back = 18,
     SwitchOff = 19,
     ResetPinCode = 20,
-    KeepAlive = 21,
+    KeepWarm = 21,
     Step = 22,
     StartRemoteUpdateInstall = 23,
     ProgramStop = 54,
@@ -875,8 +924,8 @@ enum UserRequestOven {
 }
 
 #[repr(u16)]
-#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive)]
-enum ProgramIdOven {
+#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display)]
+pub enum ProgramIdOven {
     NoProgram = 0,
     OvenHotAirPlus = 13,
     OvenIntenseBaking = 14,
@@ -942,27 +991,28 @@ pub enum ShowMeHowId {
     CaOvUseWirelessFoodprobeR30R36 = 98,
     CaOvUseWirelessFoodprobeR48 = 99,
 }
+/* 
 #[repr(u16)]
 #[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive)]
 pub enum UserRequestId {
     None = 0,
-    Start = 1,
-    Stop = 2,
-    Pause = 3,
+    StartProgram = 1,
+    StopProgram = 2,
+    PauseProgram = 3,
     StartSuperFreezing = 4,
     StopSuperFreezing = 5,
     StartSuperCooling = 6,
     StopSuperCooling = 7,
-    StartDelay = 8,
+    StartDelayProgram = 8,
     DoorOpen = 11,
     DoorClose = 12,
     LightOn = 13,
     LightOff = 14,
     FactorySettings = 15,
-    SwitchOn = 16,
+    SwitchOnPanel = 16,
     Next = 17,
     Back = 18,
-    SwitchOff = 19,
+    SwitchOffPanel = 19,
     ResetPincode = 20,
     KeepAlive = 21,
     Step = 22,
@@ -1033,17 +1083,17 @@ pub enum UserRequestId {
     GlobalMax = 50,
     ReservedInvalid = 32767,
 }
-
+*/
 
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
-enum XkmRequestId {
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
+pub enum XkmRequestId {
     None = 0,
-    Reset = 1,
-    FactoryReset = 2,
+    ResetXkm = 1,
+    FactoryResetXkm = 2,
     OpenSoftAccessPointEndUser = 3,
     OpenSoftAccessPointCustomerService = 45,
-    Shutdown = 46,
+    ShutdownXkm = 46,
     MieleSmartConnect = 47,
 }
 
@@ -1145,13 +1195,28 @@ impl_tryfrom_wrapper!(ApplianceState, E8);
 
 impl_tryfrom_wrapper!(XkmRequestId, E8);
 
-impl_tryfrom_wrapper!(UserRequestId, E16);
+//impl_tryfrom_wrapper!(UserRequestId, E16);
+impl_tryfrom_wrapper!(UserRequestOven, E16);
 
 impl_tryfrom_wrapper!(ValueInterpretation, E8);
 
 impl_tryfrom_wrapper!(ShowMeHowId, E16);
 
 //impl_tryfrom_wrapper!(Dop2TimestampUtc, u64);
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct UserRequest {
+        #[dop2field(1, Dop2Payloads::E16)]
+        pub request_id : UserRequestOven,
+        /*#[dop2field(2, Dop2Payloads::E8)]
+        operation_state : OperationState,
+        #[dop2field(3, Dop2Payloads::E8)]
+        process_state : ProcessState*/
+}
+impl UserRequest
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[1583];
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DeviceCombiState {
@@ -1199,6 +1264,7 @@ type Error = String;
 };
 }
 
+impl_tryfrom_dop2struct!(UserRequest);
 impl_tryfrom_dop2struct!(DeviceCombiState);
 impl_tryfrom_dop2struct!(PSAttributesCCA);
 impl_tryfrom_dop2struct!(DeviceAttributesCCA);
@@ -1216,7 +1282,7 @@ impl_tryfrom_dop2struct!(FailureList);
 
 impl DeviceCombiState
 {
-        pub const ATTRIBUTE : u16 = 1586;
+    pub const ATTRIBUTE_IDS : &[u16] = &[1586];
 /*
         pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
@@ -1250,7 +1316,7 @@ pub struct DeviceContext // can be for main device or second device -- same stru
         #[dop2field(8, Dop2Payloads::MStruct )]
         deviceAttributes : DeviceAttributesCCA,
         #[dop2field(9, Dop2Payloads::ArrayE16 )]
-        supportedUserRequests : Vec<UserRequestId>,
+        supportedUserRequests : Vec<UserRequestOven>,
         #[dop2field(11, Dop2Payloads::Boolean)]
         mobileStartActive : bool,
        #[dop2field(12, Dop2Payloads::E16 )]
@@ -1351,7 +1417,7 @@ pub struct PSAttributesCCA {
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct XkmRequest {
     #[dop2field(1, Dop2Payloads::E8)]
-        request_id : XkmRequestId
+        pub(crate) request_id : XkmRequestId
 }
     impl XkmRequest
     {
@@ -1393,7 +1459,7 @@ impl DateTimeInfo
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PsSelect {
        #[dop2field(1, Dop2Payloads::E16)]
-        program_id : ProgramIdOven
+        pub(crate) program_id : ProgramIdOven
 }
     impl PsSelect
     {
