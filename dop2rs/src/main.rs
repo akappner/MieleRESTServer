@@ -182,6 +182,7 @@ newtype_int!(E16, u16);
 newtype_int!(E32, u32);
 newtype_int!(E64, u64);
 
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Dop2Payloads {
     Boolean(bool),
@@ -818,6 +819,12 @@ fn main() {
     println!("{decoded:#?}");
 }
 
+    else if (payloads::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::FailureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
+
        
     
 }
@@ -875,6 +882,66 @@ enum ProgramIdOven {
     OvenIntenseBaking = 14,
 }
 
+#[repr(u16)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, TryFromPrimitive)]
+pub enum ShowMeHowId {
+    None = 0,
+    ReservedInvalid = 32767,
+
+    CaOvDescaling1 = 51,
+    CaOvDescaling2 = 52,
+    CaOvDescaling3 = 53,
+    CaOvDrawInWater = 54,
+    CaOvUseWirelessFoodprobe = 55,
+    CaOvUseWiredFoodprobe = 56,
+    CaOvRotisserie = 57,
+    CaOvAfterPyrolyticCleaning = 58,
+
+    CaSovcUseWirelessFoodprobe = 59,
+    CaSovcUseWiredFoodprobe = 60,
+    CaSovcFreshWaterFill = 61,
+    CaSovcEmptyCondensateTank = 62,
+    CaSovcFlushWaterTankAndFill = 63,
+    CaSovcDescaling = 64,
+    CaSovcFlushFreshWater = 65,
+    CaSovcPurgeFreshWaterFill = 66,
+    CaSovcPurgeEmptyCondensateTank = 67,
+
+    CaSovmFreshWaterFill = 68,
+    CaSovmFlushFreshWaterFill = 69,
+    CaSovmDescaling = 70,
+    CaSovmFlushFreshWater = 71,
+    CaOvmUseWiredFoodprobe = 72,
+
+    CoFillWatertankWithWaterAndDescalingAgent = 73,
+    CoPlaceMaintenanceContainerUnderSpout = 74,
+    CoEmptyDripTrayWasteContainerCleanContactsAndPlaceBack = 75,
+    CoRinseFillInsertWaterContainer = 76,
+    CoRemoveWaterContainerBrewUnitRinseBrewUnit = 77,
+    CoInsertBrewUnitWithTablet = 78,
+    CoFillWatertankWithWaterAndCleaningAgent = 79,
+    CoRinseInsertWaterContainer = 80,
+    CoUnwrapDescalingCartidgeAndFitAsDescribed = 81,
+    CoUnwrapCleaningCartidgeAndFitAsDescribed = 82,
+    CoUnwrapCleaningAndDescalingCartidgeAndFitAsDescribed = 83,
+    CoFitMilkValveConnectMilkPipework = 84,
+    CoNewDescalingCartidgeIsFlooded = 85,
+
+    CaSovcUseWiredFoodprobe2 = 86,
+    CaOvRotisserieR36 = 87,
+    CaOvRotisserieR48 = 88,
+    CaOvReplugWirelessFoodprobe = 89,
+    CaSovcReplugWirelessFoodprobe = 90,
+    CoInsertAdapter = 91,
+    CoRemoveAndCleanMilkValve = 92,
+    CaSovcRemoveAccessoriesAndShelfRunners = 93,
+    CaSovcDropBroilingElementDownAndRemoveCoarseSoiling = 94,
+    CaSovcInsertFilterInTheFloorAndPourCleaningAgent = 95,
+    CaSovcRaiseBroilingElementAndRefitShelfRunnersAndAccessories = 96,
+    CaOvUseWirelessFoodprobeNa30 = 97,
+    CaOvUseWirelessFoodprobeR30R36 = 98,
+    CaOvUseWirelessFoodprobeR48 = 99,
+}
 #[repr(u16)]
 #[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive)]
 pub enum UserRequestId {
@@ -1041,15 +1108,16 @@ macro_rules! impl_tryfrom_wrapper {
 }
 }*/
 
+
 macro_rules! impl_tryfrom_wrapper {
 ($enum:ty, $wrapper:ty) => {
 impl TryFrom<$wrapper> for $enum {
 type Error = ();
 
         fn try_from(value: $wrapper) -> Result<Self, <$enum as TryFrom<$wrapper>>::Error> {
-            <$enum>::try_from(value.0).map_err(|_| ())
+            <$enum>::try_from(value.0).map_err(|_| ()) }
         }
-    }
+    
 
     impl TryFrom<DopArray<$wrapper>> for Vec<$enum> {
         type Error = ();
@@ -1080,6 +1148,8 @@ impl_tryfrom_wrapper!(XkmRequestId, E8);
 impl_tryfrom_wrapper!(UserRequestId, E16);
 
 impl_tryfrom_wrapper!(ValueInterpretation, E8);
+
+impl_tryfrom_wrapper!(ShowMeHowId, E16);
 
 //impl_tryfrom_wrapper!(Dop2TimestampUtc, u64);
 
@@ -1122,7 +1192,7 @@ macro_rules! impl_tryfrom_dop2struct {
 impl TryFrom<Dop2Struct> for $target {
 type Error = String;
 
-        fn try_from(value: Dop2Struct) -> Result<Self, Self::Error> {
+        fn try_from(value: Dop2Struct) -> Result<Self, String> {
             <$target>::from_parse_tree(Dop2Payloads::MStruct(value))
         }
     }
@@ -1139,6 +1209,9 @@ impl_tryfrom_dop2struct!(AnnotatedU16);
 //impl_tryfrom_dop2struct!(AnnotatedU32);
 impl_tryfrom_dop2struct!(AnnotatedU64);
 impl_tryfrom_dop2struct!(AnnotatedTimeStamp);
+
+impl_tryfrom_dop2struct!(FailureListItem);
+impl_tryfrom_dop2struct!(FailureList);
 
 
 impl DeviceCombiState
@@ -1181,17 +1254,56 @@ pub struct DeviceContext // can be for main device or second device -- same stru
         #[dop2field(11, Dop2Payloads::Boolean)]
         mobileStartActive : bool,
        #[dop2field(12, Dop2Payloads::E16 )]
-        showMeHowId : ProgramIdOven,
+        showMeHowId : ShowMeHowId,
         #[dop2field(13, Dop2Payloads::Boolean )]
         requestTimeSync : bool,
 
 }
+/*
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
+enum FailureCode
+{
 
+}*/
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct FailureListItem
+{
+        #[dop2field(1, Dop2Payloads::U32 )]
+        failureCode : u32,
+        #[dop2field(2, Dop2Payloads::Boolean )]
+        presentNow : bool,
+}
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct FailureList
+{
+        #[dop2field(1, Dop2Payloads::AStruct )]
+        items : Vec<FailureListItem>,
+
+}
+impl FailureList
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[148];
+    fn try_from(value: DopArray<Dop2Struct>) -> Result<FailureList, String> {
+          Err("hmm".to_string())
+        }
+
+}
+impl TryFrom<DopArray<Dop2Struct>> for Vec<FailureListItem>
+{
+    type Error = String;
+
+    fn try_from(value: DopArray<Dop2Struct>) -> Result<Vec<FailureListItem>, String> {
+            value.elements.into_iter().map(|garbage|FailureListItem::try_from(garbage)).collect()
+        }
+    
+}
 impl DeviceContext
 {
     pub const ATTRIBUTE_IDS : &[u16] = &[391, 1585];
     
 }
+
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DeviceAttributesCCA {
