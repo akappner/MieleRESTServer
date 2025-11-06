@@ -103,6 +103,14 @@ struct TaggedDopField {
     value: Dop2Payloads,
 }
 
+impl TaggedDopField
+{
+    fn from_payload (field_index: u16, value: Dop2Payloads)
+    {
+//        let tag = 
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct DopArray <T : Dop2PayloadExpressible+ToDop2Bytes>
@@ -573,8 +581,6 @@ impl TaggedDopField {
     {
         vec.extend(self.field_index.to_be_bytes());
         vec.push(self.tag as u8);
-      //  println!("Pushed tag {:#x}",self.tag as u8);
-//        let gag : Box<dyn ToDop2Bytes> = Box::new (self.value);
         
         match self.value {
             Dop2Payloads::Boolean(b)=> b.to_bytes(vec),
@@ -1266,6 +1272,8 @@ type Error = String;
 
 impl_tryfrom_dop2struct!(UserRequest);
 impl_tryfrom_dop2struct!(DeviceCombiState);
+impl_tryfrom_dop2struct!(PsSelect);
+impl_tryfrom_dop2struct!(XkmRequest);
 impl_tryfrom_dop2struct!(PSAttributesCCA);
 impl_tryfrom_dop2struct!(DeviceAttributesCCA);
 
@@ -1423,8 +1431,12 @@ pub struct XkmRequest {
     {
         pub const ATTRIBUTE_IDS : &[u16] = &[130];
         pub const ATTRIBUTE : u16 = 130; // typically unit 14
-    
-        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
+        pub fn to_dop2_payload () -> Result<Dop2Payloads, String>
+        {
+//            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2Payloads};
+            Err("not implemented".to_string())
+        }
+/*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
             {
@@ -1440,7 +1452,7 @@ pub struct XkmRequest {
             }
             Err("Entity mismatch".to_string())
         }
-
+*/
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
@@ -1465,7 +1477,7 @@ pub struct PsSelect {
     {
         pub const ATTRIBUTE : u16 = 1577;
 
-        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
+/*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
             {
@@ -1481,6 +1493,7 @@ pub struct PsSelect {
             }
             Err("Entity mismatch".to_string())
         }
+    */
     }
 }
 
