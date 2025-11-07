@@ -2,11 +2,12 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 
 use clap::Parser;
-use num_enum::TryFromPrimitive;
+use num_enum::{TryFromPrimitive, IntoPrimitive};
 use derive_more::From;
 
 use dop2marshal::AssocTypes;
 use payloads::XkmRequest;
+use syn::token::Struct;
 use crate::payloads::Dop2ParseTreeExpressible;
 
 use paste::paste;
@@ -16,6 +17,8 @@ mod device_api;
 
 use strum_macros::{EnumIter, EnumString};
 
+#[macro_use]
+extern crate enum_kinds;
 
 #[derive(Parser)]
 #[command(name = "hex_parser")]
@@ -98,16 +101,18 @@ impl RootNode
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct TaggedDopField {
-    tag: Dop2Type,
+    tag: Dop2PayloadsKind,
     field_index : u16,
     value: Dop2Payloads,
 }
 
 impl TaggedDopField
 {
-    fn from_payload (field_index: u16, value: Dop2Payloads)
+    fn from_payload (field_index: u16, value: Dop2Payloads) -> TaggedDopField
     {
-//        let tag = 
+        let tag = Dop2PayloadsKind::from(&value);
+        return TaggedDopField {field_index: field_index, tag: tag, value: value};
+      
     }
 }
 
@@ -194,45 +199,87 @@ newtype_int!(E16, u16);
 newtype_int!(E32, u32);
 newtype_int!(E64, u64);
 
+#[derive(Clone, Debug, PartialEq, Eq, EnumKind)]
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[enum_kind(Dop2PayloadsKind, derive(TryFromPrimitive), repr(u8))]
+/* 
+Bool                        = 1,
+U8                          = 2,
+I8                          = 3,
+E8                          = 4,
+U16                         = 5,
+I16                         = 6,
+E16                         = 7,
+U32                         = 8,
+I32                         = 9,
+E32                         = 10,
+U64                         = 11,
+I64                         = 12,
+E64                         = 13,
+F32                         = 14,
+F64                         = 15,
+Struct                      = 16,
+ArrayBool                   = 17,
+ArrayU8                    = 18,
+ArrayI8                     = 19,
+ArrayE8                     = 20,
+ArrayU16                    = 21,
+ArrayI16                    = 22,
+ArrayE16                    = 23,
+ArrayU32                    = 24,
+ArrayI32                    = 25,
+ArrayE32                    = 26,
+ArrayU64                    = 27,
+ArrayI64                    = 28,
+ArrayE64                    = 29,
+ArrayF32                    = 30,
+ArrayF64                    = 31,
+MString                     = 32,  
+AStruct                     = 33,
+}*/
 enum Dop2Payloads {
-    Boolean(bool),
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    U64(u64),
-
+    Trash,
+    Boolean(bool), // 1
+    U8(u8),        // 2
     I8(i8),
+    E8(E8),
+    U16(u16),
     I16(i16),
+    E16(E16),
+    U32(u32),
     I32(i32),
+    E32(E32),
+    U64(u64),
     I64(i64),
 
-    E8(E8),
-    E16(E16),
-    E32(E32),
     E64(E64),
+    F32(i32),
+    F64(i32),
 
-    MString(String),
-    //StringU8 (String),
-
-    ArrayU8 (DopArray<u8>),
-    ArrayU16 (DopArray<u16>),
-    ArrayU32 (DopArray<u32>),
-    ArrayU64 (DopArray<u64>),
-
-    ArrayI8 (DopArray<i8>),
-    ArrayI16 (DopArray<i16>),
-    ArrayI32 (DopArray<i32>),
-//    ArrayI64 (DopArray<u64>),
-
-    ArrayE8 (DopArray<E8>),
-    ArrayE16 (DopArray<E16>),
-    ArrayE32 (DopArray<u32>),
-    ArrayE64(DopArray<u64>),
 
     MStruct (Dop2Struct),
-    AStruct (DopArray<Dop2Struct>)
+    ArrayBool (DopArray<bool>),
+    ArrayU8 (DopArray<u8>),
+    ArrayI8 (DopArray<i8>),
+    ArrayE8 (DopArray<E8>),
+
+    ArrayU16 (DopArray<u16>),
+    ArrayI16 (DopArray<i16>),
+    ArrayE16 (DopArray<E16>),
+
+    ArrayU32 (DopArray<u32>),
+    ArrayI32 (DopArray<i32>),
+    ArrayE32 (DopArray<u32>),
+
+    ArrayU64 (DopArray<u64>),
+    ArrayI64 (DopArray<i32>),
+    ArrayE64(DopArray<u64>),
+
+    ArrayF32 (DopArray<u8>), // todo
+    ArrayF64 (DopArray<i8>), // todo
+
+    MString(String),
+    AStruct (DopArray<Dop2Struct>),
 }
 
 /*
@@ -291,7 +338,7 @@ MakeAnnotatedValueType!(GarbageU16, Dop2Payloads::U16, u16);
 */
 
 #[repr(u8)]
-#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive)]
+#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
 pub enum ValueInterpretation {
     None = 0,
     Percentage = 1,
@@ -610,43 +657,49 @@ impl TaggedDopField {
             Dop2Payloads::ArrayU64(payload)  => payload.to_bytes(vec),
             Dop2Payloads::MStruct(payload)   => payload.to_bytes(vec),
             Dop2Payloads::AStruct(payload)   => payload.to_bytes(vec),
-         //   _ => todo!("not yet implemented")
+            Dop2Payloads::Trash => todo!(),
+            Dop2Payloads::ArrayBool(dop_array) => todo!(),
+            Dop2Payloads::ArrayI64(dop_array) => todo!(),
+            Dop2Payloads::ArrayF32(dop_array) => todo!(),
+            Dop2Payloads::ArrayF64(dop_array) => todo!(),
+            Dop2Payloads::F32(_) => todo!(),
+            Dop2Payloads::F64(_) => todo!(),
         }
         //self.value.to_bytes();
     }
     fn parse(parser: &mut Dop2Parser) -> Result<TaggedDopField, String> {
         let field_index = parser.take_u16().unwrap();
         let tag_byte = parser.take_u8()?;
-        let tag = Dop2Type::try_from_primitive(tag_byte)
+        let tag = Dop2PayloadsKind::try_from_primitive(tag_byte)
             .map_err(|_| format!("Invalid Dop2Type value: 0x{:02X}", tag_byte))?;
         let value = match tag {
-            Dop2Type::Bool => Dop2Payloads::Boolean(*bool::parse(parser).unwrap()),
-            Dop2Type::E8        => Dop2Payloads::E8(*E8::parse(parser).unwrap()),
-            Dop2Type::U8        => Dop2Payloads::U8(*u8::parse(parser).unwrap()),
-            Dop2Type::U16       => Dop2Payloads::U16(*u16::parse(parser).unwrap()),
-            Dop2Type::U64       => Dop2Payloads::U64(*u64::parse(parser).unwrap()),
-            Dop2Type::I8       => Dop2Payloads::I8(*i8::parse(parser).unwrap()),
-            Dop2Type::I16       => Dop2Payloads::I16(*i16::parse(parser).unwrap()),
-            Dop2Type::E16       => Dop2Payloads::E16(*E16::parse(parser).unwrap()),
-            Dop2Type::U32       => Dop2Payloads::U32(*u32::parse(parser).unwrap()),
-            Dop2Type::I32       => Dop2Payloads::I32(*i32::parse(parser).unwrap()),
-            Dop2Type::E32       => Dop2Payloads::E32(*E32::parse(parser).unwrap()),
-            Dop2Type::I64       => Dop2Payloads::I64(*i64::parse(parser).unwrap()),
-            Dop2Type::E64       => Dop2Payloads::E64(*E64::parse(parser).unwrap()),
-            Dop2Type::MString   => Dop2Payloads::MString(*String::parse(parser).unwrap()),
-            Dop2Type::ArrayU8  => Dop2Payloads::ArrayU8(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayI8  => Dop2Payloads::ArrayI8(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayI16  => Dop2Payloads::ArrayI16(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayI32  => Dop2Payloads::ArrayI32(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayU32  => Dop2Payloads::ArrayU32(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayU16   => Dop2Payloads::ArrayU16(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayE8   => Dop2Payloads::ArrayE8(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayE16  => Dop2Payloads::ArrayE16(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayE32  => Dop2Payloads::ArrayE32(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayE64  => Dop2Payloads::ArrayE64(*DopArray::parse(parser).unwrap()),
-            Dop2Type::ArrayU64  => Dop2Payloads::ArrayU64(*DopArray::parse(parser).unwrap()),
-            Dop2Type::Struct    => Dop2Payloads::MStruct(*Dop2Struct::parse(parser).unwrap()),
-            Dop2Type::AStruct   => Dop2Payloads::AStruct(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::Boolean => Dop2Payloads::Boolean(*bool::parse(parser).unwrap()),
+            Dop2PayloadsKind::E8        => Dop2Payloads::E8(*E8::parse(parser).unwrap()),
+            Dop2PayloadsKind::U8        => Dop2Payloads::U8(*u8::parse(parser).unwrap()),
+            Dop2PayloadsKind::U16       => Dop2Payloads::U16(*u16::parse(parser).unwrap()),
+            Dop2PayloadsKind::U64       => Dop2Payloads::U64(*u64::parse(parser).unwrap()),
+            Dop2PayloadsKind::I8       => Dop2Payloads::I8(*i8::parse(parser).unwrap()),
+            Dop2PayloadsKind::I16       => Dop2Payloads::I16(*i16::parse(parser).unwrap()),
+            Dop2PayloadsKind::E16       => Dop2Payloads::E16(*E16::parse(parser).unwrap()),
+            Dop2PayloadsKind::U32       => Dop2Payloads::U32(*u32::parse(parser).unwrap()),
+            Dop2PayloadsKind::I32       => Dop2Payloads::I32(*i32::parse(parser).unwrap()),
+            Dop2PayloadsKind::E32       => Dop2Payloads::E32(*E32::parse(parser).unwrap()),
+            Dop2PayloadsKind::I64       => Dop2Payloads::I64(*i64::parse(parser).unwrap()),
+            Dop2PayloadsKind::E64       => Dop2Payloads::E64(*E64::parse(parser).unwrap()),
+            Dop2PayloadsKind::MString   => Dop2Payloads::MString(*String::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayU8  => Dop2Payloads::ArrayU8(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayI8  => Dop2Payloads::ArrayI8(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayI16  => Dop2Payloads::ArrayI16(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayI32  => Dop2Payloads::ArrayI32(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayU32  => Dop2Payloads::ArrayU32(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayU16   => Dop2Payloads::ArrayU16(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayE8   => Dop2Payloads::ArrayE8(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayE16  => Dop2Payloads::ArrayE16(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayE32  => Dop2Payloads::ArrayE32(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayE64  => Dop2Payloads::ArrayE64(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::ArrayU64  => Dop2Payloads::ArrayU64(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::MStruct    => Dop2Payloads::MStruct(*Dop2Struct::parse(parser).unwrap()),
+            Dop2PayloadsKind::AStruct   => Dop2Payloads::AStruct(*DopArray::parse(parser).unwrap()),
 
             garbage => 
             {
@@ -674,6 +727,13 @@ impl Dop2Struct {
     fn get_payload (&self, id: u16)->Option<Dop2Payloads>
     {
         self.get_field(id).map(|x| x.value.clone())
+    }
+    fn from_fields (fields: Vec<TaggedDopField>) -> Self
+    {
+        let m = fields.iter();
+        let index = m.max_by_key(|x|x.field_index).map(|x|x.field_index).unwrap_or(0);
+
+        Dop2Struct {declared_fields: index, fields}
     }
 }
 impl ToDop2Bytes for Dop2Struct
@@ -809,6 +869,12 @@ fn main() {
     {
         println!("Sending XKM command {:?}", xkm);
         let request : XkmRequest = payloads::XkmRequest{request_id: xkm};
+        let payload = request.to_dop2_struct().unwrap();
+        let mut data : Vec<u8> = vec!();
+        payload.to_bytes(&mut data);
+        let hexdump = hex::encode(data);
+        println!("{}", hexdump);
+        
     }
     else if let Ok(programId)=ProgramIdOven::from_str(command)
     {
@@ -899,7 +965,7 @@ enum UnitIds {
 }
 
     #[repr(u16)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
 pub enum UserRequestOven {
     Nop = 0,
     Start = 1,
@@ -930,7 +996,7 @@ pub enum UserRequestOven {
 }
 
 #[repr(u16)]
-#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display)]
+#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
 pub enum ProgramIdOven {
     NoProgram = 0,
     OvenHotAirPlus = 13,
@@ -938,7 +1004,7 @@ pub enum ProgramIdOven {
 }
 
 #[repr(u16)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
 pub enum ShowMeHowId {
     None = 0,
     ReservedInvalid = 32767,
@@ -1092,7 +1158,7 @@ pub enum UserRequestId {
 */
 
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
+#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
 pub enum XkmRequestId {
     None = 0,
     ResetXkm = 1,
@@ -1104,7 +1170,7 @@ pub enum XkmRequestId {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
 enum ApplianceState
 {
     Unknown,
@@ -1121,7 +1187,7 @@ enum ApplianceState
     ShowWindow
 }
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
 enum OperationState
 {
     Unknown,
@@ -1133,7 +1199,7 @@ enum OperationState
     RunDelay,
 }
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq)]
+#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
 enum ProcessState
 {
     Unknown,
@@ -1163,10 +1229,28 @@ macro_rules! impl_tryfrom_wrapper {
 
 }
 }*/
+macro_rules! impl_into_wrapper {
+    ($enum:ty, $wrapper:ty) => {
+        impl Into<$wrapper> for $enum {
+            fn into(self) -> $wrapper {
+                <$wrapper>::from(self)
+            }
+        }
+
+        impl Into<DopArray<$wrapper>> for Vec<$enum> {
+            fn into(self) -> DopArray<$wrapper> {
+                DopArray {
+                    count: self.len() as u16,
+                    elements: self.into_iter().map(|e| e.into()).collect(),
+                }
+            }
+        }
+    };
+}
 
 
 macro_rules! impl_tryfrom_wrapper {
-($enum:ty, $wrapper:ty) => {
+($enum:ty, $wrapper:ident) => {
 impl TryFrom<$wrapper> for $enum {
 type Error = ();
 
@@ -1186,8 +1270,14 @@ type Error = ();
                 .collect()
         }
     }
-};
-
+impl From<$enum> for $wrapper
+{
+    fn from (value: $enum) -> $wrapper
+    {
+        $wrapper (value.into()) // TODO: Fix this
+    }
+}
+}    
 }
 
 
@@ -1200,6 +1290,7 @@ impl_tryfrom_wrapper!(ProgramIdOven, E16);
 impl_tryfrom_wrapper!(ApplianceState, E8);
 
 impl_tryfrom_wrapper!(XkmRequestId, E8);
+//impl_into_wrapper!(XkmRequestId, E8);
 
 //impl_tryfrom_wrapper!(UserRequestId, E16);
 impl_tryfrom_wrapper!(UserRequestOven, E16);
@@ -1431,10 +1522,22 @@ pub struct XkmRequest {
     {
         pub const ATTRIBUTE_IDS : &[u16] = &[130];
         pub const ATTRIBUTE : u16 = 130; // typically unit 14
-        pub fn to_dop2_payload () -> Result<Dop2Payloads, String>
+        pub fn to_dop2_payload (&self) -> Result<Dop2Payloads, String>
         {
-//            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2Payloads};
-            Err("not implemented".to_string())
+            let mut fields: Vec<TaggedDopField> = vec!();
+            let request_id_payload : Dop2Payloads = Dop2Payloads::E8(self.request_id.clone().into());
+            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
+            fields.push(request_id_field);
+            Ok(Dop2Payloads::MStruct(Dop2Struct::from_fields (fields)))
+        }
+
+        pub fn to_dop2_struct (&self) -> Result<Dop2Struct, String>
+        {
+            let mut fields: Vec<TaggedDopField> = vec!();
+            let request_id_payload : Dop2Payloads = Dop2Payloads::E8(self.request_id.clone().into());
+            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
+            fields.push(request_id_field);
+            Ok(Dop2Struct::from_fields (fields))
         }
 /*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
