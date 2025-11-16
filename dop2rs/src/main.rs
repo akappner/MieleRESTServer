@@ -856,7 +856,7 @@ impl Dop2Parser {
 #[derive(Parser, Debug)]
 struct Args {
     /// The hex string to parse
-    hex_string: String,
+    hex_string: Option<String>,
     
     // Unit parameter (optional)
    // #[arg(short, long)]
@@ -885,15 +885,15 @@ fn main() {
     let commandVerbsXkm = XkmRequestId::iter().map(|x| x.to_string());
     let commandVerbsProgram = ProgramIdOven::iter().map(|x| x.to_string());
    // let commandVerbsUserRequest = UserRequestOven::iter().map(|x| x.to_string());
-    let mut it : Vec<String> = commandVerbsXkm.chain(commandVerbsProgram)
+    //let mut it : Vec<String> = commandVerbsXkm.chain(commandVerbsProgram)
     //.chain(commandVerbsUserRequest)
-    .collect();
-    let sorted = it.sort();
+  //  .collect();
+   // let sorted = it.sort();
     
+   let command = args.hex_string.as_deref().unwrap_or("");
 
-    let command = &args.hex_string;
 
-    if let Ok(xkm)=XkmRequestId::from_str(command)
+    if let Ok(xkm)=XkmRequestId::from_str(&command)
     {
 
         eprintln!("Sending XKM command {:?}", xkm);
@@ -909,7 +909,7 @@ fn main() {
         println!("{}", hexdump);
         
     }
-    else if let Ok(programId)=ProgramIdOven::from_str(command)
+    else if let Ok(programId)=ProgramIdOven::from_str(&command)
     {
         eprintln!("Sending PS command {:?}", programId);
         let request : payloads::PsSelect = payloads::PsSelect { program_id: programId, selection_parameter: 0, selection_type: payloads::SelectionType::InitialDefault };
@@ -924,16 +924,29 @@ fn main() {
         println!("{}", hexdump);
 
     }
-    else if let Ok(userRequestId)=UserRequestOven::from_str(command)
+    else if let Ok(userRequestId)=UserRequestOven::from_str(&command)
     {
         eprintln!("Sending UserRequest command {:?}", userRequestId);
         let request = payloads::UserRequest {request_id: userRequestId};
     }
     else {
-    let bytes = match hex::decode(&args.hex_string) {
+        let hex_str = match &args.hex_string {
+            Some(s) => s,
+            None => {
+                println!("Available commands are:\n");
+                println!("*** Program Selection: {:?}\n", commandVerbsProgram.collect::<Vec<_>>());
+                println!("*** Communications Module: {:?}\n", commandVerbsXkm.collect::<Vec<_>>());
+                eprintln!("Error: no hex string provided");
+                std::process::exit(1);
+            }
+        };
+
+    let bytes = match hex::decode(hex_str) {
         Ok(bytes) => bytes,
         Err(e) => {
-            println!("Available Commands are: {:?}", it);
+            println!("Available commands are:");
+            println!("*** Program Selection: {:?}\n", commandVerbsProgram.collect::<Vec<String>>());
+            println!("*** Communications Module: {:?}\n", commandVerbsXkm.collect::<Vec<String>>());
             eprintln!("Error decoding hex string: {}", e);
             std::process::exit(1);
         }
