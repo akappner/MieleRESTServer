@@ -502,7 +502,7 @@ impl DopPadding
     fn minimum_padding (builder: &Vec<u8>)->DopPadding
     {
         let current = builder.len() as u16;
-        println!("{}", current);
+        //println!("{}", current);
         return DopPadding {bytes_of_padding: ((DopPadding::PADDING_ALIGNMENT - (current % DopPadding::PADDING_ALIGNMENT)) % DopPadding::PADDING_ALIGNMENT) as u8 };
     }
 
@@ -751,8 +751,8 @@ impl Dop2Struct
 {
     fn get_length (&self) -> u16
     {
-        2 + // 2-byte field_count header
-        self.fields.iter().map(|x|x.get_length()).sum::<u16>()
+        //2 + // 2-byte field_count header
+        2+ self.fields.iter().map(|x|x.get_length()).sum::<u16>()
     }
 }
 impl ToDop2Bytes for Dop2Struct
@@ -815,7 +815,7 @@ impl RootNode {
 
         self.root_struct.to_bytes(builder);
         let length : u16 = builder.len().try_into().unwrap();
-        builder.splice(0..0, length.to_be_bytes());
+        builder.splice(0..0, (length+2).to_be_bytes()); // TODO: Fix this
 
         let padding = DopPadding::minimum_padding(builder);
        // println!("{:?} bytes of padding",padding.bytes_of_padding);
@@ -875,7 +875,7 @@ struct ParseHex
 
 
 
-use crate::payloads::{XkmRequestId, UserRequestOven, ProgramIdOven};
+use crate::payloads::{XkmRequestId, UserRequestOven, ProgramIdOven, PsSelect};
 use strum::IntoEnumIterator;
 use std::str::FromStr;
 
@@ -884,17 +884,19 @@ fn main() {
 
     let commandVerbsXkm = XkmRequestId::iter().map(|x| x.to_string());
     let commandVerbsProgram = ProgramIdOven::iter().map(|x| x.to_string());
-    let commandVerbsUserRequest = UserRequestOven::iter().map(|x| x.to_string());
-    let mut it : Vec<String> = commandVerbsXkm.chain(commandVerbsProgram).chain(commandVerbsUserRequest).collect();
+   // let commandVerbsUserRequest = UserRequestOven::iter().map(|x| x.to_string());
+    let mut it : Vec<String> = commandVerbsXkm.chain(commandVerbsProgram)
+    //.chain(commandVerbsUserRequest)
+    .collect();
     let sorted = it.sort();
-    println!("{:?}", it);
+    
 
     let command = &args.hex_string;
 
     if let Ok(xkm)=XkmRequestId::from_str(command)
     {
 
-        println!("Sending XKM command {:?}", xkm);
+        eprintln!("Sending XKM command {:?}", xkm);
         let request : XkmRequest = payloads::XkmRequest{request_id: xkm};
         let payload = request.to_dop2_struct().unwrap();
 
@@ -909,18 +911,29 @@ fn main() {
     }
     else if let Ok(programId)=ProgramIdOven::from_str(command)
     {
-        println!("Sending PS command {:?}", programId);
-        let request : payloads::PsSelect = payloads::PsSelect { program_id: programId };
+        eprintln!("Sending PS command {:?}", programId);
+        let request : payloads::PsSelect = payloads::PsSelect { program_id: programId, selection_parameter: 0, selection_type: payloads::SelectionType::InitialDefault };
+        let payload = request.to_dop2_struct().unwrap();
+
+        let root = RootNode::single(UnitIds::MainDevice.into(), PsSelect::ATTRIBUTE_IDS.first().unwrap().clone(), payload);
+       
+        let mut data : Vec<u8> = vec!();
+        root.to_bytes(&mut data);
+       // payload.to_bytes(&mut data);
+        let hexdump = hex::encode(data);
+        println!("{}", hexdump);
+
     }
     else if let Ok(userRequestId)=UserRequestOven::from_str(command)
     {
-        println!("Sending UserRequest command {:?}", userRequestId);
+        eprintln!("Sending UserRequest command {:?}", userRequestId);
         let request = payloads::UserRequest {request_id: userRequestId};
     }
     else {
     let bytes = match hex::decode(&args.hex_string) {
         Ok(bytes) => bytes,
         Err(e) => {
+            println!("Available Commands are: {:?}", it);
             eprintln!("Error decoding hex string: {}", e);
             std::process::exit(1);
         }
@@ -1037,8 +1050,117 @@ pub enum UserRequestOven {
 #[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
 pub enum ProgramIdOven {
     NoProgram = 0,
-    OvenHotAirPlus = 13,
-    OvenIntenseBaking = 14,
+    DefrostBottom = 1,
+    AutoHotAir = 2,
+    AutoTopBottomHeat = 3,
+    EcoHotAir1 = 4,
+    EcoHotAir2 = 5,
+    EcoHotAir = 6,
+    RoastAutomatic = 7,
+    UniversalCook = 8,
+    Grill = 9,
+    GrillLarge = 10,
+    GrillSmall = 11,
+    Descale = 12,
+    HotAirPlus = 13,
+    IntenseBaking = 14,
+    ComboCookGrill = 15,
+    ComboCookHotAirPlus = 16,
+    ComboCookTopBottom = 17,
+    CakeSpecial = 18,
+    Microwave = 19,
+    MicrowaveRoastAutomatic = 20,
+    MicrowaveGrill = 21,
+    MicrowaveHotAirPlus = 22,
+    MicrowaveFanGrill = 23,
+    TopBottomHeat = 24,
+    TopHeat = 25,
+    Pyrolysis = 26,
+    RapidHeat = 27,
+    Rinse = 28,
+    FanGrill = 29,
+    EcoHotAir3 = 30,
+    BottomHeat = 31,
+    KeepWarm = 32,
+    DefrostSteam = 33,
+    DefrostMicrowave = 34,
+    ClimateRoastAutomatic = 35,
+    ConvectionBake = 36,
+    ConvectionRoast = 37,
+    MicrowaveConvectionBake = 38,
+    MicrowaveConvectionRoast = 39,
+    ClimateHotAirPlus = 40,
+    HeatBottom = 41,
+    HeatSteam = 42,
+    HeatMicrowave = 43,
+    CookFish = 44,
+    CookMeat = 45,
+    CookVegetables = 46,
+    ClimateConvectionBake = 47,
+    ClimateRoast = 48,
+    ClimateHotAirPlus2 = 49,
+    ClimateIntenseBaking = 50,
+    ClimateTopBottomHeat = 51,
+    ClimateConvectionRoast = 52,
+    Popcorn = 53,
+    QuickMicrowave = 54,
+    RoastAutomaticRf = 55,
+    ConvectionBakeRf = 56,
+    GrillRf = 57,
+    HotAirPlusRf = 58,
+    IntenseBakingRf = 59,
+    TopBottomHeatRf = 60,
+    TopHeatRf = 61,
+    FanGrillRf = 62,
+    BottomHeatRf = 63,
+    ConvectionRoastRf = 64,
+    SteamHeat = 65,
+    SteamHold = 66,
+    SteamAltitudeAdjust = 67,
+    DescaleSoak = 68,
+    DescaleRinse = 69,
+    SteamResidualWater = 70,
+    Rotisserie = 71,
+    SousVide = 72,
+    SteamDry = 73,
+    ClimateIntenseBaking2 = 74,
+    EcoUniversalCook = 75,
+    ClimateTopBottomHeat2 = 76,
+    ComboCookMicrowave = 77,
+    RotisserieLarge = 78,
+    RotisserieSmall = 79,
+    RotisserieFan = 80,
+    AutoRoastAutomatic = 81,
+    AutoIntenseBaking = 82,
+    AutoBottomHeat = 83,
+    AutoTopHeat = 84,
+    SabbathTopBottom = 85,
+    SabbathBottomHeat = 86,
+    AutoSteamCook = 87,
+    HydrocleanBottomHeat = 88,
+    SoloRf = 89,
+    HydrocleanTopBottomHeat = 90,
+    HydrocleanUniversalCook = 91,
+    DryHotAirPlusWithSteam = 92,
+    DrySteamOnly = 93,
+    DryGrillWithSteam = 94,
+}
+
+
+
+#[repr(u8)]
+#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
+pub enum SelectionType
+{
+	InitialAsConfigured = 0,
+	InitialDefault = 1,
+	Parametrized = 2,
+	Deselect = 3,
+	InitialFull = 4,
+	InitialAsConfiguredViaSyndication = 10,
+	InitialDefaultViaSyndication = 11,
+	ParametrizedTemperature = 12,
+	Last = 13
 }
 
 #[repr(u16)]
@@ -1325,6 +1447,8 @@ impl_tryfrom_wrapper!(OperationState, E8);
 
 impl_tryfrom_wrapper!(ProgramIdOven, E16);
 
+impl_tryfrom_wrapper!(SelectionType, E8);
+
 impl_tryfrom_wrapper!(ApplianceState, E8);
 
 impl_tryfrom_wrapper!(XkmRequestId, E8);
@@ -1560,7 +1684,7 @@ pub struct XkmRequest {
     {
         pub const ATTRIBUTE_IDS : &[u16] = &[130];
         pub const ATTRIBUTE : u16 = 130; // typically unit 14
-        pub fn to_dop2_payload (&self) -> Result<Dop2Payloads, String>
+        pub fn to_dop2_payload (&self) -> Result<Dop2Payloads, String> // TODO: make this call to_dop2_struct
         {
             let mut fields: Vec<TaggedDopField> = vec!();
             let request_id_payload : Dop2Payloads = Dop2Payloads::E8(self.request_id.clone().into());
@@ -1609,15 +1733,40 @@ impl DateTimeInfo
     pub const ATTRIBUTE_IDS : &[u16] = &[122];
 }
 
+
+
+
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PsSelect {
        #[dop2field(1, Dop2Payloads::E16)]
-        pub(crate) program_id : ProgramIdOven
+        pub(crate) program_id : ProgramIdOven,
+
+        #[dop2field(2, Dop2Payloads::U16)]
+        pub(crate) selection_parameter : u16,
+
+        #[dop2field(3, Dop2Payloads::E8)]
+        pub(crate) selection_type : SelectionType,
+        
 }
     impl PsSelect
     {
-        pub const ATTRIBUTE : u16 = 1577;
+        pub const ATTRIBUTE_IDS : &[u16] = &[1577];
 
+        pub fn to_dop2_struct (&self) -> Result<Dop2Struct, String>
+        {
+            let mut fields: Vec<TaggedDopField> = vec!();
+            let request_id_payload : Dop2Payloads = Dop2Payloads::E16(self.program_id.clone().into());
+            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
+            let selection_parameter_payload : Dop2Payloads = Dop2Payloads::U16(self.selection_parameter.clone().into());
+            let selection_parameter_field : TaggedDopField = TaggedDopField{ field_index: 2, tag: Dop2PayloadsKind::from(selection_parameter_payload.clone()), value: selection_parameter_payload};
+            let selection_type_payload :  Dop2Payloads = Dop2Payloads::E8(self.selection_type.clone().into());
+            let selection_type_field : TaggedDopField = TaggedDopField{ field_index: 3, tag: Dop2PayloadsKind::from(selection_type_payload.clone()), value: selection_type_payload};
+           
+            fields.push(request_id_field);
+            fields.push(selection_parameter_field);
+            fields.push(selection_type_field);
+            Ok(Dop2Struct::from_fields (fields))
+        }
 /*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
