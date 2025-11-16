@@ -6,8 +6,8 @@ use num_enum::{TryFromPrimitive, IntoPrimitive};
 use derive_more::From;
 
 use dop2marshal::AssocTypes;
-use payloads::XkmRequest;
-use syn::token::Struct;
+use payloads::{UnitIds, XkmRequest};
+use syn::token::{Struct, Type};
 use crate::payloads::Dop2ParseTreeExpressible;
 
 use paste::paste;
@@ -94,6 +94,11 @@ struct RootNode {
 }
 impl RootNode 
 {
+    fn single (unit: u16, attribute: u16, root_struct: Dop2Struct)-> RootNode
+    {
+        
+        RootNode {unit : unit, attribute : attribute, declared_length: 0, idx1: 0, idx2: 0, root_struct: root_struct}
+    }
     fn has_more_siblings(&self)->bool
     {
         return self.idx1 == self.idx2;
@@ -113,6 +118,12 @@ impl TaggedDopField
         let tag = Dop2PayloadsKind::from(&value);
         return TaggedDopField {field_index: field_index, tag: tag, value: value};
       
+    }
+
+    fn get_length (&self)->u16
+    {
+        let size = std::mem::size_of_val(&self.tag) + std::mem::size_of_val(&self.field_index);
+        size.try_into().unwrap()
     }
 }
 
@@ -736,6 +747,14 @@ impl Dop2Struct {
         Dop2Struct {declared_fields: index, fields}
     }
 }
+impl Dop2Struct 
+{
+    fn get_length (&self) -> u16
+    {
+        2 + // 2-byte field_count header
+        self.fields.iter().map(|x|x.get_length()).sum::<u16>()
+    }
+}
 impl ToDop2Bytes for Dop2Struct
 {
     fn to_bytes(self, vec: &mut Vec<u8>)
@@ -773,7 +792,14 @@ impl RootNode {
         let root_struct = *Dop2Struct::parse(parser).unwrap();
 
         let _padding = DopPadding::parse(parser).unwrap();
-        assert!(parser.is_empty());
+        assert!(parser.is_empty()); // no trailing garbage
+
+        /*if (declared_length != root_struct.get_length())// declared length equal to amounts of bytes parsed
+{
+    println!("{} is declared length, but calculated length is {}", declared_length, root_struct.get_length());
+    return Err("size mismatch".to_string());
+}*/
+
 
         Ok(RootNode { unit, attribute, declared_length, idx1, idx2, root_struct })
     }
@@ -867,11 +893,16 @@ fn main() {
 
     if let Ok(xkm)=XkmRequestId::from_str(command)
     {
+
         println!("Sending XKM command {:?}", xkm);
         let request : XkmRequest = payloads::XkmRequest{request_id: xkm};
         let payload = request.to_dop2_struct().unwrap();
+
+        let root = RootNode::single(UnitIds::CommunicationsModule.into(), XkmRequest::ATTRIBUTE_IDS.first().unwrap().clone(), payload);
+       
         let mut data : Vec<u8> = vec!();
-        payload.to_bytes(&mut data);
+        root.to_bytes(&mut data);
+       // payload.to_bytes(&mut data);
         let hexdump = hex::encode(data);
         println!("{}", hexdump);
         
@@ -944,6 +975,11 @@ else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
     let decoded = payloads::UserRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
+else if (payloads::XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
 
 
     }       
@@ -952,8 +988,10 @@ else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
 
 mod payloads {
     use super::*;
-#[repr(u8)]
-enum UnitIds {
+#[repr(u16)]
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
+pub enum UnitIds {
     UnknownOne = 1,
     MainDevice = 2,
     UnknownThree = 3, // seen in oven
