@@ -35,6 +35,8 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
     let mut impls = Vec::new();
     let mut constructor_fragments = Vec::new();
 
+    let mut marshalling_field_definitions = Vec::new();
+
     for field in fields.iter() {
         let field_ident = match &field.ident {
             Some(id) => id,
@@ -98,7 +100,8 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
 };
 
                 let marker_ident = format_ident!("{}{}", marker_prefix, field_ident);
-
+                let marshaling_payload_ident = format_ident!("{}{}", "_payload_", field_ident);
+                let marshaling_field_ident = format_ident!("{}{}", "_field_", field_ident);
                 marker_defs.push(quote! {
                     pub struct #marker_ident;
                 });
@@ -117,6 +120,7 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                     constructor_fragments.push(quote! {
                         #field_ident: #field_ident.try_into().unwrap()
                     })
+
                 }
                 else 
                 {
@@ -129,7 +133,18 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                 }
                 constructor_fragments.push(quote! {
                     #field_ident: #field_ident.try_into().unwrap()
-                })
+                });
+
+                marshalling_field_definitions.push(quote!( { 
+               //     let marshaling_payload_ident : Dop2Payloads = Dop2Payloads::U16(self.selection_parameter.clone().into());
+                 //   let marshaling_payload_ident = (self.#field_ident).clone(); // this works
+
+                    let #marshaling_payload_ident : Dop2Payloads = #enum_expr (self.#field_ident.clone().try_into().unwrap()).clone().into(); // this works
+                    let #marshaling_field_ident : TaggedDopField = TaggedDopField { field_index: #number, tag: Dop2PayloadsKind::from(#marshaling_payload_ident.clone()), value: #marshaling_payload_ident};
+                    fields.push(#marshaling_field_ident);
+                
+                  //  let #marshaling_field_ident = 3;
+                } ));
             }
         } }
     }
@@ -140,6 +155,51 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
 //        pub trait #trait_ident<Marker> {
 //            type Ty;
  //       }
+         impl #struct_name 
+         {
+            pub fn to_dop2_struct_auto (&self) -> Result<Dop2Struct, String>
+            {
+                let mut fields: Vec<TaggedDopField> = vec!();
+
+                #( #marshalling_field_definitions )*
+                
+               /* let request_id_payload : Dop2Payloads = Dop2Payloads::E16(self.program_id.clone().into());
+                let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
+                let selection_parameter_payload : Dop2Payloads = Dop2Payloads::U16(self.selection_parameter.clone().into());
+                let selection_parameter_field : TaggedDopField = TaggedDopField{ field_index: 2, tag: Dop2PayloadsKind::from(selection_parameter_payload.clone()), value: selection_parameter_payload};
+                let selection_type_payload :  Dop2Payloads = Dop2Payloads::E8(self.selection_type.clone().into());
+                let selection_type_field : TaggedDopField = TaggedDopField{ field_index: 3, tag: Dop2PayloadsKind::from(selection_type_payload.clone()), value: selection_type_payload};
+               
+                fields.push(request_id_field);
+                fields.push(selection_parameter_field);
+                fields.push(selection_type_field);
+                Ok(Dop2Struct::from_fields (fields))
+                 */
+
+                 Ok(Dop2Struct::from_fields (fields))
+            }
+         }
+
+         impl TryInto<Dop2Struct> for #struct_name
+         { 
+            type Error = String;
+            fn try_into(self)-> Result<Dop2Struct, String>
+            {
+                return self.to_dop2_struct_auto();
+            }
+         }
+
+         impl TryInto<DopArray<Dop2Struct>> for Vec<#struct_name>
+         {
+             type Error = String;
+         
+             fn try_into(self) -> Result<DopArray<Dop2Struct>, String> {
+                    // value.elements.into_iter().map(|garbage|#struct_name::try_into(garbage)).collect()
+                    Ok(DopArray{count: 0, elements: vec!()})
+                 }
+             
+         }
+       
          impl Dop2ParseTreeExpressible for #struct_name 
 {
          fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String> { 

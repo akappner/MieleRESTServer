@@ -78,6 +78,14 @@ impl TryFrom<u64> for Dop2TimestampUtc {
         let naive = NaiveDateTime::from_timestamp(value as i64, 0);
         Ok(Dop2TimestampUtc(DateTime::<Utc>::from_utc(naive, Utc)))
     }
+
+    
+}
+impl From<Dop2TimestampUtc> for u64 
+{
+    fn from(value: Dop2TimestampUtc) -> Self {
+        return value.0.timestamp() as u64;
+    }
 }
 
 
@@ -349,7 +357,7 @@ MakeAnnotatedValueType!(GarbageU16, Dop2Payloads::U16, u16);
 */
 
 #[repr(u8)]
-#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
 pub enum ValueInterpretation {
     None = 0,
     Percentage = 1,
@@ -480,7 +488,7 @@ macro_rules! MakeAnnotatedValueType {
             #[dop2field(3, Dop2Payloads::E8)]
             interpretation: ValueInterpretation,
         }
-
+        //impl_tryfrom_dop2struct!($name); // TODO: Fix this
     };
 
 }
@@ -913,7 +921,7 @@ fn main() {
     {
         eprintln!("Sending PS command {:?}", programId);
         let request : payloads::PsSelect = payloads::PsSelect { program_id: programId, selection_parameter: 0, selection_type: payloads::SelectionType::InitialDefault };
-        let payload = request.to_dop2_struct().unwrap();
+        let payload = request.to_dop2_struct_auto().unwrap();
 
         let root = RootNode::single(UnitIds::MainDevice.into(), PsSelect::ATTRIBUTE_IDS.first().unwrap().clone(), payload);
        
@@ -1464,11 +1472,12 @@ impl_tryfrom_wrapper!(SelectionType, E8);
 
 impl_tryfrom_wrapper!(ApplianceState, E8);
 
-impl_tryfrom_wrapper!(XkmRequestId, E8);
 //impl_into_wrapper!(XkmRequestId, E8);
 
 //impl_tryfrom_wrapper!(UserRequestId, E16);
 impl_tryfrom_wrapper!(UserRequestOven, E16);
+
+impl_tryfrom_wrapper!(XkmRequestId, E8);
 
 impl_tryfrom_wrapper!(ValueInterpretation, E8);
 
@@ -1536,6 +1545,10 @@ type Error = String;
 };
 }
 
+//impl_tryfrom_dop2struct!(UserRequestOven);
+//impl_tryfrom_dop2struct!(ApplianceState);
+//impl_tryfrom_dop2struct!(SelectionType);
+
 impl_tryfrom_dop2struct!(UserRequest);
 impl_tryfrom_dop2struct!(DeviceCombiState);
 impl_tryfrom_dop2struct!(PsSelect);
@@ -1589,8 +1602,8 @@ pub struct DeviceContext // can be for main device or second device -- same stru
         prog : PSAttributesCCA,
         #[dop2field(8, Dop2Payloads::MStruct )]
         deviceAttributes : DeviceAttributesCCA,
-        #[dop2field(9, Dop2Payloads::ArrayE16 )]
-        supportedUserRequests : Vec<UserRequestOven>,
+        //#[dop2field(9, Dop2Payloads::ArrayE16 )]
+       // supportedUserRequests : Vec<UserRequestOven>, // TODO: Bring this back
         #[dop2field(11, Dop2Payloads::Boolean)]
         mobileStartActive : bool,
        #[dop2field(12, Dop2Payloads::E16 )]
@@ -1735,8 +1748,8 @@ pub struct XkmRequest {
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DateTimeInfo {
-       #[dop2field(1, Dop2Payloads::U64)]
-        utc_time : Dop2TimestampUtc,
+//       #[dop2field(1, Dop2Payloads::U64)]
+//        utc_time : Dop2TimestampUtc,
        #[dop2field(2, Dop2Payloads::I32)]
         utc_offset : i32
 }
