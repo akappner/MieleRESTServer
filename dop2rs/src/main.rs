@@ -815,7 +815,7 @@ impl RootNode {
 
         self.root_struct.to_bytes(builder);
         let length : u16 = builder.len().try_into().unwrap();
-        builder.splice(0..0, (length+2).to_be_bytes()); // TODO: Fix this
+        builder.splice(0..0, (length).to_be_bytes()); // TODO: Fix this
 
         let padding = DopPadding::minimum_padding(builder);
        // println!("{:?} bytes of padding",padding.bytes_of_padding);
