@@ -16,7 +16,7 @@ These instructions assume that the device is a blank configuration, and is not
 currently connected to WiFi. If the device has already had step 2 or step 3
 performed, it will not accept a new configuration without a reset. You can reset
 the device if necessary through the local control panel.
-6
+
 ### 1) Connecting Miele device to WiFi
 
 Select "Miele@home" on the control panel of the Miele device. If the device offers
