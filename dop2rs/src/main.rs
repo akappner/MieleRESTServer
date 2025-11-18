@@ -1059,7 +1059,22 @@ else if (payloads::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute
         println!("{decoded:#?}");
     }
 
+    else if (payloads::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloads::Failure::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
 
+    else if (payloads::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloads::CSHoursOfOperation::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
+    else if (payloads::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloads::FeatureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
 
     }       
     
@@ -1801,7 +1816,11 @@ impl_tryfrom_dop2struct!(AnnotatedTimeStamp);
 
 impl_tryfrom_dop2struct!(FailureListItem);
 impl_tryfrom_dop2struct!(FailureList);
+impl_tryfrom_dop2struct!(FeatureListOven);
 
+impl_tryfrom_dop2struct!(Failure);
+
+impl_tryfrom_dop2struct!(CSHoursOfOperation);
 
 impl DeviceCombiState
 {
@@ -1871,13 +1890,112 @@ pub struct FailureList
 
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct Failure
+{
+        #[dop2field(1, Dop2Payloads::U32 )]
+        failureCode : u32,
+
+        #[dop2field(2, Dop2Payloads::Boolean )]
+        active : bool,
+
+        #[dop2field(3, Dop2Payloads::U16 )]
+        occurrenceFrequency : u16,
+
+        #[dop2field(4, Dop2Payloads::U64 )]
+        occurrenceTime : Dop2TimestampUtc,
+
+        #[dop2field(5, Dop2Payloads::U32 )]
+        operationSeconds : u32,
+
+        #[dop2field(6, Dop2Payloads::U16 )]
+        progId : u16,
+
+        #[dop2field(7, Dop2Payloads::U16 )]
+        blockNumber : u16,
+
+}
+impl Failure
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[117];
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct FeatureListOven
+{
+        #[dop2field(1, Dop2Payloads::U16 )]
+        deviceId : u16,
+
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct FeatureList
+{
+        #[dop2field(1, Dop2Payloads::E8 )]
+        deviceId : E8,
+
+        
+        #[dop2field(2, Dop2Payloads::E8 )]
+        deviceClass : E8,
+
+
+        #[dop2field(3, Dop2Payloads::U16 )]
+        deviceSubClass : u16,
+
+     /*   #[dop2field(4, Dop2Payloads::E8 )]
+        deviceGeneration : E8, */
+
+        #[dop2field(5, Dop2Payloads::Boolean )]
+        hasSearch : bool,
+
+        #[dop2field(6, Dop2Payloads::Boolean )]
+        hasCamera : bool,
+
+        #[dop2field(7, Dop2Payloads::E8 )]
+        deviceIdSubType : E8,
+
+        #[dop2field(131, Dop2Payloads::MStruct )]
+        featureListOven : FeatureListOven,
+
+
+
+
+}
+impl FeatureList
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[348];
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct CSHoursOfOperation
+{
+        #[dop2field(1, Dop2Payloads::U32 )]
+        hoursOfOperation : u32,
+
+        
+        #[dop2field(2, Dop2Payloads::U32 )]
+        hoursOfOperationBeforeReplacement : u32,
+
+
+        #[dop2field(3, Dop2Payloads::U32 )]
+        hoursOfOperationSinceLastMaintenance : u32,
+
+        #[dop2field(4, Dop2Payloads::U32 )]
+        hoursOfOperationMode1 : u32,
+
+        #[dop2field(5, Dop2Payloads::U32 )]
+        hoursOfOperationMode2 : u32,
+
+}
+impl CSHoursOfOperation
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[119];
+}
+
 impl FailureList
 {
     pub const ATTRIBUTE_IDS : &[u16] = &[148];
-    fn try_from(value: DopArray<Dop2Struct>) -> Result<FailureList, String> {
-          Err("hmm".to_string())
-        }
-
+   
 }
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct SfValueList
@@ -2064,7 +2182,7 @@ pub struct XkmRequest {
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DateTimeInfo {
 //       #[dop2field(1, Dop2Payloads::U64)]
-//        utc_time : Dop2TimestampUtc,
+//        utc_time : Dop2TimestampUtc, // TODO: bring this back
        #[dop2field(2, Dop2Payloads::I32)]
         utc_offset : i32
 }
