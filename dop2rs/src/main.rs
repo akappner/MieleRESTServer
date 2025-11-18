@@ -493,10 +493,34 @@ macro_rules! MakeAnnotatedValueType {
 
 }
 
+macro_rules! MakeGenericValueType {
+    ($name:ident, $variant:ident, $concrete_type:ty) => {
+        #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+        struct $name {
+            #[dop2field(1, Dop2Payloads::U8)]
+            requestMask: u8,
+            #[dop2field(2,  Dop2Payloads::$variant)]
+            min: $concrete_type,
+            #[dop2field(3,  Dop2Payloads::$variant)]
+            max: $concrete_type,
+            #[dop2field(4,  Dop2Payloads::$variant)]
+            current: $concrete_type,
+            #[dop2field(5,  Dop2Payloads::$variant)]
+            stepSize: $concrete_type,
+        }
+        //impl_tryfrom_dop2struct!($name); // TODO: Fix this
+    };
+
+}
+
 MakeAnnotatedValueType!(AnnotatedU8, U8, u8);
 MakeAnnotatedValueType!(AnnotatedU16, U16, u16);
 MakeAnnotatedValueType!(AnnotatedU64, U64, u64);
+MakeAnnotatedValueType!(AnnotatedBool, Boolean, bool);
 MakeAnnotatedValueType!(AnnotatedTimeStamp, U64, Dop2TimestampUtc);
+
+MakeGenericValueType!(GenericU8, U8, u8);
+MakeGenericValueType!(GenericU16, U16, u16);
 
 #[derive(Debug)]
 struct DopPadding {
@@ -1014,6 +1038,27 @@ else if (payloads::XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
     let decoded = payloads::XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
+else if (payloads::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloads::DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+    }
+    else if (payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloads::SfValueList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
+    else if (payloads::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloads::PSContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
+    else if (payloads::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloads::CSContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
+
 
 
     }       
@@ -1026,7 +1071,7 @@ mod payloads {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
 pub enum UnitIds {
-    UnknownOne = 1,
+    ProgrammingMaster = 1, // appears to be the unit responsible for front panel, notifications, programming
     MainDevice = 2,
     UnknownThree = 3, // seen in oven
     UnknownEight = 8, // seen in oven
@@ -1065,6 +1110,7 @@ pub enum UserRequestOven {
     MotorizedFrontPanelClose = 66,
     HoldingBreak = 68,
     HoldingStart = 69,
+    WifiOff=112,
 }
 
 #[repr(u16)]
@@ -1183,6 +1229,164 @@ pub enum SelectionType
 	ParametrizedTemperature = 12,
 	Last = 13
 }
+
+
+#[repr(u16)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
+
+pub enum SfId {
+    None = 0,
+    TimeDisplay = 3,
+    TimePresentation = 4,
+    TimeFormat = 5,
+    StartScreen = 10,
+    DisplayBrightness = 11,
+    DisplayColorScheme = 12,
+    VolumeSignalTones = 14,
+    VolumeKeyTone = 17,
+    WelcomeMelodyVolume = 18,
+    Lighting = 21,
+    TemperatureUnit = 22,
+    WeightUnit = 23,
+    SafetyKeyLock = 24,
+    StartupLock = 25,
+    FurnitureFrontRecognition = 26,
+    SensorLightOnApproach = 27,
+    SensorDisplayOnApproach = 28,
+    SensorLowerToneOnApproach = 29,
+    RemoteControl = 30,
+    SupervisionFunction = 31,
+    SupervisionDisplayInStandby = 32,
+    RemoteUpdate = 33,
+    VoiceControl = 34,
+
+    BaseLanguageCountry = 1000,
+    QuickMicrowaveDuration = 1001,
+    QuickMicrowavePower = 1002,
+    PopcornDuration = 1003,
+    KeepWarmMicrowave = 1004,
+    KeepWarmDishwasher = 1005,
+    KeepWarmOven = 1006,
+    AutomaticFlushing = 1007,
+    SteamReduction = 1008,
+    PyrolysisRequest = 1009,
+    PanningScreen = 1010,
+    CoolAirFollowUp = 1011,
+    ProposedTemperatures = 1012,
+    ProposedMicrowavePower = 1013,
+    NetVoltageAndFrequency = 1014,
+    ProbeSensorGroup = 1015,
+    TemperatureCalibration = 1016,
+    CameraActivation = 1017,
+    FastCooling = 1018,
+    ApplianceVariantId = 1019,
+    CurrentRate = 1020,
+    WaterHardness = 1021,
+    CarbonateHardness = 1022,
+    Altitude = 1023,
+    FreshWater = 1024,
+    PerformanceMode = 1025,
+    SpoutAdjustment = 1026,
+    ProfileChange = 1027,
+    ExpertMode = 1028,
+    LightingOnTurnedOn = 1029,
+    LightingOnTurnedOff = 1030,
+    ApplianceLightSwitchOffDelay = 1031,
+    SensorLightActivatesWhenOff = 1032,
+    SensorLightActivatesWhenOn = 1033,
+    DemoMode = 1034,
+
+    AutonomousCleaningActive = 1041,
+    AutonomousMaintenance = 1042,
+    BeanSorting = 1043,
+    ProximitySensorLight = 1044,
+    TeaTimerActivation = 1045,
+    Timer1OnTime = 1046,
+    Timer1OffTime = 1047,
+    Timer1OffDelay = 1048,
+    Timer1WeekdayAssignment = 1049,
+    Timer1OnActive = 1050,
+    Timer1OffActive = 1051,
+    Timer2OnTime = 1052,
+    Timer2OffTime = 1053,
+    Timer2OffDelay = 1054,
+    Timer2WeekdayAssignment = 1055,
+    Timer2OnActive = 1056,
+    Timer2OffActive = 1057,
+    MaintenanceTimer1OnTime = 1058,
+    MaintenanceTimer1WeekdayAssignment = 1059,
+    MaintenanceTimer1OnActive = 1060,
+    MaintenanceTimer2OnTime = 1061,
+    MaintenanceTimer2WeekdayAssignment = 1062,
+    MaintenanceTimer2OnActive = 1063,
+    ActiveUser = 1064,
+    FreshWaterControlEnabled = 1065,
+    BeanPortioningEnabled = 1066,
+    SteamExtractionEnabled = 1067,
+    WaterSofteningEnabled = 1068,
+    BoosterFunction = 1069,
+    QuickTouchDisplay = 1070,
+    CupHeater = 1071,
+    MultiZoneFoodProbeAdd = 1072,
+    MultiZoneFoodProbeSelect = 1073,
+    AutomaticPanelMovement = 1074,
+    SmartFoodId = 1075,
+    AltitudeAdjustment = 1076,
+
+    // Example of proposed cooking temperatures
+    ProposedDefrostOven = 1101,
+    ProposedHotAirAuto = 1102,
+    ProposedTopBottomHeatAuto = 1103,
+    ProposedSteamCook1 = 1104,
+    ProposedSteamCook2 = 1105,
+    ProposedEcoHotAir = 1106,
+    ProposedRoastingAutomatic = 1107,
+    ProposedUniversalCooking = 1108,
+    ProposedGrill = 1109,
+    ProposedLargeGrill = 1110,
+    ProposedSmallGrill = 1111,
+    ProposedHotAirPlus = 1113,
+    ProposedIntensiveBaking = 1114,
+    ProposedCombinationGrill = 1115,
+    ProposedCombinationSteamOven = 1116,
+    ProposedCombinationOven = 1117,
+    ProposedSpecialCake = 1118,
+    ProposedTopBottomHeat = 1124,
+    ProposedTopHeat = 1125,
+    ProposedQuickHeat = 1127,
+    ProposedConvectionGrill = 1129,
+    ProposedBottomHeat = 1131,
+    ProposedKeepWarm = 1132,
+    ProposedDefrostDishwasher = 1133,
+    ProposedConvectionBake = 1136,
+    ProposedHeatOven = 1141,
+    ProposedHeatDishwasher = 1142,
+    ProposedFishCooking = 1144,
+    ProposedMeatCooking = 1145,
+    ProposedVegetableCooking = 1146,
+    ProposedClimateRoastingAutomatic = 1148,
+    ProposedClimateHotAirPlus = 1149,
+    ProposedClimateIntensiveBaking = 1150,
+    ProposedClimateTopBottomHeat = 1151,
+    ProposedRotisserie = 1171,
+    ProposedSousVideCooking = 1172,
+    ProposedSurroundBake = 1173,
+    ProposedEcoUniversalCooking = 1175,
+    ProposedClimateCooking = 1176,
+    ProposedCombinationMicrowaveCooking = 1177,
+    ProposedLargeRotisserie = 1178,
+    ProposedSmallRotisserie = 1179,
+    ProposedConvectionRotisserie = 1180,
+    ProposedConvectionRoast = 1181,
+    ProposedMicrowavePower2 = 1219,
+    ProposedMicrowavePowerAutomatic = 1220,
+    ProposedMicrowavePowerGrill = 1221,
+    ProposedMicrowavePowerHotAirPlus = 1222,
+    ProposedMicrowavePowerConvectionGrill = 1223,
+    ProposedCombinationMicrowavePower = 1277,
+    ReservedInvalid = 32767,
+}
+
 
 #[repr(u16)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
@@ -1430,8 +1634,20 @@ macro_rules! impl_into_wrapper {
 }
 
 
-macro_rules! impl_tryfrom_wrapper {
+macro_rules! impl_tryfrom_wrapper { // example ProcessState, E8
 ($enum:ty, $wrapper:ident) => {
+
+impl TryFrom<Vec<$enum>> for DopArray<$wrapper> {
+    type Error = String;
+    fn try_from (value: Vec<$enum>)-> Result<Self, String>
+    {
+        let elements : Vec<$wrapper> = value
+        .into_iter()
+        .map(|elem| <$wrapper>::try_from(elem).unwrap().into())
+        .collect();
+        Ok(DopArray{count: elements.len() as u16, elements})
+    }
+}
 impl TryFrom<$wrapper> for $enum {
 type Error = ();
 
@@ -1476,6 +1692,8 @@ impl_tryfrom_wrapper!(ApplianceState, E8);
 
 //impl_tryfrom_wrapper!(UserRequestId, E16);
 impl_tryfrom_wrapper!(UserRequestOven, E16);
+
+impl_tryfrom_wrapper!(SfId, E16);
 
 impl_tryfrom_wrapper!(XkmRequestId, E8);
 
@@ -1542,7 +1760,18 @@ type Error = String;
             <$target>::from_parse_tree(Dop2Payloads::MStruct(value))
         }
     }
-};
+
+
+impl TryFrom<DopArray<Dop2Struct>> for Vec<$target>
+{
+    type Error = String;
+
+    fn try_from(value: DopArray<Dop2Struct>) -> Result<Vec<$target>, String> {
+             Ok(value.elements.into_iter().map(|x| TryInto::<$target>::try_into(x).unwrap()).collect())
+        }
+    
+}
+}
 }
 
 //impl_tryfrom_dop2struct!(UserRequestOven);
@@ -1555,10 +1784,17 @@ impl_tryfrom_dop2struct!(PsSelect);
 impl_tryfrom_dop2struct!(XkmRequest);
 impl_tryfrom_dop2struct!(PSAttributesCCA);
 impl_tryfrom_dop2struct!(DeviceAttributesCCA);
+impl_tryfrom_dop2struct!(PSContextParametersOven);
 
+impl_tryfrom_dop2struct!(CSContextParametersOven);
+impl_tryfrom_dop2struct!(CSContextParametersCoffeeMaker);
 
+impl_tryfrom_dop2struct!(AnnotatedBool);
 impl_tryfrom_dop2struct!(AnnotatedU8);
+impl_tryfrom_dop2struct!(GenericU8);
+
 impl_tryfrom_dop2struct!(AnnotatedU16);
+impl_tryfrom_dop2struct!(GenericU16);
 //impl_tryfrom_dop2struct!(AnnotatedU32);
 impl_tryfrom_dop2struct!(AnnotatedU64);
 impl_tryfrom_dop2struct!(AnnotatedTimeStamp);
@@ -1602,8 +1838,8 @@ pub struct DeviceContext // can be for main device or second device -- same stru
         prog : PSAttributesCCA,
         #[dop2field(8, Dop2Payloads::MStruct )]
         deviceAttributes : DeviceAttributesCCA,
-        //#[dop2field(9, Dop2Payloads::ArrayE16 )]
-       // supportedUserRequests : Vec<UserRequestOven>, // TODO: Bring this back
+        #[dop2field(9, Dop2Payloads::ArrayE16 )]
+        supportedUserRequests : Vec<UserRequestOven>,
         #[dop2field(11, Dop2Payloads::Boolean)]
         mobileStartActive : bool,
        #[dop2field(12, Dop2Payloads::E16 )]
@@ -1634,6 +1870,7 @@ pub struct FailureList
         items : Vec<FailureListItem>,
 
 }
+
 impl FailureList
 {
     pub const ATTRIBUTE_IDS : &[u16] = &[148];
@@ -1642,15 +1879,21 @@ impl FailureList
         }
 
 }
-impl TryFrom<DopArray<Dop2Struct>> for Vec<FailureListItem>
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct SfValueList
 {
-    type Error = String;
+    #[dop2field(1, Dop2Payloads::U8 )]
+    valid_count : u8,
+    #[dop2field(2, Dop2Payloads::ArrayE16 )]
+    valid : Vec<SfId>,
+}
 
-    fn try_from(value: DopArray<Dop2Struct>) -> Result<Vec<FailureListItem>, String> {
-            value.elements.into_iter().map(|garbage|FailureListItem::try_from(garbage)).collect()
-        }
+impl SfValueList
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[114];
     
 }
+
 impl DeviceContext
 {
     pub const ATTRIBUTE_IDS : &[u16] = &[391, 1585];
@@ -1666,7 +1909,79 @@ pub struct DeviceAttributesCCA {
     doorLock : E8,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct CSContext
+{
+    #[dop2field(1, Dop2Payloads::E16)]
+    pub(crate) program_id : ProgramIdOven,
 
+    #[dop2field(3, Dop2Payloads::MStruct )]
+    contextOven : CSContextParametersOven,
+
+    #[dop2field(4, Dop2Payloads::MStruct )]
+    contextcoffeMaker: CSContextParametersCoffeeMaker
+}
+impl CSContext
+    {
+        pub const ATTRIBUTE_IDS : &[u16] = &[154]; // always in unit 1?
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+    pub struct CSContextParametersOven
+    {
+        #[dop2field(1, Dop2Payloads::MStruct )]
+        open : AnnotatedBool,
+         #[dop2field(2, Dop2Payloads::MStruct )]
+        lock : AnnotatedBool,
+        #[dop2field(3, Dop2Payloads::MStruct )]
+        on : AnnotatedBool,
+        #[dop2field(4, Dop2Payloads::MStruct )]
+        level : GenericU8,
+    }    
+
+    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+    pub struct CSContextParametersCoffeeMaker
+    {
+        #[dop2field(5, Dop2Payloads::MStruct )]
+        ceramicValve : GenericU8,
+        
+         #[dop2field(6, Dop2Payloads::MStruct )]
+        brewingUnit : GenericU8,
+        #[dop2field(7, Dop2Payloads::MStruct )]
+        pump : GenericU8,
+#[dop2field(8, Dop2Payloads::MStruct )]
+        spout : GenericU8, 
+
+        #[dop2field(12, Dop2Payloads::MStruct )]
+        fan : GenericU8, 
+    }    
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct PSContext 
+{
+    #[dop2field(4, Dop2Payloads::MStruct )]
+    contextOven : PSContextParametersOven,
+    #[dop2field(7, Dop2Payloads::MStruct )]
+    attributesOven : PSAttributesCCA,
+}
+
+impl PSContext
+    {
+        pub const ATTRIBUTE_IDS : &[u16] = &[1574]; // always in unit 1?
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct PSContextParametersOven
+{
+   #[dop2field(1, Dop2Payloads::MStruct )]
+    grill_level : GenericU8,
+    #[dop2field(2, Dop2Payloads::MStruct )]
+    moisture : GenericU8,
+    #[dop2field(5, Dop2Payloads::MStruct )]
+    level : GenericU8,
+    #[dop2field(6, Dop2Payloads::MStruct )]
+    temperature : GenericU16,
+    //TODO
+}
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PSAttributesCCA {
     #[dop2field(1, Dop2Payloads::E16 )]
@@ -1827,6 +2142,7 @@ mod tests {
         oven_2_114: &'static str,
         oven_1_391: &'static str,
         oven_1_209: &'static str,
+        oven_2_1585: &'static str,
     }
     
     static TEST_PAYLOADS: TestPayloads = TestPayloads {
@@ -1838,8 +2154,8 @@ mod tests {
         oven_ident: "004e000e061d0001000100080002040000030400000412000530392e31340005051a390006120008001d63fffeaf152f0007040000081200080000000000000000000914000a00000000000000000000",
         oven_2_114: "009f0002007200000000000200010226000217004603f903f303fa03ee03f1001e0021001b001c001d001a000a000b000c00150018001903e800030005000400160011000e0012042e042d04590464045a046b046904520453046504560457046c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000202020202020202020202020202020",
         oven_1_391: "02c1000101870000000000090001100003000104000002040000030400000710001a0001070000000207000000031000030001020000020500000003040000041000030001020000020500000003040000051000030001020000020500000003040000061000030001020000020500000003040000071000030001020000020500000003040000081000030001020000020200000304000009100003000102000002020000030400000a0400000b0200000c100003000102000002020000030400000d100003000102000002020000030400000e10000300010200000202000003040000100400001210000300010200000205000000030400001308000000000014070000001510000300010200000205000000030400001610000300010200000202000003040000171000030001020000020500000003040000181000030001020000020200000304000019100003000102000002020000030400001a1000030001020000020b000000000000000000030400001c070000001d1000030001020000020b000000000000000000030400000810001e000208000000000003080000000000040800000000000508000000000006080000000000070400000804000009100003000104000002040000030400000b0400000c050000000d0800000000000e0800000000000f0200001004000011040000120100001301000014010000150100001608000000000017050000001805000000190200001a0100001b0100001c0100001d050000001e050000001f100003000101000002010000030100002010000400010100000201000003010000040100000917000e00000000000000000000000000000000000000000000000000000000000a0400000b0100000c070000000d0100001110000700010100000208000000000003080000000000040800000000000512000c00000000000000000000000000060500000007080000000020202020202020202020202020", // struct with U8s
-        oven_1_209: "0050000100d1000000000002000121000200020001010000020b000000000000000000020001010000020b000000000000000000022100020002000104000002090000015c000200010401000209000000002020202020202020202020202020" // Struct[]
-
+        oven_1_209: "0050000100d1000000000002000121000200020001010000020b000000000000000000020001010000020b000000000000000000022100020002000104000002090000015c000200010401000209000000002020202020202020202020202020", // Struct[]
+        oven_2_1585: "02c1000106310000000000090001100003000104040002040600030404000710001a00010727100002070000000310000300010200000205ffff00030400000410000300010208000205000000030405000510000300010200000205ffff00030405000610000300010208000205086300030403000710000300010200000205ffff0003040300081000030001020800020201000304000009100003000102000002020000030400000a0432000b0200000c100003000102000002020000030400000d100003000102000002020000030400000e100003000102000002020000030400001004000012100003000102000002050000000304000013080000000000140700000015100003000102080002053e8000030403001610000300010200000202000003040100171000030001020000020500000003040300181000030001020000020200000304000019100003000102000002020000030407001a1000030001020800020b0000000068e814f40003041f001c07000d001d1000030001020000020b000000000000000000030400000810001e000208000000000003080000000000040800000000000508000000000006080000000000070400000804000009100003000104000002040000030400000b0400000c05ffff000d0800000000000e0800000000000f02ff001004000011040000120100001301000014010000150100001608000001630017050000001805000000190200001a0100001b0100001c0100001d050000001e050000001f100003000101000002010000030100002010000400010100000201000003010000040100000917000e0013000e000200380070000000000000000000000000000000000000000a0401000b0101000c070000000d0100001110000700010100000208ffffffff00030800000000000408ffffffff000512000c0000000000000000000000000006050000000708ffffffff20202020202020202020202020"
        };
      static TEST_BANK : [&str; 7] = [TEST_PAYLOADS.oven_14_130, TEST_PAYLOADS.oven_2_1586, TEST_PAYLOADS.oven_9_19, TEST_PAYLOADS.oven_ident, TEST_PAYLOADS.oven_2_114, TEST_PAYLOADS.oven_1_391, TEST_PAYLOADS.oven_1_209];
  
@@ -1906,4 +2222,6 @@ mod tests {
       //  assert_eq!(root_node.declared_fields, 1);
       //  assert_eq!(root_node.fields[0].value, 0x0082);
     }
+
+    
 }

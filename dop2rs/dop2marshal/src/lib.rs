@@ -194,16 +194,22 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
              type Error = String;
          
              fn try_into(self) -> Result<DopArray<Dop2Struct>, String> {
+                //let elements : Vec<Dop2Struct> = self.into_iter().map(|e| e.try_into().unwrap()).collect(); // TODO: Figure out error handling
                     // value.elements.into_iter().map(|garbage|#struct_name::try_into(garbage)).collect()
-                    Ok(DopArray{count: 0, elements: vec!()})
-                 }
+                     
+                    Ok(DopArray {
+                        count: self.len() as u16,
+                        elements: self.into_iter().map(|e| e.try_into().unwrap()).collect()
+                    })
+                    
+                    //Err("garbage2".to_string())
+                }
              
          }
        
          impl Dop2ParseTreeExpressible for #struct_name 
 {
          fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String> { 
-         println!("destructuring macro:");
          if let Dop2Payloads::MStruct(x)=payload 
          {
            // println!("{:?}", &x.fields.map(|x| s.field));
