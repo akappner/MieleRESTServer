@@ -155,6 +155,7 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
 //        pub trait #trait_ident<Marker> {
 //            type Ty;
  //       }
+ //payloads::impl_tryfrom_dop2struct!(#struct_name);
          impl #struct_name 
          {
             pub fn to_dop2_struct_auto (&self) -> Result<Dop2Struct, String>
