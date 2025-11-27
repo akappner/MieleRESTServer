@@ -6,8 +6,9 @@ use num_enum::{TryFromPrimitive, IntoPrimitive};
 use derive_more::From;
 
 use dop2marshal::AssocTypes;
-use payloads::{UnitIds, XkmRequest};
+use payloads::{UnitIds};
 use syn::token::{Struct, Type};
+
 use crate::payloads::Dop2ParseTreeExpressible;
 
 use paste::paste;
@@ -113,7 +114,7 @@ impl RootNode
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct TaggedDopField {
+pub struct TaggedDopField {
     tag: Dop2PayloadsKind,
     field_index : u16,
     value: Dop2Payloads,
@@ -137,7 +138,7 @@ impl TaggedDopField
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct DopArray <T : Dop2PayloadExpressible+ToDop2Bytes>
+pub struct DopArray <T : Dop2PayloadExpressible+ToDop2Bytes>
 {
     count : u16,
     elements : Vec<T>
@@ -179,7 +180,7 @@ macro_rules! newtype_int {
     ($name:ident, $inner:ty) => {
 
         #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
-        struct $name($inner);
+        pub struct $name($inner);
 
 //        impl From<$inner> for $name {
  //           fn from(value: $inner) -> Self { $name(value) }
@@ -256,7 +257,7 @@ ArrayF64                    = 31,
 MString                     = 32,  
 AStruct                     = 33,
 }*/
-enum Dop2Payloads {
+pub enum Dop2Payloads {
     Trash,
     Boolean(bool), // 1
     U8(u8),        // 2
@@ -477,41 +478,7 @@ pub enum ValueInterpretation {
     MicroSiemensPerCm = 150,
 }
 
-macro_rules! MakeAnnotatedValueType {
-    ($name:ident, $variant:ident, $concrete_type:ty) => {
-        #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-        struct $name {
-            #[dop2field(1, Dop2Payloads::U8)]
-            requestMask: u8,
-            #[dop2field(2, Dop2Payloads::$variant)]
-            value: $concrete_type,
-            #[dop2field(3, Dop2Payloads::E8)]
-            interpretation: ValueInterpretation,
-        }
-        //impl_tryfrom_dop2struct!($name); // TODO: Fix this
-    };
 
-}
-
-macro_rules! MakeGenericValueType {
-    ($name:ident, $variant:ident, $concrete_type:ty) => {
-        #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-        struct $name {
-            #[dop2field(1, Dop2Payloads::U8)]
-            requestMask: u8,
-            #[dop2field(2,  Dop2Payloads::$variant)]
-            min: $concrete_type,
-            #[dop2field(3,  Dop2Payloads::$variant)]
-            max: $concrete_type,
-            #[dop2field(4,  Dop2Payloads::$variant)]
-            current: $concrete_type,
-            #[dop2field(5,  Dop2Payloads::$variant)]
-            stepSize: $concrete_type,
-        }
-        //impl_tryfrom_dop2struct!($name); // TODO: Fix this
-    };
-
-}
 
 MakeAnnotatedValueType!(AnnotatedU8, U8, u8);
 MakeAnnotatedValueType!(AnnotatedU16, U16, u16);
@@ -609,24 +576,7 @@ impl Dop2PayloadExpressible for String
     }
 }
 
-macro_rules! impl_from_bytes {
-    ($t:ty) => {
-        impl Dop2PayloadExpressible for $t {
-            fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
-                let n = std::mem::size_of::<$t>();
-                let bytes = parser.take(n);
-                let mut value: $t = 0;
-                for (i, b) in bytes.unwrap().into_iter().enumerate()
-                {
-                    //println!("{}", b);
-                    value |= ((b as $t) << ((n - 1 - i) * 8));
-                }
 
-                Ok(Box::new(value as $t))
-            }
-        }
-    };
-}
 
 impl_from_bytes!(u8);
 impl_from_bytes!(u16);
@@ -638,15 +588,7 @@ impl_from_bytes!(i16);
 impl_from_bytes!(i32);
 impl_from_bytes!(i64);
 
-macro_rules! impl_to_bytes {
-    ($t:ty) => {
-        impl ToDop2Bytes for $t {
-            fn to_bytes(self, vec: &mut Vec<u8>) {
-                vec.extend(self.to_be_bytes());
-            }
-        }
-    };
-}
+
 
 impl_to_bytes!(u8);
 impl_to_bytes!(u16);
@@ -758,7 +700,7 @@ impl TaggedDopField {
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct Dop2Struct{
+pub struct Dop2Struct{
     declared_fields: u16,
     fields: Vec<TaggedDopField>,
 }
@@ -904,17 +846,20 @@ struct ParseHex
     hex_string: String,
 }
 
+mod payloader;
+#[macro_use]
+pub mod macros;
 
 
-
-use crate::payloads::{XkmRequestId, UserRequestOven, ProgramIdOven, PsSelect};
+use crate::payloads::{UserRequestOven, ProgramIdOven, PsSelect};
+use crate::payloader::comm_module::request::request::{XkmRequestId, XkmRequest};
 use strum::IntoEnumIterator;
 use std::str::FromStr;
 
 fn main() {
     let args = Args::parse();
 
-    let commandVerbsXkm = XkmRequestId::iter().map(|x| x.to_string());
+    let commandVerbsXkm = payloader::comm_module::request::request::XkmRequestId::iter().map(|x| x.to_string());
     let commandVerbsProgram = ProgramIdOven::iter().map(|x| x.to_string());
    // let commandVerbsUserRequest = UserRequestOven::iter().map(|x| x.to_string());
     //let mut it : Vec<String> = commandVerbsXkm.chain(commandVerbsProgram)
@@ -929,7 +874,7 @@ fn main() {
     {
 
         eprintln!("Sending XKM command {:?}", xkm);
-        let request : XkmRequest = payloads::XkmRequest{request_id: xkm};
+        let request = XkmRequest{request_id: xkm};
         let payload = request.to_dop2_struct().unwrap();
 
         let root = RootNode::single(UnitIds::CommunicationsModule.into(), XkmRequest::ATTRIBUTE_IDS.first().unwrap().clone(), payload);
@@ -1016,14 +961,14 @@ fn main() {
     let decoded = payloads::DeviceContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::ProgramInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::device::oven::program_info::ProgramInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::ProgramStepInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::device::oven::program_step_info::ProgramStepInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 else if (payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
@@ -1062,9 +1007,9 @@ else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
     let decoded = payloads::UserRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 else if (payloads::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
@@ -1645,17 +1590,7 @@ pub enum ProtocolType {
     UsbDop2=202
 }
 
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
-pub enum XkmRequestId {
-    None = 0,
-    ResetXkm = 1,
-    FactoryResetXkm = 2,
-    OpenSoftAccessPointEndUser = 3,
-    OpenSoftAccessPointCustomerService = 45,
-    ShutdownXkm = 46,
-    MieleSmartConnect = 47,
-}
+
 
 
 
@@ -1719,68 +1654,8 @@ macro_rules! impl_tryfrom_wrapper {
 
 }
 }*/
-macro_rules! impl_into_wrapper {
-    ($enum:ty, $wrapper:ty) => {
-        impl Into<$wrapper> for $enum {
-            fn into(self) -> $wrapper {
-                <$wrapper>::from(self)
-            }
-        }
-
-        impl Into<DopArray<$wrapper>> for Vec<$enum> {
-            fn into(self) -> DopArray<$wrapper> {
-                DopArray {
-                    count: self.len() as u16,
-                    elements: self.into_iter().map(|e| e.into()).collect(),
-                }
-            }
-        }
-    };
-}
 
 
-macro_rules! impl_tryfrom_wrapper { // example ProcessState, E8
-($enum:ty, $wrapper:ident) => {
-
-impl TryFrom<Vec<$enum>> for DopArray<$wrapper> {
-    type Error = String;
-    fn try_from (value: Vec<$enum>)-> Result<Self, String>
-    {
-        let elements : Vec<$wrapper> = value
-        .into_iter()
-        .map(|elem| <$wrapper>::try_from(elem).unwrap().into())
-        .collect();
-        Ok(DopArray{count: elements.len() as u16, elements})
-    }
-}
-impl TryFrom<$wrapper> for $enum {
-type Error = ();
-
-        fn try_from(value: $wrapper) -> Result<Self, <$enum as TryFrom<$wrapper>>::Error> {
-            <$enum>::try_from(value.0).map_err(|_| ()) }
-        }
-    
-
-    impl TryFrom<DopArray<$wrapper>> for Vec<$enum> {
-        type Error = ();
-
-        fn try_from(value: DopArray<$wrapper>) -> Result<Self, Self::Error> {
-            value
-                .elements
-                .into_iter()
-                .map(|elem| <$enum>::try_from(elem))
-                .collect()
-        }
-    }
-impl From<$enum> for $wrapper
-{
-    fn from (value: $enum) -> $wrapper
-    {
-        $wrapper (value.into()) // TODO: Fix this
-    }
-}
-}    
-}
 
 
 impl_tryfrom_wrapper!(ProcessState, E8);
@@ -1802,7 +1677,6 @@ impl_tryfrom_wrapper!(UserRequestOven, E16);
 
 impl_tryfrom_wrapper!(SfId, E16);
 
-impl_tryfrom_wrapper!(XkmRequestId, E8);
 
 impl_tryfrom_wrapper!(ValueInterpretation, E8);
 
@@ -1905,28 +1779,7 @@ impl TryFrom<Dop2Struct> for PSAttributesCCA
     }
 }*/
 
-macro_rules! impl_tryfrom_dop2struct {
-($target:ty) => {
-impl TryFrom<Dop2Struct> for $target {
-type Error = String;
 
-        fn try_from(value: Dop2Struct) -> Result<Self, String> {
-            <$target>::from_parse_tree(Dop2Payloads::MStruct(value))
-        }
-    }
-
-
-impl TryFrom<DopArray<Dop2Struct>> for Vec<$target>
-{
-    type Error = String;
-
-    fn try_from(value: DopArray<Dop2Struct>) -> Result<Vec<$target>, String> {
-             Ok(value.elements.into_iter().map(|x| TryInto::<$target>::try_into(x).unwrap()).collect())
-        }
-    
-}
-}
-}
 
 //impl_tryfrom_dop2struct!(UserRequestOven);
 //impl_tryfrom_dop2struct!(ApplianceState);
@@ -1942,12 +1795,8 @@ impl_tryfrom_dop2struct!(DeviceIdent);
 impl_tryfrom_dop2struct!(DeviceCombiState);
 impl_tryfrom_dop2struct!(DeviceNotifications);
 impl_tryfrom_dop2struct!(PsSelect);
-impl_tryfrom_dop2struct!(XkmRequest);
 impl_tryfrom_dop2struct!(PSAttributesCCA);
 impl_tryfrom_dop2struct!(DeviceAttributesCCA);
-
-impl_tryfrom_dop2struct!(ProgramInfoOven);
-impl_tryfrom_dop2struct!(ProgramStepInfoOven);
 
 impl_tryfrom_dop2struct!(PSContextParametersOven);
 
@@ -2357,51 +2206,11 @@ impl PSContext
     }
 
 
-    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct ProgramStepInfoOven 
-{
-    #[dop2field(1, Dop2Payloads::U8 )]
-    stepNumber : u8,
-    #[dop2field(2, Dop2Payloads::E8 )]
-    stepType : E8,
-    #[dop2field(3, Dop2Payloads::U16 )]
-    operationMode : u16,
-    #[dop2field(4, Dop2Payloads::U16 )]
-    temperatureSetpoint : u8,
-    #[dop2field(5, Dop2Payloads::U8 )]
-    setGrillLevel : u8,
-    #[dop2field(6, Dop2Payloads::U8 )]
-    mwPower : u8,
-    #[dop2field(7, Dop2Payloads::U32 )]
-    duration : u32,
-    #[dop2field(8, Dop2Payloads::U16 )]
-    moistsetCoreTemperature : u16, // TODO: add remaining fields
-}
+
 
 // TODO: implement ProgramList 2, 212
 
-impl ProgramStepInfoOven
-    {
-        pub const ATTRIBUTE_IDS : &[u16] = &[214]; // always in unit 2?
-    }
-    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-    pub struct ProgramInfoOven 
-{
-    #[dop2field(1, Dop2Payloads::U8 )]
-    stepNumber : u8,
 
-    #[dop2field(2, Dop2Payloads::U8 )]
-    currentStep : u8,
-
-    #[dop2field(5, Dop2Payloads::Boolean )]
-    startDelay : bool, // TODO: add remaining fields
-
-}
-
-impl ProgramInfoOven
-    {
-        pub const ATTRIBUTE_IDS : &[u16] = &[213]; // always in unit 2?
-    }
     
     #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PSContextParametersOven
@@ -2452,50 +2261,6 @@ pub struct PSAttributesCCA {
 }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct XkmRequest {
-    #[dop2field(1, Dop2Payloads::E8)]
-        pub(crate) request_id : XkmRequestId
-}
-    impl XkmRequest
-    {
-        pub const ATTRIBUTE_IDS : &[u16] = &[130];
-        pub const ATTRIBUTE : u16 = 130; // typically unit 14
-        pub fn to_dop2_payload (&self) -> Result<Dop2Payloads, String> // TODO: make this call to_dop2_struct
-        {
-            let mut fields: Vec<TaggedDopField> = vec!();
-            let request_id_payload : Dop2Payloads = Dop2Payloads::E8(self.request_id.clone().into());
-            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
-            fields.push(request_id_field);
-            Ok(Dop2Payloads::MStruct(Dop2Struct::from_fields (fields)))
-        }
-
-        pub fn to_dop2_struct (&self) -> Result<Dop2Struct, String>
-        {
-            let mut fields: Vec<TaggedDopField> = vec!();
-            let request_id_payload : Dop2Payloads = Dop2Payloads::E8(self.request_id.clone().into());
-            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
-            fields.push(request_id_field);
-            Ok(Dop2Struct::from_fields (fields))
-        }
-/*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
-        {
-            if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
-            {
-                if let Dop2Payloads::E8(request_id) = x.fields[0].value
-                {
-                    return Ok(XkmRequest{request_id: request_id.0.try_into().unwrap() })
-                }
-                else 
-                {
-                    println!("{:?}", x.fields[0].value);                   
-                    return Err("Entity mismatch while deserializing XKMRequest field".to_string())
-                }
-            }
-            Err("Entity mismatch".to_string())
-        }
-*/
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DateTimeInfo {
