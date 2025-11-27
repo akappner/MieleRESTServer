@@ -25,23 +25,6 @@ pub struct XkmRequest {
     {
         pub const ATTRIBUTE_IDS : &[u16] = &[130];
         pub const ATTRIBUTE : u16 = 130; // typically unit 14
-        pub fn to_dop2_payload (&self) -> Result<Dop2Payloads, String> // TODO: make this call to_dop2_struct
-        {
-            let mut fields: Vec<TaggedDopField> = vec!();
-            let request_id_payload : Dop2Payloads = Dop2Payloads::E8(self.request_id.clone().into());
-            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
-            fields.push(request_id_field);
-            Ok(Dop2Payloads::MStruct(Dop2Struct::from_fields (fields)))
-        }
-
-        pub fn to_dop2_struct (&self) -> Result<Dop2Struct, String>
-        {
-            let mut fields: Vec<TaggedDopField> = vec!();
-            let request_id_payload : Dop2Payloads = Dop2Payloads::E8(self.request_id.clone().into());
-            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
-            fields.push(request_id_field);
-            Ok(Dop2Struct::from_fields (fields))
-        }
 /*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail

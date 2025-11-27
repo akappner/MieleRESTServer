@@ -877,7 +877,7 @@ fn main() {
 
         eprintln!("Sending XKM command {:?}", xkm);
         let request = XkmRequest{request_id: xkm};
-        let payload = request.to_dop2_struct().unwrap();
+        let payload = request.to_dop2_struct_auto().unwrap();
 
         let root = RootNode::single(UnitIds::CommunicationsModule.into(), XkmRequest::ATTRIBUTE_IDS.first().unwrap().clone(), payload);
        
