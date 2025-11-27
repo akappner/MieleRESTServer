@@ -1016,6 +1016,16 @@ fn main() {
     let decoded = payloads::DeviceContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
+else if (payloads::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::ProgramInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
+else if (payloads::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::ProgramStepInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
 else if (payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
     let decoded = payloads::DeviceIdent::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
@@ -1935,6 +1945,10 @@ impl_tryfrom_dop2struct!(PsSelect);
 impl_tryfrom_dop2struct!(XkmRequest);
 impl_tryfrom_dop2struct!(PSAttributesCCA);
 impl_tryfrom_dop2struct!(DeviceAttributesCCA);
+
+impl_tryfrom_dop2struct!(ProgramInfoOven);
+impl_tryfrom_dop2struct!(ProgramStepInfoOven);
+
 impl_tryfrom_dop2struct!(PSContextParametersOven);
 
 impl_tryfrom_dop2struct!(CSContextParametersOven);
@@ -2342,6 +2356,53 @@ impl PSContext
         pub const ATTRIBUTE_IDS : &[u16] = &[1574]; // always in unit 1?
     }
 
+
+    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct ProgramStepInfoOven 
+{
+    #[dop2field(1, Dop2Payloads::U8 )]
+    stepNumber : u8,
+    #[dop2field(2, Dop2Payloads::E8 )]
+    stepType : E8,
+    #[dop2field(3, Dop2Payloads::U16 )]
+    operationMode : u16,
+    #[dop2field(4, Dop2Payloads::U16 )]
+    temperatureSetpoint : u8,
+    #[dop2field(5, Dop2Payloads::U8 )]
+    setGrillLevel : u8,
+    #[dop2field(6, Dop2Payloads::U8 )]
+    mwPower : u8,
+    #[dop2field(7, Dop2Payloads::U32 )]
+    duration : u32,
+    #[dop2field(8, Dop2Payloads::U16 )]
+    moistsetCoreTemperature : u16, // TODO: add remaining fields
+}
+
+// TODO: implement ProgramList 2, 212
+
+impl ProgramStepInfoOven
+    {
+        pub const ATTRIBUTE_IDS : &[u16] = &[214]; // always in unit 2?
+    }
+    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+    pub struct ProgramInfoOven 
+{
+    #[dop2field(1, Dop2Payloads::U8 )]
+    stepNumber : u8,
+
+    #[dop2field(2, Dop2Payloads::U8 )]
+    currentStep : u8,
+
+    #[dop2field(5, Dop2Payloads::Boolean )]
+    startDelay : bool, // TODO: add remaining fields
+
+}
+
+impl ProgramInfoOven
+    {
+        pub const ATTRIBUTE_IDS : &[u16] = &[213]; // always in unit 2?
+    }
+    
     #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PSContextParametersOven
 {
@@ -2467,8 +2528,7 @@ pub struct PsSelect {
     impl PsSelect
     {
         pub const ATTRIBUTE_IDS : &[u16] = &[1577];
-
-        pub fn to_dop2_struct (&self) -> Result<Dop2Struct, String>
+/*        pub fn to_dop2_struct (&self) -> Result<Dop2Struct, String>
         {
             let mut fields: Vec<TaggedDopField> = vec!();
             let request_id_payload : Dop2Payloads = Dop2Payloads::E16(self.program_id.clone().into());
@@ -2482,7 +2542,8 @@ pub struct PsSelect {
             fields.push(selection_parameter_field);
             fields.push(selection_type_field);
             Ok(Dop2Struct::from_fields (fields))
-        }
+        } */
+
 /*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {
             if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
