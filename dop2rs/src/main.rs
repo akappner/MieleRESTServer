@@ -6,7 +6,9 @@ use num_enum::{TryFromPrimitive, IntoPrimitive};
 use derive_more::From;
 
 use dop2marshal::AssocTypes;
+use payloader::device;
 use payloads::{UnitIds};
+use payloader::device::generic::state::combined::DeviceCombiState;
 use syn::token::{Struct, Type};
 
 use crate::payloads::Dop2ParseTreeExpressible;
@@ -1012,9 +1014,9 @@ else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
     let decoded = XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
     {
-        let decoded = payloads::DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        let decoded = DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
     }
     else if (payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
@@ -1594,45 +1596,7 @@ pub enum ProtocolType {
 
 
 
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
-enum ApplianceState
-{
-    Unknown,
-    Off,
-    Synchronizing,
-    Initializing,
-    Normal,
-    Demonstration,
-    Service,
-    Error,
-    CheckAppliance,
-    Standby,
-    Supervisory,
-    ShowWindow
-}
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
-enum OperationState
-{
-    Unknown,
-    EndOfLine,
-    Service,
-    Settings,
-    InitialSettings,
-    SelectProgram,
-    RunDelay,
-}
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
-enum ProcessState
-{
-    Unknown,
-    NoProgram,
-    ProgramSelected,
-    ProgramStart,
-    ProgramRunning
-}
+
 /*
 macro_rules! impl_tryfrom_wrapper {
     ($enum:ty, $wrapper:ty) => 
@@ -1658,15 +1622,10 @@ macro_rules! impl_tryfrom_wrapper {
 
 
 
-impl_tryfrom_wrapper!(ProcessState, E8);
-
-impl_tryfrom_wrapper!(OperationState, E8);
 
 impl_tryfrom_wrapper!(ProgramIdOven, E16);
 
 impl_tryfrom_wrapper!(SelectionType, E8);
-
-impl_tryfrom_wrapper!(ApplianceState, E8);
 
 impl_tryfrom_wrapper!(NotificationAckOption, E8);
 
@@ -1700,15 +1659,7 @@ impl UserRequest
     pub const ATTRIBUTE_IDS : &[u16] = &[1583];
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct DeviceCombiState {
-        #[dop2field(1, Dop2Payloads::E8)]
-        appliance_state : ApplianceState,
-        #[dop2field(2, Dop2Payloads::E8)]
-        operation_state : OperationState,
-        #[dop2field(3, Dop2Payloads::E8)]
-        process_state : ProcessState
-}
+
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct SupportedApplications {
@@ -1792,7 +1743,6 @@ impl_tryfrom_dop2struct!(QueryInfo);
 impl_tryfrom_dop2struct!(MessageInfo);
 impl_tryfrom_dop2struct!(UserRequest);
 impl_tryfrom_dop2struct!(DeviceIdent);
-impl_tryfrom_dop2struct!(DeviceCombiState);
 impl_tryfrom_dop2struct!(DeviceNotifications);
 impl_tryfrom_dop2struct!(PsSelect);
 impl_tryfrom_dop2struct!(PSAttributesCCA);
@@ -1824,32 +1774,7 @@ impl_tryfrom_dop2struct!(Failure);
 
 impl_tryfrom_dop2struct!(CSHoursOfOperation);
 
-impl DeviceCombiState
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[1586];
-/*
-        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
-        {
-            if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
-            {
-                if let Dop2Payloads::E8(appliance_state) = x.fields[0].value &&
-                   let Dop2Payloads::E8(operation_state) = x.fields[1].value &&
-                  let Dop2Payloads::E8(process_state) = x.fields[2].value 
-                {
-                    return Ok(DeviceCombiState{appliance_state: appliance_state.0.try_into().unwrap(),
-                             operation_state: operation_state.0.try_into().unwrap(), 
-                             process_state: process_state.0.try_into().unwrap()} )
-                }
-                else 
-                { 
-                    println!("{:?}", x);
-                    return Err("Entity mismatch while deserializing field".to_string())
-                }
-            }
-            Err("Entity mismatch".to_string())
-        }
-*/
-}
+
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DeviceContext // can be for main device or second device -- same struct 
 {
