@@ -1016,10 +1016,24 @@ fn main() {
     let decoded = payloads::DeviceContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-
+else if (payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::DeviceIdent::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
     else if (payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
     let decoded = payloads::DateTimeInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
+else if (payloads::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::FileList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
+else if (payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloads::FileInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 else if (payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
@@ -1587,6 +1601,42 @@ pub enum NotificationAckOption {
 
 #[repr(u8)]
 #[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
+pub enum DeviceType {
+    None,
+    Washer,
+    Dryer,
+    WasherSemiPro,
+    DryerSemiPro,
+    WasherPro,
+    DryerPro,
+    Dishwasher,
+    DishwasherSemiPro,
+    DishwasherPro,
+    Cooker,
+    Microwave,
+    Oven,
+    OvenMicrowaveCombo,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
+pub enum ProtocolType {
+    Unknown = 0,
+    Uart = 1,
+    MeterBusDop1 = 2,
+    MeterBusDop2 = 3,
+    HdrDop2=4,
+    HdrMaci,
+    SpiMaci,
+    SdioMaci,
+    UartMaci,
+    DbusDop2=200,
+    TodDop2=201,
+    UsbDop2=202
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
 pub enum XkmRequestId {
     None = 0,
     ResetXkm = 1,
@@ -1596,6 +1646,8 @@ pub enum XkmRequestId {
     ShutdownXkm = 46,
     MieleSmartConnect = 47,
 }
+
+
 
 #[repr(u8)]
 #[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
@@ -1746,6 +1798,8 @@ impl_tryfrom_wrapper!(ValueInterpretation, E8);
 
 impl_tryfrom_wrapper!(ShowMeHowId, E16);
 
+impl_tryfrom_wrapper!(DeviceType, E8);
+impl_tryfrom_wrapper!(ProtocolType, E8);
 //impl_tryfrom_wrapper!(Dop2TimestampUtc, u64);
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
@@ -1770,6 +1824,51 @@ pub struct DeviceCombiState {
         operation_state : OperationState,
         #[dop2field(3, Dop2Payloads::E8)]
         process_state : ProcessState
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct SupportedApplications {
+        #[dop2field(1, Dop2Payloads::Boolean)]
+        mieleAtHome : bool,
+        #[dop2field(2, Dop2Payloads::Boolean)]
+        remoteVision : bool,
+         #[dop2field(3, Dop2Payloads::Boolean)]
+        superVision : bool,
+        #[dop2field(4, Dop2Payloads::Boolean)]
+        smartGrid : bool,
+        #[dop2field(5, Dop2Payloads::Boolean)]
+        mobileControl : bool,
+         #[dop2field(6, Dop2Payloads::Boolean)]
+        unknown1 : bool,
+        #[dop2field(7, Dop2Payloads::Boolean)]
+        unknown2 : bool,
+        #[dop2field(8, Dop2Payloads::Boolean)]
+        voiceControl : bool,
+        #[dop2field(9, Dop2Payloads::Boolean)]
+        unknown3 : bool,
+        #[dop2field(10, Dop2Payloads::Boolean)]
+        featureList : bool,
+        #[dop2field(11, Dop2Payloads::Boolean)]
+        washToDry : bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct DeviceIdent {
+        #[dop2field(1, Dop2Payloads::E8)]
+        device_type : DeviceType,
+        #[dop2field(2, Dop2Payloads::E8)]
+        protocol_type : ProtocolType,
+        #[dop2field(5, Dop2Payloads::MStruct)]
+        supported_apps : SupportedApplications,
+      //  #[dop2field(6, Dop2Payloads::U8)] //missing in washer
+       // unit_count : u8,
+        #[dop2field(9, Dop2Payloads::E16)] //should be an enum in washer
+        rf_variant : E16,
+}
+
+impl DeviceIdent
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[144];
 }
 
 pub trait Dop2ParseTreeExpressible : Sized
@@ -1822,13 +1921,14 @@ impl TryFrom<DopArray<Dop2Struct>> for Vec<$target>
 //impl_tryfrom_dop2struct!(UserRequestOven);
 //impl_tryfrom_dop2struct!(ApplianceState);
 //impl_tryfrom_dop2struct!(SelectionType);
-
+impl_tryfrom_dop2struct!(SupportedApplications);
 impl_tryfrom_dop2struct!(RsaKey);
 impl_tryfrom_dop2struct!(ErrorInfo);
 impl_tryfrom_dop2struct!(NotificationInfo);
 impl_tryfrom_dop2struct!(QueryInfo);
 impl_tryfrom_dop2struct!(MessageInfo);
 impl_tryfrom_dop2struct!(UserRequest);
+impl_tryfrom_dop2struct!(DeviceIdent);
 impl_tryfrom_dop2struct!(DeviceCombiState);
 impl_tryfrom_dop2struct!(DeviceNotifications);
 impl_tryfrom_dop2struct!(PsSelect);
@@ -1851,6 +1951,7 @@ impl_tryfrom_dop2struct!(GenericU16);
 //impl_tryfrom_dop2struct!(AnnotatedU32);
 impl_tryfrom_dop2struct!(AnnotatedU64);
 impl_tryfrom_dop2struct!(AnnotatedTimeStamp);
+impl_tryfrom_dop2struct!(FileList);
 
 impl_tryfrom_dop2struct!(FailureListItem);
 impl_tryfrom_dop2struct!(FailureList);
@@ -1996,6 +2097,52 @@ pub struct FailureList
         #[dop2field(1, Dop2Payloads::AStruct )]
         items : Vec<FailureListItem>,
 
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct FileList
+{
+        #[dop2field(1, Dop2Payloads::MString )]
+        filename : String,
+
+        #[dop2field(2, Dop2Payloads::ArrayU8 )]
+        sha256 : DopArray<u8>,
+
+
+        #[dop2field(3, Dop2Payloads::MString )]
+        description : String,
+
+        #[dop2field(4, Dop2Payloads::E8 )]
+        fileAccessMode : E8,
+
+        #[dop2field(5, Dop2Payloads::U32 )]
+        size : u32,
+}
+
+impl FileList
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[333];
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct FileInfo
+{
+        #[dop2field(1, Dop2Payloads::MString )]
+        filename : String,
+
+        #[dop2field(2, Dop2Payloads::ArrayU8 )]
+        sha256 : DopArray<u8>,
+
+        #[dop2field(3, Dop2Payloads::U32 )]
+        currentSize : u32,
+
+        #[dop2field(4, Dop2Payloads::U32 )]
+        maxSize : u32,
+}
+
+impl FileInfo
+{
+    pub const ATTRIBUTE_IDS : &[u16] = &[1588];
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
@@ -2242,6 +2389,8 @@ pub struct PSAttributesCCA {
         nextActionTime : AnnotatedTimeStamp,
 
 }
+
+
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct XkmRequest {
     #[dop2field(1, Dop2Payloads::E8)]
@@ -2289,8 +2438,8 @@ pub struct XkmRequest {
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct DateTimeInfo {
-//       #[dop2field(1, Dop2Payloads::U64)]
-//        utc_time : Dop2TimestampUtc, // TODO: bring this back
+       #[dop2field(1, Dop2Payloads::U64)]
+        utc_time : Dop2TimestampUtc, // TODO: bring this back
        #[dop2field(2, Dop2Payloads::I32)]
         utc_offset : i32
 }
