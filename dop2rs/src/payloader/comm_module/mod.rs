@@ -1,3 +1,4 @@
+pub mod config;
 pub mod update;
 pub mod supervision;
 pub mod state;

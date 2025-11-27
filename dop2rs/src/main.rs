@@ -1,4 +1,3 @@
-#![feature(derive_from)]
 use chrono::{DateTime, NaiveDateTime, Utc};
 
 use clap::Parser;
@@ -993,6 +992,11 @@ else if (payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
     let decoded = payloads::FileInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
+else if payloader::filesystem::transfer::FileTransfer::ATTRIBUTE_IDS.contains(&root_node.attribute)
+{
+    let decoded = payloader::filesystem::transfer::FileTransfer::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
 else if (payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
     let decoded = payloads::RsaKey::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
@@ -1012,6 +1016,11 @@ else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
 else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
     let decoded = XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
+else if (payloader::comm_module::config::ip::XkmConfigIp::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloader::comm_module::config::ip::XkmConfigIp::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 else if (DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
