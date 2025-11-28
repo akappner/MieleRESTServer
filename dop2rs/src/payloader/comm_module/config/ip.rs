@@ -1,6 +1,18 @@
 use crate::payloader::prelude::*;
 use crate::Dop2ParseTreeExpressible;
 
+#[repr(u8)]
+#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
+pub enum WifiSecurityProtocol {
+    Open = 0,
+    WEP = 1,
+    WPA = 2,
+    WPA2 = 3,
+    WPA3 = 4,
+}
+
+crate::impl_tryfrom_wrapper!(WifiSecurityProtocol, E8);
+
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct XkmConfigIp {
     #[dop2field(1, Dop2Payloads::Boolean)]
@@ -31,7 +43,7 @@ pub struct XkmConfigIp {
     wifi_ssid: DopArray<u8>, // WiFi SSID (32 bytes, null-terminated string)
 
     #[dop2field(10, Dop2Payloads::E8)]
-    wifi_security_type: E8,
+    wifi_security_type: WifiSecurityProtocol,
 
     #[dop2field(11, Dop2Payloads::E8)]
     wifi_channel: E8,
