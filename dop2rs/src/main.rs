@@ -1023,6 +1023,11 @@ else if (payloader::comm_module::config::ip::XkmConfigIp::ATTRIBUTE_IDS.contains
     let decoded = payloader::comm_module::config::ip::XkmConfigIp::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
+else if (payloader::comm_module::config::ssid::XkmConfigSsidList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+{
+    let decoded = payloader::comm_module::config::ssid::XkmConfigSsidList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    println!("{decoded:#?}");
+}
 else if (DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
     {
         let decoded = DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
