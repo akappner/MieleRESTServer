@@ -1,9 +1,7 @@
 
 use clap::Parser;
-use num_enum::{TryFromPrimitive, IntoPrimitive};
 
 use payloader::unit_ids::UnitIds;
-use payloader::device::generic::state::combined::DeviceCombiState;
 use payloader::device::generic::program_selection::enums::{ProgramIdOven, SelectionType};
 use payloader::device::generic::request::UserRequestOven;
 use payloader::root::RootNode;
@@ -12,11 +10,6 @@ use payloader::root::RootNode;
 mod crypto;
 mod device_api;
 mod attribute_registry;
-
-use strum_macros::{EnumIter, EnumString};
-
-#[macro_use]
-extern crate enum_kinds;
 
 // Generic* and Annotated* types moved to payloader::helper::types
 pub use payloader::helper::types::*;
@@ -37,11 +30,6 @@ struct Args {
     // Attribute parameter (optional)
    // #[arg(short, long)]
    // attribute: Option<u16>,
-}
-
-struct ParseHex 
-{
-    hex_string: String,
 }
 
 mod payloader;

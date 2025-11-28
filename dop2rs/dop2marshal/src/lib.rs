@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use quote::{format_ident, quote, ToTokens};
+use quote::{format_ident, quote};
 use syn::{parse_macro_input, punctuated::Punctuated, DeriveInput, Expr, ExprLit, Lit, Type, token::Comma, ExprPath, TypePath};
 
 #[proc_macro_derive(AssocTypes, attributes(dop2field))]
@@ -7,8 +7,7 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = input.ident;
 
-//    let trait_ident = format_ident!("__AssocFor_{}", struct_name);
-    let trait_ident = format_ident!("Dop2ParseTreeExpressible");
+//    let trait_ident = format_ident!("Dop2ParseTreeExpressible");
     let marker_prefix = format!("__AssocFor_{}_field_", struct_name);
 
     // Only support named-structs
@@ -90,7 +89,7 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
                     }
                 };
 
-let in_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
+//let in_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
 //let out_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
 
 let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
