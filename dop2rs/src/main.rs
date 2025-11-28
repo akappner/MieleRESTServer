@@ -158,40 +158,6 @@ impl<T: Dop2PayloadExpressible + ToDop2Bytes> ToDop2Bytes for DopArray<T>{
     }
 }
 
-macro_rules! newtype_int {
-    ($name:ident, $inner:ty) => {
-
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
-        pub struct $name($inner);
-        impl ToDop2Bytes for $name {
-            fn to_bytes(self, vec: &mut Vec<u8>) {
-                vec.extend(self.0.to_be_bytes());
-            }
-        }
-
-        impl Dop2PayloadExpressible for $name {
-            fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
-                let n = std::mem::size_of::<$inner>();
-                let bytes = parser.take(n);
-                let mut value: $inner = 0;
-                for (i, b) in bytes.unwrap().into_iter().enumerate()
-                {
-                    //println!("{}", b);
-                    value |= ((b as $inner) << ((n - 1 - i) * 8));
-                }
-
-                Ok(Box::new(value.into()))
-            }
-        }
-
-
-    };
-}
-
-newtype_int!(E8, u8);
-newtype_int!(E16, u16);
-newtype_int!(E32, u32);
-newtype_int!(E64, u64);
 
 #[derive(Clone, Debug, PartialEq, Eq, EnumKind)]
 
@@ -322,14 +288,15 @@ impl ToDop2Bytes for DopPadding
         vec.extend(std::iter::repeat(DopPadding::PADDING_BYTE).take(self.bytes_of_padding.into()));
     }
 }
-trait Dop2PayloadExpressible {
+pub trait Dop2PayloadExpressible {
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> ;
 }
 
-trait ToDop2Bytes 
+pub trait ToDop2Bytes 
 {
     fn to_bytes (self, vec: &mut Vec<u8>);
 }
+
 impl Dop2PayloadExpressible for bool
 {
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> 
@@ -369,27 +336,9 @@ impl Dop2PayloadExpressible for String
 
 
 
-impl_from_bytes!(u8);
-impl_from_bytes!(u16);
-impl_from_bytes!(u32);
-impl_from_bytes!(u64);
-
-impl_from_bytes!(i8);
-impl_from_bytes!(i16);
-impl_from_bytes!(i32);
-impl_from_bytes!(i64);
 
 
 
-impl_to_bytes!(u8);
-impl_to_bytes!(u16);
-impl_to_bytes!(u32);
-impl_to_bytes!(u64);
-
-impl_to_bytes!(i8);
-impl_to_bytes!(i16);
-impl_to_bytes!(i32);
-impl_to_bytes!(i64);
 
 
 impl ToDop2Bytes for String{
@@ -589,7 +538,7 @@ impl RootNode {
 }
 
 
-struct Dop2Parser {
+pub struct Dop2Parser {
     payload : Vec<u8>
 }
 impl Dop2Parser {
@@ -889,49 +838,6 @@ pub trait Dop2ParseTreeExpressible : Sized
     fn from_parse_tree(payload: Dop2Payloads) -> Result<Self, String>;
 }
 
-/*
-impl TryFrom<Dop2Struct> for DeviceCombiState 
-{
-    type Error = String;
-
-    fn try_from(value: Dop2Struct) -> Result<Self, Self::Error> {
-        return DeviceCombiState::from_parse_tree (Dop2Payloads::MStruct(value))
-    }
-}
-
-impl TryFrom<Dop2Struct> for PSAttributesCCA 
-{
-    type Error = String;
-
-    fn try_from(value: Dop2Struct) -> Result<Self, Self::Error> {
-        return PSAttributesCCA::from_parse_tree (Dop2Payloads::MStruct(value))
-    }
-}*/
-
-
-
-//impl_tryfrom_dop2struct!(UserRequestOven);
-//impl_tryfrom_dop2struct!(ApplianceState);
-//impl_tryfrom_dop2struct!(SelectionType);
-
-
-impl_tryfrom_dop2struct!(AnnotatedBool);
-impl_tryfrom_dop2struct!(AnnotatedU8);
-impl_tryfrom_dop2struct!(AnnotatedI16);
-impl_tryfrom_dop2struct!(AnnotatedI32);
-
-
-impl_tryfrom_dop2struct!(GenericU8);
-
-impl_tryfrom_dop2struct!(AnnotatedU16);
-impl_tryfrom_dop2struct!(GenericU16);
-//impl_tryfrom_dop2struct!(AnnotatedU32);
-impl_tryfrom_dop2struct!(AnnotatedU64);
-impl_tryfrom_dop2struct!(AnnotatedTimeStamp);
-
-
-
-
 
 
 }
@@ -1027,10 +933,6 @@ mod tests {
         let _bytes = root_node.to_bytes(&mut data);
         let hex_string = hex::encode(&data);
         assert_eq!(hex_string, TEST_PAYLOADS.oven_14_130);
-        //assert_eq!(root_node.unit, 14);
-        //assert_eq!(root_node.attribute, 130);
-      //  assert_eq!(root_node.declared_fields, 1);
-      //  assert_eq!(root_node.fields[0].value, 0x0082);
     }
 
     

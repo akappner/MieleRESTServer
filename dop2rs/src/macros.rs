@@ -156,4 +156,35 @@ macro_rules! impl_tryfrom_wrapper { // example ProcessState, E8
             }
         };
     }
+
+#[macro_export]
+macro_rules! newtype_int {
+    ($name:ident, $inner:ty) => {
+
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
+        pub struct $name(pub $inner);
+        impl ToDop2Bytes for $name {
+            fn to_bytes(self, vec: &mut Vec<u8>) {
+                vec.extend(self.0.to_be_bytes());
+            }
+        }
+
+        impl Dop2PayloadExpressible for $name {
+            fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
+                let n = std::mem::size_of::<$inner>();
+                let bytes = parser.take(n);
+                let mut value: $inner = 0;
+                for (i, b) in bytes.unwrap().into_iter().enumerate()
+                {
+                    //println!("{}", b);
+                    value |= ((b as $inner) << ((n - 1 - i) * 8));
+                }
+
+                Ok(Box::new(value.into()))
+            }
+        }
+
+
+    };
+}
     
