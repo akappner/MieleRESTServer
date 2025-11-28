@@ -2,7 +2,9 @@ use chrono::{DateTime, Utc};
 use dop2marshal::AssocTypes;
 use derive_more::From;
 use crate::payloader::prelude::*;
-use crate::{MakeAnnotatedValueType, MakeGenericValueType, Dop2ParseTreeExpressible, ToDop2Bytes, Dop2PayloadExpressible, Dop2Parser, impl_to_bytes, impl_from_bytes};
+use crate::{MakeAnnotatedValueType, MakeGenericValueType, impl_to_bytes, impl_from_bytes};
+use crate::payloader::root::Dop2ParseTreeExpressible;
+use crate::payloader::parser::{ToDop2Bytes, Dop2PayloadExpressible, Dop2Parser};
 use crate::newtype_int;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
