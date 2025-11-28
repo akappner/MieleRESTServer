@@ -434,10 +434,10 @@ impl TaggedDopField {
             Dop2Payloads::MStruct(payload)   => payload.to_bytes(vec),
             Dop2Payloads::AStruct(payload)   => payload.to_bytes(vec),
             Dop2Payloads::Trash => todo!(),
-            Dop2Payloads::ArrayBool(dop_array) => todo!(),
-            Dop2Payloads::ArrayI64(dop_array) => todo!(),
-            Dop2Payloads::ArrayF32(dop_array) => todo!(),
-            Dop2Payloads::ArrayF64(dop_array) => todo!(),
+            Dop2Payloads::ArrayBool(_) => todo!(),
+            Dop2Payloads::ArrayI64(_) => todo!(),
+            Dop2Payloads::ArrayF32(_) => todo!(),
+            Dop2Payloads::ArrayF64(_) => todo!(),
             Dop2Payloads::F32(_) => todo!(),
             Dop2Payloads::F64(_) => todo!(),
         }
@@ -839,6 +839,21 @@ else if (DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
         let decoded = payloader::device::generic::notifications::DeviceNotifications::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
+    else if (payloader::device::washer::process::Process::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloader::device::washer::process::Process::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
+    else if (payloader::device::washer::actuator::ActuatorData::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloader::device::washer::actuator::ActuatorData::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
+    else if (payloader::device::washer::sensor::Sensor::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloader::device::washer::sensor::Sensor::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
 
     }       
     
@@ -902,6 +917,8 @@ impl TryFrom<Dop2Struct> for PSAttributesCCA
 
 impl_tryfrom_dop2struct!(AnnotatedBool);
 impl_tryfrom_dop2struct!(AnnotatedU8);
+impl_tryfrom_dop2struct!(AnnotatedI16);
+impl_tryfrom_dop2struct!(AnnotatedI32);
 
 
 impl_tryfrom_dop2struct!(GenericU8);

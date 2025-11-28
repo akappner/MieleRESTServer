@@ -27,6 +27,8 @@ impl From<Dop2TimestampUtc> for u64 {
 
 MakeAnnotatedValueType!(AnnotatedU8, U8, u8);
 MakeAnnotatedValueType!(AnnotatedU16, U16, u16);
+MakeAnnotatedValueType!(AnnotatedI16, I16, i16);
+MakeAnnotatedValueType!(AnnotatedI32, I32, i32);
 MakeAnnotatedValueType!(AnnotatedU64, U64, u64);
 MakeAnnotatedValueType!(AnnotatedBool, Boolean, bool);
 MakeAnnotatedValueType!(AnnotatedTimeStamp, U64, Dop2TimestampUtc);
