@@ -5,7 +5,7 @@ use rand::prelude::*;
 use std::fmt;
 use aes::cipher::{block_padding::NoPadding,KeyInit};
 
-use sha2::{Sha256, Digest};
+use sha2::Sha256;
 use hmac::{digest::Update, Hmac};
 
 struct GroupId([u8; 8]);
@@ -171,7 +171,6 @@ impl MieleCryptoContext
     }
     fn random () -> Self
     {
-        let rng = rand::rng();
         return MieleCryptoContext {group_id: GroupId::random(), group_key: MieleKey::random()};
     }
     fn signature (&self, buffer: &[u8])->[u8; 32]
@@ -219,23 +218,24 @@ impl MieleHeader
 }
 mod tests {
     use super::*;
+    
     #[test]
     fn test_round_trip() {
-       let plaintextString = "0123456789012345678901234567890123456789012345678901234567891234";
+       let plaintext_string = "0123456789012345678901234567890123456789012345678901234567891234";
        let context : MieleCryptoContext = MieleCryptoContext::random(); 
        let iv = AesIv::random();
-       let ciphertext = context.encrypt(plaintextString.as_bytes().into(), &iv);
+       let ciphertext = context.encrypt(plaintext_string.as_bytes().into(), &iv);
        let plaintext = context.decrypt(ciphertext, &iv);
        //println!("{:}", context);
-       assert_eq!(plaintextString.as_bytes(), plaintext);
+       assert_eq!(plaintext_string.as_bytes(), plaintext);
        
     }
     #[test]
     fn test_decryption()
     {
-        let testKey = hex::decode("123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE").unwrap();
+        let test_key = hex::decode("123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE").unwrap();
         let header = MieleHeader::from_http_header("123456789ABCDEFE:9258984775FF6450CF8D943A946C36C850FAAB65DEFCD2EAC6E7262B58308B47".to_string());
-        let context = MieleCryptoContext {group_id: GroupId::from_hex("123456789ABCDEFE"), group_key: MieleKey{0: testKey.try_into().unwrap()} } ;
+        let context = MieleCryptoContext {group_id: GroupId::from_hex("123456789ABCDEFE"), group_key: MieleKey{0: test_key.try_into().unwrap()} } ;
         
 //        let ciphertext = hex::decode("f6eebe5e2bf7c5064c4d61c0da55c7e80010f700bd8b5d5c958e8165ab025bd5f65a002044ef3e573d2bfd1ee3eef862cb96115100307c472b5c7389793a6d713249b056231f0040e865b7931033e679f46c6a97ba6f58840050d58d0dc367e557f675d4092fb3254cb60060e9c0e4ca99b5c0a34df73a8802004cf90070b7fca41d0cbc521792df8ae4a0fc3e0e0080fefbc1d6550a7a66c13334680de6066c").unwrap();
         let ciphertext = hex::decode("8dc821a1c9eced3fa98fd74e0d6629b9ee41543376ea08dec33acca7949f6b1f812e2b828dae8c72f7ae0fa7670fa38a0ec8fe10e42988df0f09fa0815c2e2ee").unwrap();
@@ -256,22 +256,22 @@ mod tests {
       //  println!("{:?}", plaintext_str);
         assert!(plaintext_str.contains("ReleaseNotes"));
         
-        let headerFields = MieleResponseSignatureInfo {status_code: 200, content_type: "application/vnd.miele.v1+json; charset=utf-8".to_string(), date: "Sat, 16 Aug 2025 02:37:30 GMT".to_string(), decrypted_payload: plaintext_str.as_bytes().into()};
-        let sig = context.signature(&headerFields.to_bytes());
+        let header_fields = MieleResponseSignatureInfo {status_code: 200, content_type: "application/vnd.miele.v1+json; charset=utf-8".to_string(), date: "Sat, 16 Aug 2025 02:37:30 GMT".to_string(), decrypted_payload: plaintext_str.as_bytes().into()};
+        let sig = context.signature(&header_fields.to_bytes());
         assert_eq!(sig, header.signature.hmac.0);
     }
     #[test]
     fn test_request_signature() {
-        let testKey = hex::decode("123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE").unwrap();
-        let context = MieleCryptoContext {group_id: GroupId::from_hex("123456789ABCDEFE"), group_key: MieleKey{0: testKey.try_into().unwrap()} } ;
+        let test_key = hex::decode("123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE").unwrap();
+        let context = MieleCryptoContext {group_id: GroupId::from_hex("123456789ABCDEFE"), group_key: MieleKey{0: test_key.try_into().unwrap()} } ;
         //let context = MieleCryptoContext::default();
-        let headerFields : MieleRequestSignatureInfo = MieleRequestSignatureInfo {http_method: "GET".to_string(), host:"127.0.0.1".to_string(), request_uri: "/Devices/000177753917/DOP2/2/1585?idx1=0&idx2=1".to_string(), content_type: "application / vnd.miele.v1 + json; charset = utf - 8".to_string(), accept_header: "application/vnd.miele.v1+json".to_string(), date: "Thu, 01 Jan 1970 02:09:22 GMT".to_string(), payload: vec!()};
+        let header_fields : MieleRequestSignatureInfo = MieleRequestSignatureInfo {http_method: "GET".to_string(), host:"127.0.0.1".to_string(), request_uri: "/Devices/000177753917/DOP2/2/1585?idx1=0&idx2=1".to_string(), content_type: "application / vnd.miele.v1 + json; charset = utf - 8".to_string(), accept_header: "application/vnd.miele.v1+json".to_string(), date: "Thu, 01 Jan 1970 02:09:22 GMT".to_string(), payload: vec!()};
       //  let header = MieleHeader::from_http_header("1111111111111111:731BAE233DA2EA585D4641BCBBD14CBDA64E74B2C48617F177E1280F56B70C48".to_string());
         
-        //let signed_payload = headerFields.to_bytes();
+        //let signed_payload = header_fields.to_bytes();
          //assert_eq!(hex::encode(context.signature(&signed_payload)), hex::encode(header.signature.hmac.0));
         // this works -- let payload = hex::decode("4745540a31302e302e302e31312f446576696365732f3030303138373638333139322f444f50322f322f313538353f696478313d3026696478323d310a6170706c69636174696f6e202f20766e642e6d69656c652e7631202b206a736f6e3b2063686172736574203d20757466202d20380a6170706c69636174696f6e2f766e642e6d69656c652e76312b6a736f6e0a5468752c203031204a616e20313937302030323a30393a323220474d540a").unwrap();
-         let payload = headerFields.to_bytes();
+         let payload = header_fields.to_bytes();
          assert_eq!(hex::encode(context.signature(&payload)).to_uppercase(), "DBC5C3BD007CDDF0214645E4FF27F517AFA1025AA9E3C1030BB15AE2A4210D91");
     }
 }

@@ -1,5 +1,5 @@
-use reqwest::{Client, Request, Response};
-use reqwest_middleware::{ClientBuilder, Middleware, Next, Result};
+use reqwest::{Request, Response};
+use reqwest_middleware::{Middleware, Next, Result};
 use http::Extensions;
 
 use crate::crypto::MieleRequestSignatureInfo;

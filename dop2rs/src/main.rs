@@ -1,22 +1,14 @@
 
 use clap::Parser;
 use num_enum::{TryFromPrimitive, IntoPrimitive};
-use derive_more::From;
 
-use payloader::device;
 use payloads::{UnitIds};
 use payloader::device::generic::state::combined::DeviceCombiState;
 use payloader::device::generic::program_selection::enums::{ProgramIdOven, SelectionType};
 use payloader::device::generic::request::UserRequestOven;
-use payloader::device::generic::notifications::NotificationAckOption;
-use payloader::device::generic::settings::SfId;
-use payloader::device::generic::context::ShowMeHowId;
-use payloader::device::generic::ident::ident::{DeviceType, ProtocolType};
-use syn::token::{Struct, Type};
 
 use crate::payloads::Dop2ParseTreeExpressible;
 
-use paste::paste;
 
 mod crypto;
 mod device_api;
@@ -643,7 +635,7 @@ fn main() {
     else if let Ok(user_request_id)=UserRequestOven::from_str(&command)
     {
         eprintln!("Sending UserRequest command {:?}", user_request_id);
-        let request = payloader::device::generic::request::UserRequest {request_id: user_request_id};
+        let _request = payloader::device::generic::request::UserRequest {request_id: user_request_id};
     }
     else {
         let hex_str = match &args.hex_string {
@@ -675,37 +667,37 @@ fn main() {
 /*
 
      */
-    if (payloader::device::generic::context::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    if payloader::device::generic::context::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::device::generic::context::DeviceContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::device::oven::program_info::ProgramInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::device::oven::program_step_info::ProgramStepInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::device::generic::ident::ident::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::device::generic::ident::ident::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::device::generic::ident::ident::DeviceIdent::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-    else if (payloader::comm_module::state::datetime::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::comm_module::state::datetime::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::comm_module::state::datetime::DateTimeInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::filesystem::file_list::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::filesystem::file_list::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::filesystem::file_list::FileList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::filesystem::file_info::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::filesystem::file_info::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::filesystem::file_info::FileInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
@@ -715,90 +707,90 @@ else if payloader::filesystem::transfer::FileTransfer::ATTRIBUTE_IDS.contains(&r
     let decoded = payloader::filesystem::transfer::FileTransfer::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::filesystem::rsa_key::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::filesystem::rsa_key::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::filesystem::rsa_key::RsaKey::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 
-    else if (payloader::device::generic::failure::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::generic::failure::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::device::generic::failure::FailureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::device::generic::request::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::device::generic::request::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::device::generic::request::UserRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::comm_module::config::ip::XkmConfigIp::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::comm_module::config::ip::XkmConfigIp::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::comm_module::config::ip::XkmConfigIp::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloader::comm_module::config::ssid::XkmConfigSsidList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if payloader::comm_module::config::ssid::XkmConfigSsidList::ATTRIBUTE_IDS.contains(&root_node.attribute)
 {
     let decoded = payloader::comm_module::config::ssid::XkmConfigSsidList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
     }
-    else if (payloader::device::generic::settings::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::generic::settings::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::generic::settings::SfValueList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloader::device::generic::program_selection::context::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::generic::program_selection::context::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::generic::program_selection::context::PSContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloader::device::generic::state::cs_context::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::generic::state::cs_context::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::generic::state::cs_context::CSContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
 
-    else if (payloader::device::generic::failure::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::generic::failure::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::generic::failure::Failure::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
 
-    else if (payloader::device::generic::state::hours::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::generic::state::hours::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::generic::state::hours::CSHoursOfOperation::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloader::device::generic::ident::feature_list::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::generic::ident::feature_list::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::generic::ident::feature_list::FeatureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloader::device::generic::notifications::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::generic::notifications::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::generic::notifications::DeviceNotifications::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloader::device::washer::process::Process::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::washer::process::Process::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::washer::process::Process::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloader::device::washer::actuator::ActuatorData::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::washer::actuator::ActuatorData::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::washer::actuator::ActuatorData::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloader::device::washer::sensor::Sensor::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if payloader::device::washer::sensor::Sensor::ATTRIBUTE_IDS.contains(&root_node.attribute)
     {
         let decoded = payloader::device::washer::sensor::Sensor::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");

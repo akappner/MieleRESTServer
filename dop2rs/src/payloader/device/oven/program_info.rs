@@ -21,7 +21,6 @@ impl ProgramInfoOven
         pub const ATTRIBUTE_IDS : &[u16] = &[213]; // always in unit 2?
     }
 
-    #[macro_use]
-    use crate::macros;
+    
 
     impl_tryfrom_dop2struct!(ProgramInfoOven);

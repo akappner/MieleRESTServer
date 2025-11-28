@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use dop2marshal::AssocTypes;
 use derive_more::From;
 use crate::payloader::prelude::*;
@@ -16,8 +16,9 @@ impl TryFrom<u64> for Dop2TimestampUtc {
             return Err("timestamp out of range");
         }
 
-        let naive = NaiveDateTime::from_timestamp(value as i64, 0);
-        Ok(Dop2TimestampUtc(DateTime::<Utc>::from_utc(naive, Utc)))
+        let dt = DateTime::from_timestamp(value as i64, 0)
+            .ok_or("timestamp out of range")?;
+        Ok(Dop2TimestampUtc(dt))
     }
 }
 

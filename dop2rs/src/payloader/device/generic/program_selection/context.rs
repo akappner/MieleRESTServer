@@ -1,7 +1,6 @@
 use crate::payloader::prelude::*;
 use crate::Dop2ParseTreeExpressible;
 use crate::payloader::helper::types::{AnnotatedU8, AnnotatedU16, AnnotatedTimeStamp, GenericU8, GenericU16};
-use super::enums::ProgramIdOven;
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct PSAttributesCCA {
