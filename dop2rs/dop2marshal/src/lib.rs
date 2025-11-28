@@ -222,18 +222,16 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
             else
             {
                
-                return Err("failed converting type".to_string());
+                return Err(format!("failed converting type: one or more field conversions failed in {}", stringify!(#struct_name)));
             }
          }
          else
          {
             //println!("{:?}", &payload);
-            return Err("failed converting type".to_string());
+            return Err(format!("failed converting type: one or more field conversions failed in {}", stringify!(#struct_name)));
          }
         }
 }
-        // generated marker structs and impls
-//        #(#marker_defs)*
 
     };
 
