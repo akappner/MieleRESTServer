@@ -57,13 +57,13 @@ macro_rules! impl_tryfrom_dop2struct {
     macro_rules! MakeAnnotatedValueType {
         ($name:ident, $variant:ident, $concrete_type:ty) => {
             #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-            struct $name {
+            pub struct $name {
                 #[dop2field(1, Dop2Payloads::U8)]
-                requestMask: u8,
+                pub request_mask: u8,
                 #[dop2field(2, Dop2Payloads::$variant)]
-                value: $concrete_type,
+                pub value: $concrete_type,
                 #[dop2field(3, Dop2Payloads::E8)]
-                interpretation: ValueInterpretation,
+                pub interpretation: ValueInterpretation,
             }
             //impl_tryfrom_dop2struct!($name); // TODO: Fix this
         };
@@ -74,17 +74,17 @@ macro_rules! impl_tryfrom_dop2struct {
     macro_rules! MakeGenericValueType {
         ($name:ident, $variant:ident, $concrete_type:ty) => {
             #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-            struct $name {
+            pub struct $name {
                 #[dop2field(1, Dop2Payloads::U8)]
-                requestMask: u8,
+                pub request_mask: u8,
                 #[dop2field(2,  Dop2Payloads::$variant)]
-                min: $concrete_type,
+                pub min: $concrete_type,
                 #[dop2field(3,  Dop2Payloads::$variant)]
-                max: $concrete_type,
+                pub max: $concrete_type,
                 #[dop2field(4,  Dop2Payloads::$variant)]
-                current: $concrete_type,
+                pub current: $concrete_type,
                 #[dop2field(5,  Dop2Payloads::$variant)]
-                stepSize: $concrete_type,
+                pub step_size: $concrete_type,
             }
             //impl_tryfrom_dop2struct!($name); // TODO: Fix this
         };

@@ -95,18 +95,18 @@ type Signer = Hmac<Sha256>;
 
 pub struct MieleResponseSignatureInfo
 {
-    pub statusCode : u8,
-    pub contentType : String,
+    pub status_code : u8,
+    pub content_type : String,
     pub date : String,
-    pub decryptedPayload : Vec<u8>
+    pub decrypted_payload : Vec<u8>
 }
 pub struct MieleRequestSignatureInfo
 {
-    pub httpMethod : String,
+    pub http_method : String,
     pub host : String,
     pub request_uri: String,
-    pub contentType: String,
-    pub acceptHeader: String,
+    pub content_type: String,
+    pub accept_header: String,
     pub date: String,
     pub payload : Vec<u8>
 }
@@ -117,16 +117,16 @@ impl MieleResponseSignatureInfo
     {
         let newline : u8  = b'\n';
         let mut bytes : Vec<u8> = Vec::new();
-        bytes.extend_from_slice(self.statusCode.to_string().as_bytes());
+        bytes.extend_from_slice(self.status_code.to_string().as_bytes());
         bytes.push(newline);
 
-        bytes.extend_from_slice(self.contentType.as_bytes());
+        bytes.extend_from_slice(self.content_type.as_bytes());
         bytes.push(newline);
 
         bytes.extend_from_slice(self.date.as_bytes());
         bytes.push(newline);
         
-        bytes.extend_from_slice(&self.decryptedPayload);   
+        bytes.extend_from_slice(&self.decrypted_payload);   
         //bytes.push(0);     
 
         return bytes;   
@@ -138,7 +138,7 @@ impl MieleRequestSignatureInfo
     {
         let newline : u8  = b'\n';
         let mut bytes : Vec<u8> = Vec::new();
-        bytes.extend_from_slice(self.httpMethod.as_bytes());
+        bytes.extend_from_slice(self.http_method.as_bytes());
         bytes.push(newline);
 
         bytes.extend_from_slice(self.host.as_bytes());
@@ -146,10 +146,10 @@ impl MieleRequestSignatureInfo
         //bytes.push(b'/');
         bytes.push(newline);
 
-        bytes.extend_from_slice(self.contentType.as_bytes());
+        bytes.extend_from_slice(self.content_type.as_bytes());
         bytes.push(newline);
 
-        bytes.extend_from_slice(self.acceptHeader.as_bytes());
+        bytes.extend_from_slice(self.accept_header.as_bytes());
         bytes.push(newline);
 
        
@@ -256,7 +256,7 @@ mod tests {
       //  println!("{:?}", plaintext_str);
         assert!(plaintext_str.contains("ReleaseNotes"));
         
-        let headerFields = MieleResponseSignatureInfo {statusCode: 200, contentType: "application/vnd.miele.v1+json; charset=utf-8".to_string(), date: "Sat, 16 Aug 2025 02:37:30 GMT".to_string(), decryptedPayload: plaintext_str.as_bytes().into()};
+        let headerFields = MieleResponseSignatureInfo {status_code: 200, content_type: "application/vnd.miele.v1+json; charset=utf-8".to_string(), date: "Sat, 16 Aug 2025 02:37:30 GMT".to_string(), decrypted_payload: plaintext_str.as_bytes().into()};
         let sig = context.signature(&headerFields.to_bytes());
         assert_eq!(sig, header.signature.hmac.0);
     }
@@ -265,7 +265,7 @@ mod tests {
         let testKey = hex::decode("123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE123456789ABCDEFE").unwrap();
         let context = MieleCryptoContext {group_id: GroupId::from_hex("123456789ABCDEFE"), group_key: MieleKey{0: testKey.try_into().unwrap()} } ;
         //let context = MieleCryptoContext::default();
-        let headerFields : MieleRequestSignatureInfo = MieleRequestSignatureInfo {httpMethod: "GET".to_string(), host:"127.0.0.1".to_string(), request_uri: "/Devices/000177753917/DOP2/2/1585?idx1=0&idx2=1".to_string(), contentType: "application / vnd.miele.v1 + json; charset = utf - 8".to_string(), acceptHeader: "application/vnd.miele.v1+json".to_string(), date: "Thu, 01 Jan 1970 02:09:22 GMT".to_string(), payload: vec!()};
+        let headerFields : MieleRequestSignatureInfo = MieleRequestSignatureInfo {http_method: "GET".to_string(), host:"127.0.0.1".to_string(), request_uri: "/Devices/000177753917/DOP2/2/1585?idx1=0&idx2=1".to_string(), content_type: "application / vnd.miele.v1 + json; charset = utf - 8".to_string(), accept_header: "application/vnd.miele.v1+json".to_string(), date: "Thu, 01 Jan 1970 02:09:22 GMT".to_string(), payload: vec!()};
       //  let header = MieleHeader::from_http_header("1111111111111111:731BAE233DA2EA585D4641BCBBD14CBDA64E74B2C48617F177E1280F56B70C48".to_string());
         
         //let signed_payload = headerFields.to_bytes();

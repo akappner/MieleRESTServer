@@ -1,0 +1,27 @@
+use crate::payloader::prelude::*;
+use crate::Dop2ParseTreeExpressible;
+
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct FileList {
+    #[dop2field(1, Dop2Payloads::MString)]
+    filename: String,
+
+    #[dop2field(2, Dop2Payloads::ArrayU8)]
+    sha256: DopArray<u8>,
+
+    #[dop2field(3, Dop2Payloads::MString)]
+    description: String,
+
+    #[dop2field(4, Dop2Payloads::E8)]
+    file_access_mode: E8, // Note: original field name was fileAccessMode
+
+    #[dop2field(5, Dop2Payloads::U32)]
+    size: u32,
+}
+
+impl FileList {
+    pub const ATTRIBUTE_IDS: &[u16] = &[333];
+}
+
+impl_tryfrom_dop2struct!(FileList);
+

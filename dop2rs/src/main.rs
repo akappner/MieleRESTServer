@@ -1,13 +1,17 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
 
 use clap::Parser;
 use num_enum::{TryFromPrimitive, IntoPrimitive};
 use derive_more::From;
 
-use dop2marshal::AssocTypes;
 use payloader::device;
 use payloads::{UnitIds};
 use payloader::device::generic::state::combined::DeviceCombiState;
+use payloader::device::generic::program_selection::enums::{ProgramIdOven, SelectionType};
+use payloader::device::generic::request::UserRequestOven;
+use payloader::device::generic::notifications::NotificationAckOption;
+use payloader::device::generic::settings::SfId;
+use payloader::device::generic::context::ShowMeHowId;
+use payloader::device::generic::ident::ident::{DeviceType, ProtocolType};
 use syn::token::{Struct, Type};
 
 use crate::payloads::Dop2ParseTreeExpressible;
@@ -66,29 +70,6 @@ pub enum Dop2Type {
     AStruct                     = 33,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Dop2TimestampUtc(DateTime<Utc>);
-
-impl TryFrom<u64> for Dop2TimestampUtc {
-    type Error = &'static str;
-
-    fn try_from(value: u64) -> Result<Self, Self::Error> {
-        if value > i64::MAX as u64 {
-            return Err("timestamp out of range");
-        }
-
-        let naive = NaiveDateTime::from_timestamp(value as i64, 0);
-        Ok(Dop2TimestampUtc(DateTime::<Utc>::from_utc(naive, Utc)))
-    }
-
-    
-}
-impl From<Dop2TimestampUtc> for u64 
-{
-    fn from(value: Dop2TimestampUtc) -> Self {
-        return value.0.timestamp() as u64;
-    }
-}
 
 
 #[allow(dead_code)]
@@ -182,14 +163,6 @@ macro_rules! newtype_int {
 
         #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
         pub struct $name($inner);
-
-//        impl From<$inner> for $name {
- //           fn from(value: $inner) -> Self { $name(value) }
-  //      }
-
- //       impl From<$name> for $inner {
-  //          fn from(value: $name) -> Self { value.0 }
-   //     }
         impl ToDop2Bytes for $name {
             fn to_bytes(self, vec: &mut Vec<u8>) {
                 vec.extend(self.0.to_be_bytes());
@@ -303,192 +276,9 @@ pub enum Dop2Payloads {
     AStruct (DopArray<Dop2Struct>),
 }
 
-/*
-macro_rules! MakeAnnotatedValueType {
-($concrete_type) => {
-paste! {
-struct [<Garbage $concrete_type>] {
 
-    #[dop2field(1, Dop2Payloads::U8)]
-    requestMask : u8,
-    #[dop2field(2, T)]
-    value : $concrete_type, 
-    #[dop2field(3, Dop2Payloads::E16)]
-    interpretation: E16
-}
-}
-}
-}*/
-/*
-macro_rules! MakeAnnotatedValueType {
-($payload:path, $concrete_type:ty) => {
-paste! {
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-struct [<Garbage $concrete_type>] {
-#[dop2field(1, Dop2Payloads::U8)]
-requestMask : u8,
-
-#[dop2field(2, $payload )]
-value: $concrete_type,
-#[dop2field(3, Dop2Payloads::E16)]
-interpretation: E16
-
-}
-}
-};
-}
-*/
-/*
-macro_rules! MakeAnnotatedValueType {
-    ($name:ident, $payload:path, $concrete_type:ty) => {
-//            paste!{
-        #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-        struct $name {
-            #[dop2field(1, Dop2Payloads::U8)]
-            requestMask: u8,
-            #[dop2field(2, $payload )]
-            value: $concrete_type,
-            #[dop2field(3, Dop2Payloads::E16)]
-            interpretation: E16,
-//}
-        }
-    };
-}
-
-MakeAnnotatedValueType!(GarbageU16, Dop2Payloads::U16, u16);
-*/
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
-pub enum ValueInterpretation {
-    None = 0,
-    Percentage = 1,
-    TemperatureC1 = 2,
-    TemperatureC100 = 3,
-    TemperatureF100 = 4,
-    DurationSec = 5,
-    DurationMin = 6,
-    Step = 7,
-    WeightGram = 8,
-    Numerical = 9,
-    Date = 10,
-    MicrowavePowerSteps = 11,
-    RfPower = 12,
-    RfEnergy = 13,
-    RfMode = 14,
-    Browning = 15,
-    DegreeOfCooking = 16,
-    TimeFormat = 17,
-    TimePresentation = 18,
-    Language = 19,
-    BurstOfSteam = 20,
-    DisplayScheme = 21,
-    DisplayInStandby = 22,
-    Lighting = 23,
-    TemperatureUnit = 24,
-    WeightUnit = 25,
-    StartScreen = 26,
-    WaterHardness = 27,
-    TestState = 28,
-    TimeUtc = 29,
-    VoltageAndFrequency = 30,
-    StartPoint = 31,
-    EndPoint = 32,
-    ParameterShape = 33,
-    StartPointOrRightNow = 34,
-    WaterLevelMmws = 35,
-    WaterInletWay = 36,
-    DrumSpeedRpm = 37,
-    OnOff = 38,
-    DoorSwitch = 39,
-    DoorLockSwitch = 40,
-    WpsSwitch = 41,
-    TwindosContainer1Switch = 42,
-    TwindosContainer2Switch = 43,
-    EcoWaterLiter = 44,
-    EcoEnergyKwh = 45,
-    EcoEnergyWatt = 46,
-    StartPointOnlyRightNow = 47,
-    TemperatureF1 = 48,
-    DrumSpeed10Rpm = 49,
-    OperationMode = 50,
-    Name = 51,
-    TimeBackground = 52,
-    DisplayBrightness = 53,
-    DisplayContrast = 54,
-    VolumeSignalTonesLevel = 55,
-    VolumeKeyTone = 56,
-    MotoePosition = 57,
-    DoorExtOpeningEnabled = 58,
-    WawPosition = 59,
-    WawDirection = 60,
-    CookingShelfs3 = 80,
-    CookingShelfs4 = 81,
-    CookingShelfs5 = 82,
-    CookingShelfs6 = 83,
-    PerformanceMode = 90,
-    Altitude = 91,
-    ProfileChange = 92,
-    MicrowavePower = 96,
-    Variant = 97,
-    SensorGroup = 98,
-    TimerDayOfWeekAssignment = 99,
-    TimeUtc0 = 100,
-    ActiveUser = 101,
-    TemperatureText = 102,
-    WeightTenthOfGram = 103,
-    TimeDisplay = 104,
-    DeviceHeight = 105,
-    DeviceWidth = 106,
-    AutoDosCartridgeType = 107,
-    RinseAidCapacityMl = 108,
-    Knock2Open = 109,
-    CountryVariant = 110,
-    NetworkingCountry = 111,
-    CountryLanguage = 112,
-    Lbs = 120,
-    EnergyWh = 121,
-    CoolAirBlowersFollowUp = 122,
-    CookingProgramId = 123,
-    Extend = 124,
-    ApproximationLightOption = 125,
-    BurstsOfSteamType = 126,
-    Lbs100 = 127,
-    DurationSecOrUndefined = 128,
-    WaterHardnessDh = 129,
-    FlowMlMin = 130,
-    TimeIn100Ms = 131,
-    Concentration = 132,
-    WaterSource = 133,
-    TempCalibration = 134,
-    FoodProbeSelection = 135,
-    FoodProbeSerialNumber = 136,
-    LiquidQuantityLiters = 137,
-    LiquidQuantity100Milliliters = 138,
-    LiquidQuantityMilliliters = 139,
-    Day = 140,
-    Program = 141,
-    SpinSpeed10RpmText = 142,
-    Percent10 = 143,
-    Temperature10C = 144,
-    LiquidQuantity500Milliliters = 145,
-    Percent100 = 146,
-    Temperature10F = 147,
-    Quantity10Liters = 148,
-    MicroSiemens10PerCm = 149,
-    MicroSiemensPerCm = 150,
-}
-
-
-
-MakeAnnotatedValueType!(AnnotatedU8, U8, u8);
-MakeAnnotatedValueType!(AnnotatedU16, U16, u16);
-MakeAnnotatedValueType!(AnnotatedU64, U64, u64);
-MakeAnnotatedValueType!(AnnotatedBool, Boolean, bool);
-MakeAnnotatedValueType!(AnnotatedTimeStamp, U64, Dop2TimestampUtc);
-
-MakeGenericValueType!(GenericU8, U8, u8);
-MakeGenericValueType!(GenericU16, U16, u16);
+// Generic* and Annotated* types moved to payloader::helper::types
+pub use payloader::helper::types::*;
 
 #[derive(Debug)]
 struct DopPadding {
@@ -852,7 +642,6 @@ mod payloader;
 pub mod macros;
 
 
-use crate::payloads::{UserRequestOven, ProgramIdOven, PsSelect};
 use crate::payloader::comm_module::request::request::{XkmRequestId, XkmRequest};
 use strum::IntoEnumIterator;
 use std::str::FromStr;
@@ -860,11 +649,11 @@ use std::str::FromStr;
 fn main() {
     let args = Args::parse();
 
-    let commandVerbsXkm = payloader::comm_module::request::request::XkmRequestId::iter().map(|x| x.to_string());
-    let commandVerbsProgram = ProgramIdOven::iter().map(|x| x.to_string());
-   // let commandVerbsUserRequest = UserRequestOven::iter().map(|x| x.to_string());
-    //let mut it : Vec<String> = commandVerbsXkm.chain(commandVerbsProgram)
-    //.chain(commandVerbsUserRequest)
+    let command_verbs_xkm = payloader::comm_module::request::request::XkmRequestId::iter().map(|x| x.to_string());
+    let command_verbs_program = ProgramIdOven::iter().map(|x| x.to_string());
+   // let command_verbs_user_request = UserRequestOven::iter().map(|x| x.to_string());
+    //let mut it : Vec<String> = command_verbs_xkm.chain(command_verbs_program)
+    //.chain(command_verbs_user_request)
   //  .collect();
    // let sorted = it.sort();
     
@@ -887,13 +676,13 @@ fn main() {
         println!("{}", hexdump);
         
     }
-    else if let Ok(programId)=ProgramIdOven::from_str(&command)
+    else if let Ok(program_id)=ProgramIdOven::from_str(&command)
     {
-        eprintln!("Sending PS command {:?}", programId);
-        let request : payloads::PsSelect = payloads::PsSelect { program_id: programId, selection_parameter: 0, selection_type: payloads::SelectionType::InitialDefault };
+        eprintln!("Sending PS command {:?}", program_id);
+        let request : payloader::device::generic::program_selection::select::PsSelect = payloader::device::generic::program_selection::select::PsSelect { program_id, selection_parameter: 0, selection_type: SelectionType::InitialDefault };
         let payload = request.to_dop2_struct_auto().unwrap();
 
-        let root = RootNode::single(UnitIds::MainDevice.into(), PsSelect::ATTRIBUTE_IDS.first().unwrap().clone(), payload);
+        let root = RootNode::single(UnitIds::MainDevice.into(), payloader::device::generic::program_selection::select::PsSelect::ATTRIBUTE_IDS.first().unwrap().clone(), payload);
        
         let mut data : Vec<u8> = vec!();
         root.to_bytes(&mut data);
@@ -902,18 +691,18 @@ fn main() {
         println!("{}", hexdump);
 
     }
-    else if let Ok(userRequestId)=UserRequestOven::from_str(&command)
+    else if let Ok(user_request_id)=UserRequestOven::from_str(&command)
     {
-        eprintln!("Sending UserRequest command {:?}", userRequestId);
-        let request = payloads::UserRequest {request_id: userRequestId};
+        eprintln!("Sending UserRequest command {:?}", user_request_id);
+        let request = payloader::device::generic::request::UserRequest {request_id: user_request_id};
     }
     else {
         let hex_str = match &args.hex_string {
             Some(s) => s,
             None => {
                 println!("Available commands are:\n");
-                println!("*** Program Selection: {:?}\n", commandVerbsProgram.collect::<Vec<_>>());
-                println!("*** Communications Module: {:?}\n", commandVerbsXkm.collect::<Vec<_>>());
+                println!("*** Program Selection: {:?}\n", command_verbs_program.collect::<Vec<_>>());
+                println!("*** Communications Module: {:?}\n", command_verbs_xkm.collect::<Vec<_>>());
                 eprintln!("Error: no hex string provided");
                 std::process::exit(1);
             }
@@ -923,8 +712,8 @@ fn main() {
         Ok(bytes) => bytes,
         Err(e) => {
             println!("Available commands are:");
-            println!("*** Program Selection: {:?}\n", commandVerbsProgram.collect::<Vec<String>>());
-            println!("*** Communications Module: {:?}\n", commandVerbsXkm.collect::<Vec<String>>());
+            println!("*** Program Selection: {:?}\n", command_verbs_program.collect::<Vec<String>>());
+            println!("*** Communications Module: {:?}\n", command_verbs_xkm.collect::<Vec<String>>());
             eprintln!("Error decoding hex string: {}", e);
             std::process::exit(1);
         }
@@ -935,31 +724,11 @@ fn main() {
     
 
 /*
-    match root_node.attribute
-    {
-        payloads::XkmRequest::ATTRIBUTE => 
-        { 
-             let decoded = payloads::XkmRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
-             println!("{decoded:#?}");
-         },
 
-        payloads::PsSelect::ATTRIBUTE => 
-        { 
-             let decoded = payloads::PsSelect::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
-             println!("{decoded:#?}");
-         },
-        payloads::DeviceCombiState::ATTRIBUTE => 
-        { 
-             let decoded = payloads::DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
-             println!("{decoded:#?}");
-        },
-        _ => { println!("no decoding for attribute");
-    }
-}
      */
-    if (payloads::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    if (payloader::device::generic::context::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::DeviceContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::device::generic::context::DeviceContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 else if (payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
@@ -972,24 +741,24 @@ else if (payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIB
     let decoded = payloader::device::oven::program_step_info::ProgramStepInfoOven::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (payloader::device::generic::ident::ident::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::DeviceIdent::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::device::generic::ident::ident::DeviceIdent::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-    else if (payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if (payloader::comm_module::state::datetime::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::DateTimeInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::comm_module::state::datetime::DateTimeInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (payloader::filesystem::file_list::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::FileList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::filesystem::file_list::FileList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (payloader::filesystem::file_info::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::FileInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::filesystem::file_info::FileInfo::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 else if payloader::filesystem::transfer::FileTransfer::ATTRIBUTE_IDS.contains(&root_node.attribute)
@@ -997,20 +766,20 @@ else if payloader::filesystem::transfer::FileTransfer::ATTRIBUTE_IDS.contains(&r
     let decoded = payloader::filesystem::transfer::FileTransfer::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (payloader::filesystem::rsa_key::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::RsaKey::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::filesystem::rsa_key::RsaKey::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 
-    else if (payloads::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if (payloader::device::generic::failure::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::FailureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::device::generic::failure::FailureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
-else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+else if (payloader::device::generic::request::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
 {
-    let decoded = payloads::UserRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+    let decoded = payloader::device::generic::request::UserRequest::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
 }
 else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
@@ -1033,41 +802,41 @@ else if (DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
         let decoded = DeviceCombiState::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
     println!("{decoded:#?}");
     }
-    else if (payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if (payloader::device::generic::settings::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
     {
-        let decoded = payloads::SfValueList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        let decoded = payloader::device::generic::settings::SfValueList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloads::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if (payloader::device::generic::program_selection::context::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
     {
-        let decoded = payloads::PSContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        let decoded = payloader::device::generic::program_selection::context::PSContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloads::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if (payloader::device::generic::state::cs_context::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
     {
-        let decoded = payloads::CSContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
-        println!("{decoded:#?}");
-    }
-
-    else if (payloads::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute))
-    {
-        let decoded = payloads::Failure::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        let decoded = payloader::device::generic::state::cs_context::CSContext::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
 
-    else if (payloads::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if (payloader::device::generic::failure::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute))
     {
-        let decoded = payloads::CSHoursOfOperation::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        let decoded = payloader::device::generic::failure::Failure::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloads::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+
+    else if (payloader::device::generic::state::hours::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute))
     {
-        let decoded = payloads::FeatureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        let decoded = payloader::device::generic::state::hours::CSHoursOfOperation::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
-    else if (payloads::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    else if (payloader::device::generic::ident::feature_list::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
     {
-        let decoded = payloads::DeviceNotifications::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        let decoded = payloader::device::generic::ident::feature_list::FeatureList::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
+        println!("{decoded:#?}");
+    }
+    else if (payloader::device::generic::notifications::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    {
+        let decoded = payloader::device::generic::notifications::DeviceNotifications::from_parse_tree(Dop2Payloads::MStruct(root_node.root_struct));
         println!("{decoded:#?}");
     }
 
@@ -1092,633 +861,13 @@ pub enum UnitIds {
     Filesystem = 15,
 }
 
-    #[repr(u16)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
-pub enum UserRequestOven {
-    Nop = 0,
-    Start = 1,
-    Stop = 2,
-    Pause = 3,
-    StartDelay = 8,
-    DoorOpen = 11,
-    DoorClose = 12,
-    LightOn = 13,
-    LightOff = 14,
-    FactorySettingReset = 15,
-    SwitchOn = 16,
-    Next = 17,
-    Back = 18,
-    SwitchOff = 19,
-    ResetPinCode = 20,
-    KeepWarm = 21,
-    Step = 22,
-    StartRemoteUpdateInstall = 23,
-    ProgramStop = 54,
-    ProgramAbort = 55,
-    ProgramFinalize = 56,
-    ProgramSave = 61,
-    MotorizedFrontPanelOpen = 65,
-    MotorizedFrontPanelClose = 66,
-    HoldingBreak = 68,
-    HoldingStart = 69,
-    WifiOff=112,
-}
-
-#[repr(u16)]
-#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
-pub enum ProgramIdOven {
-    NoProgram = 0,
-    DefrostBottom = 1,
-    AutoHotAir = 2,
-    AutoTopBottomHeat = 3,
-    EcoHotAir1 = 4,
-    EcoHotAir2 = 5,
-    EcoHotAir = 6,
-    RoastAutomatic = 7,
-    UniversalCook = 8,
-    Grill = 9,
-    GrillLarge = 10,
-    GrillSmall = 11,
-    Descale = 12,
-    HotAirPlus = 13,
-    IntenseBaking = 14,
-    ComboCookGrill = 15,
-    ComboCookHotAirPlus = 16,
-    ComboCookTopBottom = 17,
-    CakeSpecial = 18,
-    Microwave = 19,
-    MicrowaveRoastAutomatic = 20,
-    MicrowaveGrill = 21,
-    MicrowaveHotAirPlus = 22,
-    MicrowaveFanGrill = 23,
-    TopBottomHeat = 24,
-    TopHeat = 25,
-    Pyrolysis = 26,
-    RapidHeat = 27,
-    Rinse = 28,
-    FanGrill = 29,
-    EcoHotAir3 = 30,
-    BottomHeat = 31,
-    KeepWarm = 32,
-    DefrostSteam = 33,
-    DefrostMicrowave = 34,
-    ClimateRoastAutomatic = 35,
-    ConvectionBake = 36,
-    ConvectionRoast = 37,
-    MicrowaveConvectionBake = 38,
-    MicrowaveConvectionRoast = 39,
-    ClimateHotAirPlus = 40,
-    HeatBottom = 41,
-    HeatSteam = 42,
-    HeatMicrowave = 43,
-    CookFish = 44,
-    CookMeat = 45,
-    CookVegetables = 46,
-    ClimateConvectionBake = 47,
-    ClimateRoast = 48,
-    ClimateHotAirPlus2 = 49,
-    ClimateIntenseBaking = 50,
-    ClimateTopBottomHeat = 51,
-    ClimateConvectionRoast = 52,
-    Popcorn = 53,
-    QuickMicrowave = 54,
-    RoastAutomaticRf = 55,
-    ConvectionBakeRf = 56,
-    GrillRf = 57,
-    HotAirPlusRf = 58,
-    IntenseBakingRf = 59,
-    TopBottomHeatRf = 60,
-    TopHeatRf = 61,
-    FanGrillRf = 62,
-    BottomHeatRf = 63,
-    ConvectionRoastRf = 64,
-    SteamHeat = 65,
-    SteamHold = 66,
-    SteamAltitudeAdjust = 67,
-    DescaleSoak = 68,
-    DescaleRinse = 69,
-    SteamResidualWater = 70,
-    Rotisserie = 71,
-    SousVide = 72,
-    SteamDry = 73,
-    ClimateIntenseBaking2 = 74,
-    EcoUniversalCook = 75,
-    ClimateTopBottomHeat2 = 76,
-    ComboCookMicrowave = 77,
-    RotisserieLarge = 78,
-    RotisserieSmall = 79,
-    RotisserieFan = 80,
-    AutoRoastAutomatic = 81,
-    AutoIntenseBaking = 82,
-    AutoBottomHeat = 83,
-    AutoTopHeat = 84,
-    SabbathTopBottom = 85,
-    SabbathBottomHeat = 86,
-    AutoSteamCook = 87,
-    HydrocleanBottomHeat = 88,
-    SoloRf = 89,
-    HydrocleanTopBottomHeat = 90,
-    HydrocleanUniversalCook = 91,
-    DryHotAirPlusWithSteam = 92,
-    DrySteamOnly = 93,
-    DryGrillWithSteam = 94,
-}
-
-
-
-#[repr(u8)]
-#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive, EnumIter, EnumString, strum_macros::Display, IntoPrimitive)]
-pub enum SelectionType
-{
-	InitialAsConfigured = 0,
-	InitialDefault = 1,
-	Parametrized = 2,
-	Deselect = 3,
-	InitialFull = 4,
-	InitialAsConfiguredViaSyndication = 10,
-	InitialDefaultViaSyndication = 11,
-	ParametrizedTemperature = 12,
-	Last = 13
-}
-
-
-#[repr(u16)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
-
-pub enum SfId {
-    None = 0,
-    TimeDisplay = 3,
-    TimePresentation = 4,
-    TimeFormat = 5,
-    StartScreen = 10,
-    DisplayBrightness = 11,
-    DisplayColorScheme = 12,
-    VolumeSignalTones = 14,
-    VolumeKeyTone = 17,
-    WelcomeMelodyVolume = 18,
-    Lighting = 21,
-    TemperatureUnit = 22,
-    WeightUnit = 23,
-    SafetyKeyLock = 24,
-    StartupLock = 25,
-    FurnitureFrontRecognition = 26,
-    SensorLightOnApproach = 27,
-    SensorDisplayOnApproach = 28,
-    SensorLowerToneOnApproach = 29,
-    RemoteControl = 30,
-    SupervisionFunction = 31,
-    SupervisionDisplayInStandby = 32,
-    RemoteUpdate = 33,
-    VoiceControl = 34,
-
-    BaseLanguageCountry = 1000,
-    QuickMicrowaveDuration = 1001,
-    QuickMicrowavePower = 1002,
-    PopcornDuration = 1003,
-    KeepWarmMicrowave = 1004,
-    KeepWarmDishwasher = 1005,
-    KeepWarmOven = 1006,
-    AutomaticFlushing = 1007,
-    SteamReduction = 1008,
-    PyrolysisRequest = 1009,
-    PanningScreen = 1010,
-    CoolAirFollowUp = 1011,
-    ProposedTemperatures = 1012,
-    ProposedMicrowavePower = 1013,
-    NetVoltageAndFrequency = 1014,
-    ProbeSensorGroup = 1015,
-    TemperatureCalibration = 1016,
-    CameraActivation = 1017,
-    FastCooling = 1018,
-    ApplianceVariantId = 1019,
-    CurrentRate = 1020,
-    WaterHardness = 1021,
-    CarbonateHardness = 1022,
-    Altitude = 1023,
-    FreshWater = 1024,
-    PerformanceMode = 1025,
-    SpoutAdjustment = 1026,
-    ProfileChange = 1027,
-    ExpertMode = 1028,
-    LightingOnTurnedOn = 1029,
-    LightingOnTurnedOff = 1030,
-    ApplianceLightSwitchOffDelay = 1031,
-    SensorLightActivatesWhenOff = 1032,
-    SensorLightActivatesWhenOn = 1033,
-    DemoMode = 1034,
-
-    AutonomousCleaningActive = 1041,
-    AutonomousMaintenance = 1042,
-    BeanSorting = 1043,
-    ProximitySensorLight = 1044,
-    TeaTimerActivation = 1045,
-    Timer1OnTime = 1046,
-    Timer1OffTime = 1047,
-    Timer1OffDelay = 1048,
-    Timer1WeekdayAssignment = 1049,
-    Timer1OnActive = 1050,
-    Timer1OffActive = 1051,
-    Timer2OnTime = 1052,
-    Timer2OffTime = 1053,
-    Timer2OffDelay = 1054,
-    Timer2WeekdayAssignment = 1055,
-    Timer2OnActive = 1056,
-    Timer2OffActive = 1057,
-    MaintenanceTimer1OnTime = 1058,
-    MaintenanceTimer1WeekdayAssignment = 1059,
-    MaintenanceTimer1OnActive = 1060,
-    MaintenanceTimer2OnTime = 1061,
-    MaintenanceTimer2WeekdayAssignment = 1062,
-    MaintenanceTimer2OnActive = 1063,
-    ActiveUser = 1064,
-    FreshWaterControlEnabled = 1065,
-    BeanPortioningEnabled = 1066,
-    SteamExtractionEnabled = 1067,
-    WaterSofteningEnabled = 1068,
-    BoosterFunction = 1069,
-    QuickTouchDisplay = 1070,
-    CupHeater = 1071,
-    MultiZoneFoodProbeAdd = 1072,
-    MultiZoneFoodProbeSelect = 1073,
-    AutomaticPanelMovement = 1074,
-    SmartFoodId = 1075,
-    AltitudeAdjustment = 1076,
-
-    // Example of proposed cooking temperatures
-    ProposedDefrostOven = 1101,
-    ProposedHotAirAuto = 1102,
-    ProposedTopBottomHeatAuto = 1103,
-    ProposedSteamCook1 = 1104,
-    ProposedSteamCook2 = 1105,
-    ProposedEcoHotAir = 1106,
-    ProposedRoastingAutomatic = 1107,
-    ProposedUniversalCooking = 1108,
-    ProposedGrill = 1109,
-    ProposedLargeGrill = 1110,
-    ProposedSmallGrill = 1111,
-    ProposedHotAirPlus = 1113,
-    ProposedIntensiveBaking = 1114,
-    ProposedCombinationGrill = 1115,
-    ProposedCombinationSteamOven = 1116,
-    ProposedCombinationOven = 1117,
-    ProposedSpecialCake = 1118,
-    ProposedTopBottomHeat = 1124,
-    ProposedTopHeat = 1125,
-    ProposedQuickHeat = 1127,
-    ProposedConvectionGrill = 1129,
-    ProposedBottomHeat = 1131,
-    ProposedKeepWarm = 1132,
-    ProposedDefrostDishwasher = 1133,
-    ProposedConvectionBake = 1136,
-    ProposedHeatOven = 1141,
-    ProposedHeatDishwasher = 1142,
-    ProposedFishCooking = 1144,
-    ProposedMeatCooking = 1145,
-    ProposedVegetableCooking = 1146,
-    ProposedClimateRoastingAutomatic = 1148,
-    ProposedClimateHotAirPlus = 1149,
-    ProposedClimateIntensiveBaking = 1150,
-    ProposedClimateTopBottomHeat = 1151,
-    ProposedRotisserie = 1171,
-    ProposedSousVideCooking = 1172,
-    ProposedSurroundBake = 1173,
-    ProposedEcoUniversalCooking = 1175,
-    ProposedClimateCooking = 1176,
-    ProposedCombinationMicrowaveCooking = 1177,
-    ProposedLargeRotisserie = 1178,
-    ProposedSmallRotisserie = 1179,
-    ProposedConvectionRotisserie = 1180,
-    ProposedConvectionRoast = 1181,
-    ProposedMicrowavePower2 = 1219,
-    ProposedMicrowavePowerAutomatic = 1220,
-    ProposedMicrowavePowerGrill = 1221,
-    ProposedMicrowavePowerHotAirPlus = 1222,
-    ProposedMicrowavePowerConvectionGrill = 1223,
-    ProposedCombinationMicrowavePower = 1277,
-    ReservedInvalid = 32767,
-}
-
-
-#[repr(u16)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
-pub enum ShowMeHowId {
-    None = 0,
-    ReservedInvalid = 32767,
-
-    CaOvDescaling1 = 51,
-    CaOvDescaling2 = 52,
-    CaOvDescaling3 = 53,
-    CaOvDrawInWater = 54,
-    CaOvUseWirelessFoodprobe = 55,
-    CaOvUseWiredFoodprobe = 56,
-    CaOvRotisserie = 57,
-    CaOvAfterPyrolyticCleaning = 58,
-
-    CaSovcUseWirelessFoodprobe = 59,
-    CaSovcUseWiredFoodprobe = 60,
-    CaSovcFreshWaterFill = 61,
-    CaSovcEmptyCondensateTank = 62,
-    CaSovcFlushWaterTankAndFill = 63,
-    CaSovcDescaling = 64,
-    CaSovcFlushFreshWater = 65,
-    CaSovcPurgeFreshWaterFill = 66,
-    CaSovcPurgeEmptyCondensateTank = 67,
-
-    CaSovmFreshWaterFill = 68,
-    CaSovmFlushFreshWaterFill = 69,
-    CaSovmDescaling = 70,
-    CaSovmFlushFreshWater = 71,
-    CaOvmUseWiredFoodprobe = 72,
-
-    CoFillWatertankWithWaterAndDescalingAgent = 73,
-    CoPlaceMaintenanceContainerUnderSpout = 74,
-    CoEmptyDripTrayWasteContainerCleanContactsAndPlaceBack = 75,
-    CoRinseFillInsertWaterContainer = 76,
-    CoRemoveWaterContainerBrewUnitRinseBrewUnit = 77,
-    CoInsertBrewUnitWithTablet = 78,
-    CoFillWatertankWithWaterAndCleaningAgent = 79,
-    CoRinseInsertWaterContainer = 80,
-    CoUnwrapDescalingCartidgeAndFitAsDescribed = 81,
-    CoUnwrapCleaningCartidgeAndFitAsDescribed = 82,
-    CoUnwrapCleaningAndDescalingCartidgeAndFitAsDescribed = 83,
-    CoFitMilkValveConnectMilkPipework = 84,
-    CoNewDescalingCartidgeIsFlooded = 85,
-
-    CaSovcUseWiredFoodprobe2 = 86,
-    CaOvRotisserieR36 = 87,
-    CaOvRotisserieR48 = 88,
-    CaOvReplugWirelessFoodprobe = 89,
-    CaSovcReplugWirelessFoodprobe = 90,
-    CoInsertAdapter = 91,
-    CoRemoveAndCleanMilkValve = 92,
-    CaSovcRemoveAccessoriesAndShelfRunners = 93,
-    CaSovcDropBroilingElementDownAndRemoveCoarseSoiling = 94,
-    CaSovcInsertFilterInTheFloorAndPourCleaningAgent = 95,
-    CaSovcRaiseBroilingElementAndRefitShelfRunnersAndAccessories = 96,
-    CaOvUseWirelessFoodprobeNa30 = 97,
-    CaOvUseWirelessFoodprobeR30R36 = 98,
-    CaOvUseWirelessFoodprobeR48 = 99,
-}
-/* 
-#[repr(u16)]
-#[derive(Debug, Clone, PartialEq, Eq, TryFromPrimitive)]
-pub enum UserRequestId {
-    None = 0,
-    StartProgram = 1,
-    StopProgram = 2,
-    PauseProgram = 3,
-    StartSuperFreezing = 4,
-    StopSuperFreezing = 5,
-    StartSuperCooling = 6,
-    StopSuperCooling = 7,
-    StartDelayProgram = 8,
-    DoorOpen = 11,
-    DoorClose = 12,
-    LightOn = 13,
-    LightOff = 14,
-    FactorySettings = 15,
-    SwitchOnPanel = 16,
-    Next = 17,
-    Back = 18,
-    SwitchOffPanel = 19,
-    ResetPincode = 20,
-    KeepAlive = 21,
-    Step = 22,
-    StartRemoteUpdateInstall = 23,
-    CheckSupervisorCode = 24,
-    ChangeSupervisorCode = 25,
-    ResetSupervisorCode = 26,
-    SupervisorCodeLocked = 27,
-    StopProgramEndSignal = 28,
-    CheckDoorCode = 29,
-    ChangeDoorCode = 30,
-    TracePersistenceActivate = 51,
-    TracePersistenceDeactivate = 52,
-    ProgramStop = 54,
-    ProgramAbort = 55,
-    ProgramFinalize = 56,
-    ProgramClose = 57,
-    BurstOfSteamStart = 59,
-    BurstOfSteamStop = 60,
-    ProgramSave = 61,
-    IncrementQuickMwDuration = 62,
-    FasciaPanelOpen = 65,
-    FasciaPanelClose = 66,
-    Backward = 67,
-    HoldingBreak = 68,
-    HoldingStart = 69,
-    QuickMwStart = 70,
-    PopcornStart = 71,
-    ContinueCookingStart = 72,
-    RfStart = 74,
-    RfStop = 75,
-    CsActuatorOff = 76,
-    CsActuatorOn = 77,
-    AbortPhase1 = 78,
-    AbortPhase2 = 79,
-    AbortPhase3 = 80,
-    AbortPhase4 = 81,
-    DoubleDispense = 82,
-    SaveDispensePhase1 = 83,
-    SaveDispensePhase2 = 84,
-    SaveDispensePhase3 = 85,
-    SaveDispensePhase4 = 86,
-    ParameterSave = 87,
-    ShowFooterInfo = 88,
-    StartDrying = 89,
-    AbortPhase5 = 90,
-    AbortPhase6 = 91,
-    AbortPhase7 = 92,
-    AbortPhase8 = 93,
-    MobileKeyPressed = 94,
-    ProgramStepInfo = 95,
-    ProgramInstructionInfo = 96,
-    BackwardTwoSteps = 97,
-    JumpToFoodIq = 98,
-    PushToTalkStart = 99,
-    PushToTalkBreak = 100,
-    EnterSoftAccessPoint = 104,
-    ProgressStart = 105,
-    ProgressStop = 106,
-    ProgressOk = 107,
-    ShopWindowSequenceAllowed = 108,
-    SwitchApplianceOnDemoMode = 109,
-    StartOwnProgramModification = 110,
-    EnableWiFi = 111,
-    DisableWiFi = 112,
-    StartLocal = 113,
-    ResetInitialGrinding = 114,
-    GlobalMax = 50,
-    ReservedInvalid = 32767,
-}
-*/
-
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
-pub enum NotificationAckOption {
-    None = 0,
-    Ok,
-    Continue,
-    Abort,
-    Back,
-    Start,
-    Stop,
-    Yes,
-    No,
-    StepOver,
-    SwitchOff,
-    Change,
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
-pub enum DeviceType {
-    None,
-    Washer,
-    Dryer,
-    WasherSemiPro,
-    DryerSemiPro,
-    WasherPro,
-    DryerPro,
-    Dishwasher,
-    DishwasherSemiPro,
-    DishwasherPro,
-    Cooker,
-    Microwave,
-    Oven,
-    OvenMicrowaveCombo,
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
-pub enum ProtocolType {
-    Unknown = 0,
-    Uart = 1,
-    MeterBusDop1 = 2,
-    MeterBusDop2 = 3,
-    HdrDop2=4,
-    HdrMaci,
-    SpiMaci,
-    SdioMaci,
-    UartMaci,
-    DbusDop2=200,
-    TodDop2=201,
-    UsbDop2=202
-}
 
 
 
 
 
 
-/*
-macro_rules! impl_tryfrom_wrapper {
-    ($enum:ty, $wrapper:ty) => 
-{
-        impl TryFrom<$wrapper> for $enum {
-            type Error = ();
 
-            fn try_from(value: $wrapper) -> Result<Self, <$enum as TryFrom<$wrapper>>::Error> {
-                <$enum>::try_from(value.0).map_err(|_| ())
-            }
-        }
-        impl TryFrom<DopArray<$wrapper>> for Vec<$enum>
-	{
-            type Error = ();
-	fn try_from (value: DopArray<$wrapper>) -> Result <Self, <$enum as TryFrom<$wrapper>>::Error>
-         {
-         Err("garbage2")
-}
-
-}
-}*/
-
-
-
-
-
-impl_tryfrom_wrapper!(ProgramIdOven, E16);
-
-impl_tryfrom_wrapper!(SelectionType, E8);
-
-impl_tryfrom_wrapper!(NotificationAckOption, E8);
-
-//impl_into_wrapper!(XkmRequestId, E8);
-
-//impl_tryfrom_wrapper!(UserRequestId, E16);
-impl_tryfrom_wrapper!(UserRequestOven, E16);
-
-impl_tryfrom_wrapper!(SfId, E16);
-
-
-impl_tryfrom_wrapper!(ValueInterpretation, E8);
-
-impl_tryfrom_wrapper!(ShowMeHowId, E16);
-
-impl_tryfrom_wrapper!(DeviceType, E8);
-impl_tryfrom_wrapper!(ProtocolType, E8);
-//impl_tryfrom_wrapper!(Dop2TimestampUtc, u64);
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct UserRequest {
-        #[dop2field(1, Dop2Payloads::E16)]
-        pub request_id : UserRequestOven,
-        /*#[dop2field(2, Dop2Payloads::E8)]
-        operation_state : OperationState,
-        #[dop2field(3, Dop2Payloads::E8)]
-        process_state : ProcessState*/
-}
-impl UserRequest
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[1583];
-}
-
-
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct SupportedApplications {
-        #[dop2field(1, Dop2Payloads::Boolean)]
-        mieleAtHome : bool,
-        #[dop2field(2, Dop2Payloads::Boolean)]
-        remoteVision : bool,
-         #[dop2field(3, Dop2Payloads::Boolean)]
-        superVision : bool,
-        #[dop2field(4, Dop2Payloads::Boolean)]
-        smartGrid : bool,
-        #[dop2field(5, Dop2Payloads::Boolean)]
-        mobileControl : bool,
-         #[dop2field(6, Dop2Payloads::Boolean)]
-        unknown1 : bool,
-        #[dop2field(7, Dop2Payloads::Boolean)]
-        unknown2 : bool,
-        #[dop2field(8, Dop2Payloads::Boolean)]
-        voiceControl : bool,
-        #[dop2field(9, Dop2Payloads::Boolean)]
-        unknown3 : bool,
-        #[dop2field(10, Dop2Payloads::Boolean)]
-        featureList : bool,
-        #[dop2field(11, Dop2Payloads::Boolean)]
-        washToDry : bool,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct DeviceIdent {
-        #[dop2field(1, Dop2Payloads::E8)]
-        device_type : DeviceType,
-        #[dop2field(2, Dop2Payloads::E8)]
-        protocol_type : ProtocolType,
-        #[dop2field(5, Dop2Payloads::MStruct)]
-        supported_apps : SupportedApplications,
-      //  #[dop2field(6, Dop2Payloads::U8)] //missing in washer
-       // unit_count : u8,
-        #[dop2field(9, Dop2Payloads::E16)] //should be an enum in washer
-        rf_variant : E16,
-}
-
-impl DeviceIdent
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[144];
-}
 
 pub trait Dop2ParseTreeExpressible : Sized
 {
@@ -1749,23 +898,7 @@ impl TryFrom<Dop2Struct> for PSAttributesCCA
 //impl_tryfrom_dop2struct!(UserRequestOven);
 //impl_tryfrom_dop2struct!(ApplianceState);
 //impl_tryfrom_dop2struct!(SelectionType);
-impl_tryfrom_dop2struct!(SupportedApplications);
-impl_tryfrom_dop2struct!(RsaKey);
-impl_tryfrom_dop2struct!(ErrorInfo);
-impl_tryfrom_dop2struct!(NotificationInfo);
-impl_tryfrom_dop2struct!(QueryInfo);
-impl_tryfrom_dop2struct!(MessageInfo);
-impl_tryfrom_dop2struct!(UserRequest);
-impl_tryfrom_dop2struct!(DeviceIdent);
-impl_tryfrom_dop2struct!(DeviceNotifications);
-impl_tryfrom_dop2struct!(PsSelect);
-impl_tryfrom_dop2struct!(PSAttributesCCA);
-impl_tryfrom_dop2struct!(DeviceAttributesCCA);
 
-impl_tryfrom_dop2struct!(PSContextParametersOven);
-
-impl_tryfrom_dop2struct!(CSContextParametersOven);
-impl_tryfrom_dop2struct!(CSContextParametersCoffeeMaker);
 
 impl_tryfrom_dop2struct!(AnnotatedBool);
 impl_tryfrom_dop2struct!(AnnotatedU8);
@@ -1778,494 +911,12 @@ impl_tryfrom_dop2struct!(GenericU16);
 //impl_tryfrom_dop2struct!(AnnotatedU32);
 impl_tryfrom_dop2struct!(AnnotatedU64);
 impl_tryfrom_dop2struct!(AnnotatedTimeStamp);
-impl_tryfrom_dop2struct!(FileList);
 
-impl_tryfrom_dop2struct!(FailureListItem);
-impl_tryfrom_dop2struct!(FailureList);
-impl_tryfrom_dop2struct!(FeatureListOven);
 
-impl_tryfrom_dop2struct!(Failure);
 
-impl_tryfrom_dop2struct!(CSHoursOfOperation);
 
 
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct DeviceContext // can be for main device or second device -- same struct 
-{
-        #[dop2field(1, Dop2Payloads::MStruct )]
-        state : DeviceCombiState,
-        #[dop2field(7, Dop2Payloads::MStruct )]
-        prog : PSAttributesCCA,
-        #[dop2field(8, Dop2Payloads::MStruct )]
-        deviceAttributes : DeviceAttributesCCA,
-        #[dop2field(9, Dop2Payloads::ArrayE16 )]
-        supportedUserRequests : Vec<UserRequestOven>,
-        #[dop2field(11, Dop2Payloads::Boolean)]
-        mobileStartActive : bool,
-       #[dop2field(12, Dop2Payloads::E16 )]
-        showMeHowId : ShowMeHowId,
-        #[dop2field(13, Dop2Payloads::Boolean )]
-        requestTimeSync : bool,
 
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct DeviceNotifications // can be for main device or second device -- same struct 
-{
-    //    #[dop2field(1, Dop2Payloads::AStruct )]
-      //  info : Vec<NotificationInfo>, // this field appears to be OPTIONAL on a washer. present on an oven.
-
-        #[dop2field(2, Dop2Payloads::AStruct )]
-        messages : Vec<MessageInfo>,
-
-       #[dop2field(3, Dop2Payloads::AStruct )]
-        errors : Vec<ErrorInfo>,
-
-       // #[dop2field(4, Dop2Payloads::AStruct )] // also optional on washer
-       // queries : Vec<QueryInfo>,
-
-}
-
-impl DeviceNotifications
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[131, 392];
-}
-
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct NotificationInfo // can be for main device or second device -- same struct 
-{
-         #[dop2field(1, Dop2Payloads::E16 )]
-        id : E16,
-        #[dop2field(3, Dop2Payloads::ArrayE8 )]
-        ackOptions : Vec<NotificationAckOption>,
-
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct RsaKey 
-{
-    #[dop2field(1, Dop2Payloads::ArrayU8 )]
-    key : DopArray<u8>,
-}
-
-impl RsaKey
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[287];
-}
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct MessageInfo // can be for main device or second device -- same struct 
-{
-    #[dop2field(1, Dop2Payloads::E16 )]
-    id : E16,
-    #[dop2field(3, Dop2Payloads::ArrayE8 )]
-    ackOptions : Vec<NotificationAckOption>,
-}
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct ErrorInfo // can be for main device or second device -- same struct 
-{
-    #[dop2field(1, Dop2Payloads::U32 )]
-    id : u32,
-
-    #[dop2field(2, Dop2Payloads::ArrayE8 )]
-    ackOptions : Vec<NotificationAckOption>,
-
-}
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct QueryInfo // can be for main device or second device -- same struct 
-{
-    #[dop2field(1, Dop2Payloads::E16 )]
-    id : E16,
-
-}
-/*
-#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
-enum FailureCode
-{
-
-}*/
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct FailureListItem
-{
-        #[dop2field(1, Dop2Payloads::U32 )]
-        failureCode : u32,
-        #[dop2field(2, Dop2Payloads::Boolean )]
-        presentNow : bool,
-}
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct FailureList
-{
-        #[dop2field(1, Dop2Payloads::AStruct )]
-        items : Vec<FailureListItem>,
-
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct FileList
-{
-        #[dop2field(1, Dop2Payloads::MString )]
-        filename : String,
-
-        #[dop2field(2, Dop2Payloads::ArrayU8 )]
-        sha256 : DopArray<u8>,
-
-
-        #[dop2field(3, Dop2Payloads::MString )]
-        description : String,
-
-        #[dop2field(4, Dop2Payloads::E8 )]
-        fileAccessMode : E8,
-
-        #[dop2field(5, Dop2Payloads::U32 )]
-        size : u32,
-}
-
-impl FileList
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[333];
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct FileInfo
-{
-        #[dop2field(1, Dop2Payloads::MString )]
-        filename : String,
-
-        #[dop2field(2, Dop2Payloads::ArrayU8 )]
-        sha256 : DopArray<u8>,
-
-        #[dop2field(3, Dop2Payloads::U32 )]
-        currentSize : u32,
-
-        #[dop2field(4, Dop2Payloads::U32 )]
-        maxSize : u32,
-}
-
-impl FileInfo
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[1588];
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct Failure
-{
-        #[dop2field(1, Dop2Payloads::U32 )]
-        failureCode : u32,
-
-        #[dop2field(2, Dop2Payloads::Boolean )]
-        active : bool,
-
-        #[dop2field(3, Dop2Payloads::U16 )]
-        occurrenceFrequency : u16,
-
-        #[dop2field(4, Dop2Payloads::U64 )]
-        occurrenceTime : Dop2TimestampUtc,
-
-        #[dop2field(5, Dop2Payloads::U32 )]
-        operationSeconds : u32,
-
-        #[dop2field(6, Dop2Payloads::U16 )]
-        progId : u16,
-
-        #[dop2field(7, Dop2Payloads::U16 )]
-        blockNumber : u16,
-
-}
-impl Failure
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[117];
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct FeatureListOven
-{
-        #[dop2field(1, Dop2Payloads::U16 )]
-        deviceId : u16,
-
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct FeatureList
-{
-        #[dop2field(1, Dop2Payloads::E8 )]
-        deviceId : E8,
-
-        
-        #[dop2field(2, Dop2Payloads::E8 )]
-        deviceClass : E8,
-
-
-        #[dop2field(3, Dop2Payloads::U16 )]
-        deviceSubClass : u16,
-
-     /*   #[dop2field(4, Dop2Payloads::E8 )]
-        deviceGeneration : E8, */
-
-        #[dop2field(5, Dop2Payloads::Boolean )]
-        hasSearch : bool,
-
-        #[dop2field(6, Dop2Payloads::Boolean )]
-        hasCamera : bool,
-
-        #[dop2field(7, Dop2Payloads::E8 )]
-        deviceIdSubType : E8,
-
-        #[dop2field(131, Dop2Payloads::MStruct )]
-        featureListOven : FeatureListOven,
-
-
-
-
-}
-impl FeatureList
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[348];
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct CSHoursOfOperation
-{
-        #[dop2field(1, Dop2Payloads::U32 )]
-        hoursOfOperation : u32,
-
-        
-        #[dop2field(2, Dop2Payloads::U32 )]
-        hoursOfOperationBeforeReplacement : u32,
-
-
-        #[dop2field(3, Dop2Payloads::U32 )]
-        hoursOfOperationSinceLastMaintenance : u32,
-
-        #[dop2field(4, Dop2Payloads::U32 )]
-        hoursOfOperationMode1 : u32,
-
-        #[dop2field(5, Dop2Payloads::U32 )]
-        hoursOfOperationMode2 : u32,
-
-}
-impl CSHoursOfOperation
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[119];
-}
-
-impl FailureList
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[148];
-   
-}
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct SfValueList
-{
-    #[dop2field(1, Dop2Payloads::U8 )]
-    valid_count : u8,
-    #[dop2field(2, Dop2Payloads::ArrayE16 )]
-    valid : Vec<SfId>,
-}
-
-impl SfValueList
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[114];
-    
-}
-
-impl DeviceContext
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[391, 1585];
-    
-}
-
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct DeviceAttributesCCA {
-//    #[dop2field(1, Dop2Payloads::U32 )]
-//    milkCleaningCntr : u32,
-    #[dop2field(11, Dop2Payloads::E8 )]
-    doorLock : E8,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct CSContext
-{
-    #[dop2field(1, Dop2Payloads::E16)]
-    pub(crate) program_id : ProgramIdOven,
-
-    #[dop2field(3, Dop2Payloads::MStruct )]
-    contextOven : CSContextParametersOven,
-
-    #[dop2field(4, Dop2Payloads::MStruct )]
-    contextcoffeMaker: CSContextParametersCoffeeMaker
-}
-impl CSContext
-    {
-        pub const ATTRIBUTE_IDS : &[u16] = &[154]; // always in unit 1?
-    }
-
-    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-    pub struct CSContextParametersOven
-    {
-        #[dop2field(1, Dop2Payloads::MStruct )]
-        open : AnnotatedBool,
-         #[dop2field(2, Dop2Payloads::MStruct )]
-        lock : AnnotatedBool,
-        #[dop2field(3, Dop2Payloads::MStruct )]
-        on : AnnotatedBool,
-        #[dop2field(4, Dop2Payloads::MStruct )]
-        level : GenericU8,
-    }    
-
-    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-    pub struct CSContextParametersCoffeeMaker
-    {
-        #[dop2field(5, Dop2Payloads::MStruct )]
-        ceramicValve : GenericU8,
-        
-         #[dop2field(6, Dop2Payloads::MStruct )]
-        brewingUnit : GenericU8,
-        #[dop2field(7, Dop2Payloads::MStruct )]
-        pump : GenericU8,
-#[dop2field(8, Dop2Payloads::MStruct )]
-        spout : GenericU8, 
-
-        #[dop2field(12, Dop2Payloads::MStruct )]
-        fan : GenericU8, 
-    }    
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct PSContext 
-{
-    #[dop2field(4, Dop2Payloads::MStruct )]
-    contextOven : PSContextParametersOven,
-    #[dop2field(7, Dop2Payloads::MStruct )]
-    attributesOven : PSAttributesCCA,
-}
-
-impl PSContext
-    {
-        pub const ATTRIBUTE_IDS : &[u16] = &[1574]; // always in unit 1?
-    }
-
-
-
-
-// TODO: implement ProgramList 2, 212
-
-
-    
-    #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct PSContextParametersOven
-{
-   #[dop2field(1, Dop2Payloads::MStruct )]
-    grill_level : GenericU8,
-    #[dop2field(2, Dop2Payloads::MStruct )]
-    moisture : GenericU8,
-    #[dop2field(5, Dop2Payloads::MStruct )]
-    level : GenericU8,
-    #[dop2field(6, Dop2Payloads::MStruct )]
-    temperature : GenericU16,
-    //TODO
-}
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct PSAttributesCCA {
-    #[dop2field(1, Dop2Payloads::E16 )]
-    progPhase : E16,
-
-    #[dop2field(2, Dop2Payloads::E16 )]
-    progSubPhase : E16,
-        #[dop2field(3, Dop2Payloads::MStruct )]
-        progress : AnnotatedU16,
-
-        #[dop2field(6, Dop2Payloads::MStruct )]
-        displayTemperature : AnnotatedU16,
-
-
-        #[dop2field(7, Dop2Payloads::MStruct )]
-        displayCoreTemperature : AnnotatedU16,
-
-        #[dop2field(21, Dop2Payloads::MStruct )]
-        temperatureSetpoint : AnnotatedU16,
-
-        #[dop2field(22, Dop2Payloads::MStruct )]
-        moistureSetpoint : AnnotatedU8,
-
-        #[dop2field(24, Dop2Payloads::MStruct )]
-        powerSetpoint : AnnotatedU8,
-
-
-        #[dop2field(26, Dop2Payloads::MStruct )]
-        startTime : AnnotatedTimeStamp,
-
-        #[dop2field(29, Dop2Payloads::MStruct )]
-        nextActionTime : AnnotatedTimeStamp,
-
-}
-
-
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct DateTimeInfo {
-       #[dop2field(1, Dop2Payloads::U64)]
-        utc_time : Dop2TimestampUtc, // TODO: bring this back
-       #[dop2field(2, Dop2Payloads::I32)]
-        utc_offset : i32
-}
-
-impl DateTimeInfo 
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[122];
-}
-
-
-
-
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
-pub struct PsSelect {
-       #[dop2field(1, Dop2Payloads::E16)]
-        pub(crate) program_id : ProgramIdOven,
-
-        #[dop2field(2, Dop2Payloads::U16)]
-        pub(crate) selection_parameter : u16,
-
-        #[dop2field(3, Dop2Payloads::E8)]
-        pub(crate) selection_type : SelectionType,
-        
-}
-    impl PsSelect
-    {
-        pub const ATTRIBUTE_IDS : &[u16] = &[1577];
-/*        pub fn to_dop2_struct (&self) -> Result<Dop2Struct, String>
-        {
-            let mut fields: Vec<TaggedDopField> = vec!();
-            let request_id_payload : Dop2Payloads = Dop2Payloads::E16(self.program_id.clone().into());
-            let request_id_field : TaggedDopField = TaggedDopField{ field_index: 1, tag: Dop2PayloadsKind::from(request_id_payload.clone()), value: request_id_payload};
-            let selection_parameter_payload : Dop2Payloads = Dop2Payloads::U16(self.selection_parameter.clone().into());
-            let selection_parameter_field : TaggedDopField = TaggedDopField{ field_index: 2, tag: Dop2PayloadsKind::from(selection_parameter_payload.clone()), value: selection_parameter_payload};
-            let selection_type_payload :  Dop2Payloads = Dop2Payloads::E8(self.selection_type.clone().into());
-            let selection_type_field : TaggedDopField = TaggedDopField{ field_index: 3, tag: Dop2PayloadsKind::from(selection_type_payload.clone()), value: selection_type_payload};
-           
-            fields.push(request_id_field);
-            fields.push(selection_parameter_field);
-            fields.push(selection_type_field);
-            Ok(Dop2Struct::from_fields (fields))
-        } */
-
-/*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
-        {
-            if let Dop2Payloads::MStruct(x)=payload // if payload cannot be deserialized as struct, fail
-            {
-                if let Dop2Payloads::E16(program_id) = x.fields[0].value
-                {
-                    let intermediate : E16 = program_id.try_into().unwrap();
-                    return Ok(PsSelect{program_id: intermediate.0.try_into().unwrap() })
-                }
-                else 
-                {
-                    return Err("Entity mismatch while deserializing field".to_string())
-                }
-            }
-            Err("Entity mismatch".to_string())
-        }
-    */
-    }
 }
 
 #[cfg(test)]

@@ -1,1 +1,9 @@
+pub mod attributes;
+pub mod context;
+pub mod failure;
+pub mod ident;
+pub mod notifications;
+pub mod program_selection;
+pub mod request;
+pub mod settings;
 pub mod state;

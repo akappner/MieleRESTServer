@@ -5,13 +5,13 @@ use crate::Dop2ParseTreeExpressible;
 pub struct ProgramInfoOven 
 {
 #[dop2field(1, Dop2Payloads::U8 )]
-stepNumber : u8,
+step_number : u8,
 
 #[dop2field(2, Dop2Payloads::U8 )]
-currentStep : u8,
+    current_step : u8,
 
 #[dop2field(5, Dop2Payloads::Boolean )]
-startDelay : bool, // TODO: add remaining fields
+    start_delay : bool, // TODO: add remaining fields
 
 }
 
