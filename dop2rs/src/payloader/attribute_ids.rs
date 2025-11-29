@@ -83,5 +83,6 @@ register_root_nodes! {
     
     // Meta types
     crate::payloader::meta::object_ids::SysObjectId => &[19],
+    crate::payloader::meta::object_ids::SoftwareIds => &[17],
 }
 
