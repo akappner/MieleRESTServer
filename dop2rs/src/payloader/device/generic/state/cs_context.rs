@@ -60,9 +60,9 @@ pub struct CSContext {
     #[dop2field(1, Dop2Payloads::E16)]
     pub(crate) program_id: ProgramIdOven,
     #[dop2field(2, Dop2Payloads::MStruct)]
-    context_washer: CSContextParametersWasher,
-   // #[dop2field(3, Dop2Payloads::MStruct)]
-   // context_oven: CSContextParametersOven,
+    pub(crate) context_washer: Option<CSContextParametersWasher>,
+    #[dop2field(3, Dop2Payloads::MStruct)]
+    pub(crate) context_oven: Option<CSContextParametersOven>,
   //  #[dop2field(4, Dop2Payloads::MStruct)]
    // context_coffee_maker: CSContextParametersCoffeeMaker,
 }

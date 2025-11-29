@@ -109,20 +109,29 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
 
                 if is_option
                 {
-                    impls.push(quote! {
-                        let #enum_expr(#field_ident) = x.get_field(#number).clone() && 
-                    });
+                    
+                    /*impls.push(quote! {
+                        let #enum_expr(#field_ident) = x.get_payload(#number) && 
+                    });*/
                     if constructor_fragments.len() > 0
                     {
                         constructor_fragments.push(quote!{,});
                     }
                     constructor_fragments.push(quote! {
-                        #field_ident: #field_ident.try_into().unwrap()
+                       #field_ident: match x.get_payload(#number)
+                       {
+                         Some(test) => match test {
+                            #enum_expr(unwrapped) => Some(unwrapped.try_into().unwrap()),
+                            _ => None
+                         },
+                         None => None
+                       }
                     })
 
                 }
                 else 
                 {
+                    //println!("field_ident: {:?} is not an option", stringify!(#field_ident));
                 impls.push(quote! {
                     let Some(#enum_expr(#field_ident)) = x.get_payload(#number) && 
                 });
@@ -130,20 +139,30 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                 {
                     constructor_fragments.push(quote!{,});
                 }
-                constructor_fragments.push(quote! {
-                    #field_ident: #field_ident.try_into().unwrap()
-                });
+                
+                if is_option
 
+                {
+                    
+                }
+                else {
+                    constructor_fragments.push(quote! {
+                        #field_ident: #field_ident.try_into().unwrap()
+                    });
                 marshalling_field_definitions.push(quote!( { 
                //     let marshaling_payload_ident : Dop2Payloads = Dop2Payloads::U16(self.selection_parameter.clone().into());
                  //   let marshaling_payload_ident = (self.#field_ident).clone(); // this works
-
+                    //if (let Some(unwrapped_value) = self.#field_ident) 
+                    { // skip the field if it's None
                     let #marshaling_payload_ident : Dop2Payloads = #enum_expr (self.#field_ident.clone().try_into().unwrap()).clone().into(); // this works
                     let #marshaling_field_ident : TaggedDopField = TaggedDopField { field_index: #number, tag: Dop2PayloadsKind::from(#marshaling_payload_ident.clone()), value: #marshaling_payload_ident};
                     fields.push(#marshaling_field_ident);
+                    }
                 
                   //  let #marshaling_field_ident = 3;
                 } ));
+
+                }
             }
         } }
     }
