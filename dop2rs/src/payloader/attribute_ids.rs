@@ -80,5 +80,8 @@ register_root_nodes! {
     crate::payloader::filesystem::file_write::FileWrite => &[1590],
     crate::payloader::filesystem::transfer::FileTransfer => &[336],
     crate::payloader::filesystem::rsa_key::RsaKey => &[287],
+    
+    // Meta types
+    crate::payloader::meta::object_ids::SysObjectId => &[19],
 }
 
