@@ -1,4 +1,5 @@
 use crate::payloader::prelude::*;
+use crate::payloader::helper::types::Dop2IpV4Adress;
 use crate::Dop2ParseTreeExpressible;
 
 #[repr(u8)]
@@ -19,22 +20,22 @@ pub struct XkmConfigIp {
     ip_auto: bool,
 
     #[dop2field(2, Dop2Payloads::ArrayU8)]
-    ip_address: DopArray<u8>, // 4 bytes representing IPv4 address
+    ip_address: Dop2IpV4Adress, // 4 bytes representing IPv4 address
 
     #[dop2field(3, Dop2Payloads::ArrayU8)]
-    subnet_mask: DopArray<u8>, // 4 bytes representing IPv4 subnet mask
+    subnet_mask: Dop2IpV4Adress, // 4 bytes representing IPv4 subnet mask
 
     #[dop2field(4, Dop2Payloads::ArrayU8)]
-    gateway_address: DopArray<u8>, // 4 bytes representing IPv4 gateway
+    gateway_address: Dop2IpV4Adress, // 4 bytes representing IPv4 gateway
 
     #[dop2field(5, Dop2Payloads::Boolean)]
     dns_server_auto: bool,
 
     #[dop2field(6, Dop2Payloads::ArrayU8)]
-    dns_server1: DopArray<u8>, // 4 bytes representing IPv4 DNS server 1
+    dns_server1: Dop2IpV4Adress, // 4 bytes representing IPv4 DNS server 1
 
     #[dop2field(7, Dop2Payloads::ArrayU8)]
-    dns_server2: DopArray<u8>, // 4 bytes representing IPv4 DNS server 2
+    dns_server2: Dop2IpV4Adress, // 4 bytes representing IPv4 DNS server 2
 
     #[dop2field(8, Dop2Payloads::ArrayU8)]
     wifi_key: DopArray<u8>, // WiFi password (masked, 63 bytes)

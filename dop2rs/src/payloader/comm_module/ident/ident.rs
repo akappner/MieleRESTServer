@@ -1,4 +1,5 @@
 use crate::payloader::prelude::*;
+use crate::payloader::helper::types::Dop2MacAddress;
 use crate::Dop2ParseTreeExpressible;
 
 /// Representation of the XKM identification information (unit 14, attribute 1565).
@@ -29,17 +30,17 @@ pub struct XkmIdent {
     #[dop2field(5, Dop2Payloads::U16)]
     software_id: u16,
 
-    /// WiFi MAC address bytes
+    /// WiFi MAC address
     #[dop2field(6, Dop2Payloads::ArrayU8)]
-    mac_address_wifi: DopArray<u8>,
+    mac_address_wifi: Dop2MacAddress,
 
     /// Application scope (enum, stored as E8)
     #[dop2field(7, Dop2Payloads::E8)]
     application_scope: E8,
 
-    /// LAN MAC address bytes
+    /// LAN MAC address
     #[dop2field(8, Dop2Payloads::ArrayU8)]
-    mac_address_lan: DopArray<u8>,
+    mac_address_lan: Dop2MacAddress,
 }
 
 impl_tryfrom_dop2struct!(XkmIdent);

@@ -1,10 +1,38 @@
 use crate::payloader::prelude::*;
 use crate::Dop2ParseTreeExpressible;
 
+/// Enum representing the XKM connection state (mirrors `EnumXKMState` in the
+/// original implementation, but without the `GLOBAL_` prefix in the name
+/// or the variants).
+#[repr(u8)]
+#[derive(
+    Debug,
+    Clone,
+    TryFromPrimitive,
+    IntoPrimitive,
+    PartialEq,
+    Eq,
+    EnumIter,
+    EnumString,
+    strum_macros::Display,
+)]
+pub enum XkmState {
+    Init = 0,
+    NotConnected = 1,
+    Connected = 2,
+    ApInactive = 3,
+    ApActive = 4,
+    NetworkDeactivated = 7,
+    Connecting = 8,
+    ConnectedEthernet = 9,
+}
+
+crate::impl_tryfrom_wrapper!(XkmState, E8);
+
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct XkmStateInfo {
     #[dop2field(1, Dop2Payloads::E8)]
-    state: E8,
+    state: XkmState,
 
     #[dop2field(2, Dop2Payloads::U8)]
     signal_quality: u8,
