@@ -38,6 +38,7 @@ register_root_nodes! {
     // Oven types
     crate::payloader::device::oven::program_info::ProgramInfoOven => &[213],
     crate::payloader::device::oven::program_step_info::ProgramStepInfoOven => &[214],
+    crate::payloader::device::generic::ident::program_groups_complete::ProgramGroupsComplete => &[1599],
     
     // Washer types
     crate::payloader::device::washer::process::Process => &[6195],
@@ -62,7 +63,9 @@ register_root_nodes! {
     
     // Communication module types
     crate::payloader::comm_module::state::datetime::DateTimeInfo => &[122],
+    crate::payloader::comm_module::state::state::XkmStateInfo => &[1568],
     crate::payloader::comm_module::request::request::XkmRequest => &[130],
+    crate::payloader::comm_module::update::control::UpdateControl => &[170],
     crate::payloader::comm_module::config::ip::XkmConfigIp => &[1573],
     crate::payloader::comm_module::config::ssid::XkmConfigSsidList => &[110],
     crate::payloader::comm_module::supervision::config::SuperVisionListConfig => &[1570],
