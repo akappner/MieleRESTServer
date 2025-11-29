@@ -1,5 +1,6 @@
 use crate::payloader::prelude::*;
 use crate::Dop2ParseTreeExpressible;
+use crate::payloader::device::generic::enums::MieleDeviceId;
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct FeatureListOven {
@@ -12,7 +13,7 @@ impl_tryfrom_dop2struct!(FeatureListOven);
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct FeatureList {
     #[dop2field(1, Dop2Payloads::E8)]
-    device_id: E8,
+    device_id: MieleDeviceId,
     #[dop2field(2, Dop2Payloads::E8)]
     device_class: E8,
     #[dop2field(3, Dop2Payloads::U16)]

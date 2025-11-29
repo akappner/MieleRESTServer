@@ -55,6 +55,7 @@ register_root_nodes! {
     crate::payloader::device::generic::notifications::DeviceNotifications => &[131, 392],
     crate::payloader::device::generic::program_selection::context::PSContext => &[1574],
     crate::payloader::device::generic::program_selection::select::PsSelect => &[1577],
+    crate::payloader::device::generic::cets::CookingEndTimeSynchronizationStatus => &[412],
     
     // Device state types
     crate::payloader::device::generic::state::combined::DeviceCombiState => &[1586],

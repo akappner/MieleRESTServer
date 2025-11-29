@@ -1,5 +1,6 @@
 use crate::payloader::prelude::*;
 use crate::Dop2ParseTreeExpressible;
+use crate::payloader::device::generic::enums::MieleDeviceId;
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct SuperVisionListConfig {
@@ -27,7 +28,7 @@ pub struct SuperVisionListItem {
 
         /// Device ID enum (matches `deviceIdEnum` in Python)
         #[dop2field(2, Dop2Payloads::E8)]
-        device_id_enum: E8,
+        device_id_enum: MieleDeviceId,
 
         /// Device name bytes (null-terminated, padded string)
         ///
