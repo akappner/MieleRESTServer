@@ -1,13 +1,32 @@
 // Macro to register ATTRIBUTE_IDS for all root node types
 // This centralizes the definition of attribute IDs for all payloader types
+// It also generates handler registration code
 
+// Trait for types that have ATTRIBUTE_IDS
+pub trait HasAttributeIds {
+    const ATTRIBUTE_IDS: &'static [u16];
+}
+
+#[macro_export]
 macro_rules! register_root_nodes {
+    // Define ATTRIBUTE_IDS for types and generate handler registration function
     ($($type:ty => $ids:expr),* $(,)?) => {
+        // Generate ATTRIBUTE_IDS definitions
         $(
             impl $type {
                 pub const ATTRIBUTE_IDS: &[u16] = $ids;
             }
+            impl HasAttributeIds for $type {
+                const ATTRIBUTE_IDS: &'static [u16] = $ids;
+            }
         )*
+        
+        // Generate a function that registers all handlers
+        pub fn register_all_handlers(registry: &mut crate::attribute_registry::AttributeRegistry) {
+            $(
+                registry.register_handler::<$type>();
+            )*
+        }
     };
 }
 
