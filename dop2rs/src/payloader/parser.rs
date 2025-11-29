@@ -51,6 +51,14 @@ pub struct DopArray<T: Dop2PayloadExpressible + ToDop2Bytes> {
     pub elements: Vec<T>,
 }
 
+impl DopArray<u8> {
+    /// Converts the byte array to a hexadecimal string representation
+    pub fn to_hex_str(&self) -> String {
+        hex::encode(&self.elements)
+    }
+}
+
+
 impl<T> Into<Vec<T>> for DopArray<T>
 where
     T: Dop2PayloadExpressible + ToDop2Bytes,
@@ -101,6 +109,7 @@ impl ToDop2Bytes for bool {
         }
     }
 }
+
 
 impl Dop2PayloadExpressible for String {
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
