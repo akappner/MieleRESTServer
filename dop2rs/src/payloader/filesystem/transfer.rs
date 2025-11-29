@@ -3,7 +3,7 @@ use crate::Dop2ParseTreeExpressible;
 use crate::payloader::filesystem::enums::FileOperation;
 use crate::payloader::filesystem::enums::FileOperationStatus;
 
-#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+#[derive(Clone, PartialEq, Eq, AssocTypes)]
 pub struct FileTransfer {
     #[dop2field(1, Dop2Payloads::MString)]
     file_name: String,
@@ -31,4 +31,19 @@ pub struct FileTransfer {
 }
 
 impl_tryfrom_dop2struct!(FileTransfer);
+
+impl std::fmt::Debug for FileTransfer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FileTransfer")
+            .field("file_name", &self.file_name)
+            .field("file_operation", &self.file_operation)
+            .field("file_operation_status", &self.file_operation_status)
+            .field("offset", &self.offset)
+            .field("file_size", &self.file_size)
+            .field("data_length", &self.data_length)
+            .field("dummy", &self.dummy)
+            .field("data", &format!("DopArray<u8>(count: {}, hex: {})", self.data.count, self.data.to_hex_str()))
+            .finish()
+    }
+}
 
