@@ -1,39 +1,7 @@
 use crate::payloader::prelude::*;
 use crate::Dop2ParseTreeExpressible;
-
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
-pub enum FileOperation {
-    Open = 0,
-    Write = 1,
-    Close = 2,
-    Discard = 3,
-    Sha256 = 4,
-    DiscardValidationFailed = 5,
-    Delete = 6,
-    Read = 7,
-    Finalize = 8,
-    Invalid = 255,
-}
-
-crate::impl_tryfrom_wrapper!(FileOperation, E8);
-
-#[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
-pub enum FileOperationStatus {
-    NoError = 0,
-    CannotOpen = 1,
-    FileNotFound = 2,
-    EndOfFile = 3,
-    WriteFailed = 4,
-    VerifyFailed = 5,
-    FileDiscard = 6,
-    OutOfMemory = 7,
-    ReadInProgress = 8,
-    Invalid = 255,
-}
-
-crate::impl_tryfrom_wrapper!(FileOperationStatus, E8);
+use crate::payloader::filesystem::enums::FileOperation;
+use crate::payloader::filesystem::enums::FileOperationStatus;
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct FileTransfer {

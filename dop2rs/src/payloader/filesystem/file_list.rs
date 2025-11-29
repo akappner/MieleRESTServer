@@ -1,5 +1,6 @@
 use crate::payloader::prelude::*;
 use crate::Dop2ParseTreeExpressible;
+use crate::payloader::filesystem::enums::FileAccessMode;
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct FileList {
@@ -13,7 +14,7 @@ pub struct FileList {
     description: String,
 
     #[dop2field(4, Dop2Payloads::E8)]
-    file_access_mode: E8, // Note: original field name was fileAccessMode
+    file_access_mode: FileAccessMode,
 
     #[dop2field(5, Dop2Payloads::U32)]
     size: u32,

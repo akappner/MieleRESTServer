@@ -80,6 +80,10 @@ impl AttributeRegistry {
         );
         register_handler!(
             self,
+            crate::payloader::filesystem::file_write::FileWrite
+        );
+        register_handler!(
+            self,
             crate::payloader::filesystem::transfer::FileTransfer
         );
         register_handler!(

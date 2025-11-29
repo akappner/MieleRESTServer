@@ -52,6 +52,7 @@ register_root_nodes! {
     // Filesystem types
     crate::payloader::filesystem::file_list::FileList => &[333],
     crate::payloader::filesystem::file_info::FileInfo => &[1588],
+    crate::payloader::filesystem::file_write::FileWrite => &[1590],
     crate::payloader::filesystem::transfer::FileTransfer => &[336],
     crate::payloader::filesystem::rsa_key::RsaKey => &[287],
 }
