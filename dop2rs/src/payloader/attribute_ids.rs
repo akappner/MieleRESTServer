@@ -68,6 +68,8 @@ register_root_nodes! {
     crate::payloader::comm_module::update::control::UpdateControl => &[170],
     crate::payloader::comm_module::config::ip::XkmConfigIp => &[1573],
     crate::payloader::comm_module::config::ssid::XkmConfigSsidList => &[110],
+    crate::payloader::comm_module::ident::ident::XkmIdent => &[1565],
+    crate::payloader::comm_module::ident::ident_label::XkmIdentLabel => &[1566],
     crate::payloader::comm_module::supervision::config::SuperVisionListConfig => &[1570],
     crate::payloader::comm_module::supervision::config::SuperVisionListItem => &[1571],
     
