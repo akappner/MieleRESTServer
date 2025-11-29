@@ -50,9 +50,5 @@ pub struct PSContext {
     attributes_oven: PSAttributesCCA,
 }
 
-impl PSContext {
-    pub const ATTRIBUTE_IDS: &[u16] = &[1574];
-}
-
 impl_tryfrom_dop2struct!(PSContext);
 

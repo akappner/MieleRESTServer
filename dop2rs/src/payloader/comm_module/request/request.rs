@@ -23,7 +23,6 @@ pub struct XkmRequest {
 }
     impl XkmRequest
     {
-        pub const ATTRIBUTE_IDS : &[u16] = &[130];
         pub const ATTRIBUTE : u16 = 130; // typically unit 14
 /*        pub fn from_parse_tree (payload: Dop2Payloads) -> Result<Self, String>
         {

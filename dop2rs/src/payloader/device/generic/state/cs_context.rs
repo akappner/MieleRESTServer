@@ -43,9 +43,5 @@ pub struct CSContext {
     context_coffee_maker: CSContextParametersCoffeeMaker,
 }
 
-impl CSContext {
-    pub const ATTRIBUTE_IDS: &[u16] = &[154];
-}
-
 impl_tryfrom_dop2struct!(CSContext);
 

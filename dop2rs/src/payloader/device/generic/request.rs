@@ -41,9 +41,5 @@ pub struct UserRequest {
     pub request_id: UserRequestOven,
 }
 
-impl UserRequest {
-    pub const ATTRIBUTE_IDS: &[u16] = &[1583];
-}
-
 impl_tryfrom_dop2struct!(UserRequest);
 

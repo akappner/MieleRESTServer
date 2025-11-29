@@ -12,9 +12,5 @@ pub struct PsSelect {
     pub(crate) selection_type: SelectionType,
 }
 
-impl PsSelect {
-    pub const ATTRIBUTE_IDS: &[u16] = &[1577];
-}
-
 impl_tryfrom_dop2struct!(PsSelect);
 

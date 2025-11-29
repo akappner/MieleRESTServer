@@ -10,9 +10,5 @@ pub struct DateTimeInfo {
     utc_offset: i32,
 }
 
-impl DateTimeInfo {
-    pub const ATTRIBUTE_IDS: &[u16] = &[122];
-}
-
 impl_tryfrom_dop2struct!(DateTimeInfo);
 

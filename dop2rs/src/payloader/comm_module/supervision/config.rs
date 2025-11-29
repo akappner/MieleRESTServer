@@ -17,11 +17,6 @@ pub struct SuperVisionListConfig {
         //on_error_only : bool,
 }
 
-impl SuperVisionListConfig
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[1570];
-}
-
 impl_tryfrom_dop2struct!(SuperVisionListConfig);
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
@@ -38,11 +33,6 @@ pub struct SuperVisionListItem {
         //active : bool,
         //#[dop2field(6, Dop2Payloads::Boolean)]
         //on_error_only : bool,
-}
-
-impl SuperVisionListItem
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[1571];
 }
 
 impl_tryfrom_dop2struct!(SuperVisionListItem);

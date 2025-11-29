@@ -18,10 +18,6 @@ pub struct FailureList {
     items: Vec<FailureListItem>,
 }
 
-impl FailureList {
-    pub const ATTRIBUTE_IDS: &[u16] = &[148];
-}
-
 impl_tryfrom_dop2struct!(FailureList);
 
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
@@ -40,10 +36,6 @@ pub struct Failure {
     prog_id: u16,
     #[dop2field(7, Dop2Payloads::U16)]
     block_number: u16,
-}
-
-impl Failure {
-    pub const ATTRIBUTE_IDS: &[u16] = &[117];
 }
 
 impl_tryfrom_dop2struct!(Failure);

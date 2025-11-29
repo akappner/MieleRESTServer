@@ -11,10 +11,6 @@ pub struct DeviceCombiState {
         process_state : ProcessState
 }
 
-impl DeviceCombiState
-{
-    pub const ATTRIBUTE_IDS : &[u16] = &[1586];
-}
 impl_tryfrom_dop2struct!(DeviceCombiState);
 
 #[repr(u8)]

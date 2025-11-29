@@ -62,9 +62,5 @@ pub struct FileTransfer {
     data: DopArray<u8>,
 }
 
-impl FileTransfer {
-    pub const ATTRIBUTE_IDS: &[u16] = &[336];
-}
-
 impl_tryfrom_dop2struct!(FileTransfer);
 

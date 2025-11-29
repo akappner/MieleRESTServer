@@ -23,11 +23,4 @@ pub struct ProgramStepInfoOven
     moistset_core_temperature : u16, // TODO: add remaining fields
 }
 
-impl ProgramStepInfoOven
-    {
-        pub const ATTRIBUTE_IDS : &[u16] = &[214]; // always in unit 2?
-    }
-
-
-
 impl_tryfrom_dop2struct!(ProgramStepInfoOven);

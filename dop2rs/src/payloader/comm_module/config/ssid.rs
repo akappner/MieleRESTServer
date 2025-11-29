@@ -17,8 +17,4 @@ pub struct XkmConfigSsidList {
     wifi_channel: E8,
 }
 
-impl XkmConfigSsidList {
-    pub const ATTRIBUTE_IDS: &[u16] = &[110];
-}
-
 impl_tryfrom_dop2struct!(XkmConfigSsidList);

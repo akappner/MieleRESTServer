@@ -7,9 +7,5 @@ pub struct RsaKey {
     key: DopArray<u8>,
 }
 
-impl RsaKey {
-    pub const ATTRIBUTE_IDS: &[u16] = &[287];
-}
-
 impl_tryfrom_dop2struct!(RsaKey);
 

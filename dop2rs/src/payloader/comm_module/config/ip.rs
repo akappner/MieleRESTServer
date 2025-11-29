@@ -49,9 +49,5 @@ pub struct XkmConfigIp {
     wifi_channel: E8,
 }
 
-impl XkmConfigIp {
-    pub const ATTRIBUTE_IDS: &[u16] = &[1573];
-}
-
 impl_tryfrom_dop2struct!(XkmConfigIp);
 

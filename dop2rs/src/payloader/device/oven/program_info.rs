@@ -15,12 +15,4 @@ step_number : u8,
 
 }
 
-
-impl ProgramInfoOven
-    {
-        pub const ATTRIBUTE_IDS : &[u16] = &[213]; // always in unit 2?
-    }
-
-    
-
-    impl_tryfrom_dop2struct!(ProgramInfoOven);
+impl_tryfrom_dop2struct!(ProgramInfoOven);

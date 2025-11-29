@@ -38,9 +38,5 @@ pub struct Sensor {
     pub sens_coiner_payment: AnnotatedBool,
 }
 
-impl Sensor {
-    pub const ATTRIBUTE_IDS: &[u16] = &[6193];
-}
-
 impl_tryfrom_dop2struct!(Sensor);
 

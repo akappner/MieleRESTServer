@@ -66,9 +66,5 @@ pub struct DeviceNotifications {
     errors: Vec<ErrorInfo>,
 }
 
-impl DeviceNotifications {
-    pub const ATTRIBUTE_IDS: &[u16] = &[131, 392];
-}
-
 impl_tryfrom_dop2struct!(DeviceNotifications);
 

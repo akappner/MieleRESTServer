@@ -15,9 +15,5 @@ pub struct CSHoursOfOperation {
     hours_of_operation_mode2: u32,
 }
 
-impl CSHoursOfOperation {
-    pub const ATTRIBUTE_IDS: &[u16] = &[119];
-}
-
 impl_tryfrom_dop2struct!(CSHoursOfOperation);
 

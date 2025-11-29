@@ -46,9 +46,5 @@ pub struct ActuatorData {
     pub sens_peak_load: AnnotatedBool
 }
 
-impl ActuatorData {
-    pub const ATTRIBUTE_IDS: &[u16] = &[6192];
-}
-
 impl_tryfrom_dop2struct!(ActuatorData);
 

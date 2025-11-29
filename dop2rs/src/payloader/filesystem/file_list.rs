@@ -19,9 +19,5 @@ pub struct FileList {
     size: u32,
 }
 
-impl FileList {
-    pub const ATTRIBUTE_IDS: &[u16] = &[333];
-}
-
 impl_tryfrom_dop2struct!(FileList);
 

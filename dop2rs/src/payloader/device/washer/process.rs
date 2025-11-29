@@ -100,8 +100,4 @@ pub struct Process {
     pub tb_kg_result_integral95: AnnotatedU16,
 }
 
-impl Process {
-    pub const ATTRIBUTE_IDS: &[u16] = &[6195];
-}
-
 impl_tryfrom_dop2struct!(Process);

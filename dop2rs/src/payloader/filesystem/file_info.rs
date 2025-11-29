@@ -16,9 +16,5 @@ pub struct FileInfo {
     max_size: u32,
 }
 
-impl FileInfo {
-    pub const ATTRIBUTE_IDS: &[u16] = &[1588];
-}
-
 impl_tryfrom_dop2struct!(FileInfo);
 

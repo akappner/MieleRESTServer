@@ -86,9 +86,5 @@ pub struct DeviceContext {
     request_time_sync: bool,
 }
 
-impl DeviceContext {
-    pub const ATTRIBUTE_IDS: &[u16] = &[391, 1585];
-}
-
 impl_tryfrom_dop2struct!(DeviceContext);
 

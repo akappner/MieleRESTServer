@@ -166,9 +166,5 @@ pub struct SfValueList {
     valid: Vec<SfId>,
 }
 
-impl SfValueList {
-    pub const ATTRIBUTE_IDS: &[u16] = &[114];
-}
-
 impl_tryfrom_dop2struct!(SfValueList);
 

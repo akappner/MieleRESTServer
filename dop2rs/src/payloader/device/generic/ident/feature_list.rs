@@ -27,9 +27,5 @@ pub struct FeatureList {
     feature_list_oven: FeatureListOven,
 }
 
-impl FeatureList {
-    pub const ATTRIBUTE_IDS: &[u16] = &[348];
-}
-
 impl_tryfrom_dop2struct!(FeatureList);
 

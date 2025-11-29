@@ -53,9 +53,5 @@ pub struct DeviceIdent {
     rf_variant: E16,
 }
 
-impl DeviceIdent {
-    pub const ATTRIBUTE_IDS: &[u16] = &[144];
-}
-
 impl_tryfrom_dop2struct!(DeviceIdent);
 
