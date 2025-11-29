@@ -45,3 +45,13 @@ pub struct CSContext {
 
 impl_tryfrom_dop2struct!(CSContext);
 
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct CSBarcode {
+    #[dop2field(1, Dop2Payloads::ArrayU8)]
+    pub(crate) partname: String,
+    #[dop2field(2, Dop2Payloads::ArrayU8)]
+    pub(crate) barcode: DopArray<u8>,
+}
+
+impl_tryfrom_dop2struct!(CSBarcode);
+

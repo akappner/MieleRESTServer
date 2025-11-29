@@ -59,6 +59,7 @@ register_root_nodes! {
     // Device state types
     crate::payloader::device::generic::state::combined::DeviceCombiState => &[1586],
     crate::payloader::device::generic::state::cs_context::CSContext => &[154],
+    crate::payloader::device::generic::state::cs_context::CSBarcode => &[174],
     crate::payloader::device::generic::state::hours::CSHoursOfOperation => &[119],
     
     // Communication module types

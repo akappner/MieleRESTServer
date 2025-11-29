@@ -24,6 +24,31 @@ impl TryFrom<u64> for Dop2TimestampUtc {
         Ok(Dop2TimestampUtc(dt))
     }
 }
+impl TryFrom<DopArray<u8>> for String {
+    type Error = &'static str;
+
+    fn try_from(value: DopArray<u8>) -> Result<Self, Self::Error> {
+        // Convert only up to `count` elements.
+        if value.count > value.elements.len() as u16 {
+            return Err("count field exceeds number of elements in DopArray<u8>");
+        }
+        let ascii_bytes = &value.elements[..value.count as usize];
+        match std::str::from_utf8(ascii_bytes) {
+            Ok(s) => Ok(s.to_string()),
+            Err(_) => Err("DopArray<u8> contains invalid ASCII/UTF-8"),
+        }
+    }
+}
+
+impl From<String> for DopArray<u8> {
+    fn from(value: String) -> Self {
+        let ascii_bytes = value.as_bytes();
+        DopArray {
+            count: ascii_bytes.len() as u16,
+            elements: ascii_bytes.to_vec(),
+        }
+    }
+}
 
 impl From<Dop2TimestampUtc> for u64 {
     fn from(value: Dop2TimestampUtc) -> Self {
