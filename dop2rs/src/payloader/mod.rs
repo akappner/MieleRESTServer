@@ -9,3 +9,4 @@ pub mod root;
 pub mod unit_ids;
 pub mod attribute_ids;
 pub mod meta;
+pub mod notifications;

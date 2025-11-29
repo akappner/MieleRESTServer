@@ -38,8 +38,7 @@ register_root_nodes! {
     // Oven types
     crate::payloader::device::oven::program_info::ProgramInfoOven => &[213],
     crate::payloader::device::oven::program_step_info::ProgramStepInfoOven => &[214],
-    crate::payloader::device::generic::ident::program_groups_complete::ProgramGroupsComplete => &[1599],
-    
+
     // Washer types
     crate::payloader::device::washer::process::Process => &[6195],
     crate::payloader::device::washer::actuator::ActuatorData => &[6192],
@@ -56,6 +55,7 @@ register_root_nodes! {
     crate::payloader::device::generic::program_selection::context::PSContext => &[1574],
     crate::payloader::device::generic::program_selection::select::PsSelect => &[1577],
     crate::payloader::device::generic::cets::CookingEndTimeSynchronizationStatus => &[412],
+    crate::payloader::device::generic::ident::program_groups_complete::ProgramGroupsComplete => &[1599],
     
     // Device state types
     crate::payloader::device::generic::state::combined::DeviceCombiState => &[1586],
@@ -85,5 +85,8 @@ register_root_nodes! {
     // Meta types
     crate::payloader::meta::object_ids::SysObjectId => &[19],
     crate::payloader::meta::object_ids::SoftwareIds => &[17],
+    
+    // Notification types
+    crate::payloader::notifications::acknowledge::NotificationAcknowledge => &[138],
 }
 
