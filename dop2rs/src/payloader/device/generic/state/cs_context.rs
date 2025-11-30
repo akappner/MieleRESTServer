@@ -20,21 +20,21 @@ impl_tryfrom_dop2struct!(CSContextParametersOven);
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct CSContextParametersWasher {
     #[dop2field(1, Dop2Payloads::MStruct)]
-    on_off: AnnotatedBool,
+    pub on_off: AnnotatedBool,
     #[dop2field(2, Dop2Payloads::MStruct)]
-    water_level: GenericU16,
+    pub water_level: GenericU16,
     #[dop2field(3, Dop2Payloads::MStruct)]
-    water_inlet_way: GenericU8,
+    pub water_inlet_way: GenericU8,
     #[dop2field(4, Dop2Payloads::MStruct)]
-    speed: GenericU16,
+    pub speed: GenericU16,
     #[dop2field(5, Dop2Payloads::MStruct)]
-    actuator_level: GenericU8,
+    pub actuator_level: GenericU8,
     #[dop2field(6, Dop2Payloads::MStruct)]
-    residual_moisture_resistance: AnnotatedBool,
+    pub residual_moisture_resistance: AnnotatedBool,
     #[dop2field(7, Dop2Payloads::MStruct)]
-    rss_calibration: AnnotatedBool,
+    pub rss_calibration: AnnotatedBool,
     #[dop2field(8, Dop2Payloads::MStruct)]
-    user_interface: AnnotatedBool,
+    pub user_interface: AnnotatedBool,
 }
 
 impl_tryfrom_dop2struct!(CSContextParametersWasher);
@@ -58,11 +58,11 @@ impl_tryfrom_dop2struct!(CSContextParametersCoffeeMaker);
 #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
 pub struct CSContext {
     #[dop2field(1, Dop2Payloads::E16)]
-    pub(crate) program_id: ProgramIdOven,
+    pub program_id: ProgramIdOven,
     #[dop2field(2, Dop2Payloads::MStruct)]
-    pub(crate) context_washer: Option<CSContextParametersWasher>,
+    pub context_washer: Option<CSContextParametersWasher>,
     #[dop2field(3, Dop2Payloads::MStruct)]
-    pub(crate) context_oven: Option<CSContextParametersOven>,
+    pub context_oven: Option<CSContextParametersOven>,
   //  #[dop2field(4, Dop2Payloads::MStruct)]
    // context_coffee_maker: CSContextParametersCoffeeMaker,
 }

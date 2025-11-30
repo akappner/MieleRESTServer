@@ -1,6 +1,9 @@
 #[allow(dead_code)]
 use crate::*;
-use crate::payloader::device::generic::state::cs_context::CSContext;
+use crate::payloader::device::generic::state::cs_context::{CSContext, CSContextParametersWasher};
+use crate::payloader::helper::types::{AnnotatedBool, GenericU8, GenericU16};
+use crate::payloader::device::generic::program_selection::enums::ProgramIdOven;
+use crate::payloader::prelude::ValueInterpretation;
 // Static test data structure with individual fields
 struct TestPayloads {
     oven_14_130: &'static str,
@@ -70,11 +73,73 @@ fn test_washer_context_optionals() {
     let mut parser = Dop2Parser::new(hex::decode(TEST_PAYLOADS.washer_1_154).unwrap());
     let result = RootNode::parse(&mut parser);
     assert!(result.is_ok());
-    let _root_node = result.unwrap();
-    let context = CSContext::try_from(_root_node.root_struct).unwrap();
-    assert_eq!(context.context_washer.is_some(), true);
-    assert_eq!(context.context_oven.is_some(), false);
-    //assert_eq!(root_node.attribute, 1586);
+    let root_node = result.unwrap();
+    let context = CSContext::try_from(root_node.root_struct.clone()).unwrap();
+    
+    // Create expected CSContext structure for comparison
+    let expected_context = CSContext {
+        program_id: ProgramIdOven::NoProgram,
+        context_washer: Some(CSContextParametersWasher {
+            on_off: AnnotatedBool {
+                request_mask: 9,
+                value: false,
+                interpretation: ValueInterpretation::None,
+            },
+            water_level: GenericU16 {
+                request_mask: 0,
+                min: 0,
+                max: 0,
+                current: 0,
+                step_size: 0,
+            },
+            water_inlet_way: GenericU8 {
+                request_mask: 0,
+                min: 0,
+                max: 0,
+                current: 0,
+                step_size: 0,
+            },
+            speed: GenericU16 {
+                request_mask: 0,
+                min: 0,
+                max: 0,
+                current: 0,
+                step_size: 0,
+            },
+            actuator_level: GenericU8 {
+                request_mask: 0,
+                min: 0,
+                max: 0,
+                current: 0,
+                step_size: 0,
+            },
+            residual_moisture_resistance: AnnotatedBool {
+                request_mask: 0,
+                value: false,
+                interpretation: ValueInterpretation::None,
+            },
+            rss_calibration: AnnotatedBool {
+                request_mask: 0,
+                value: false,
+                interpretation: ValueInterpretation::None,
+            },
+            user_interface: AnnotatedBool {
+                request_mask: 0,
+                value: false,
+                interpretation: ValueInterpretation::None,
+            },
+        }),
+        context_oven: None,
+    };
+    
+    // Test that the parsed CSContext matches the expected structure
+    assert_eq!(context, expected_context);
+    
+    // Round-trip test: serialize back to bytes and verify it matches original
+    let mut data: Vec<u8> = Vec::new();
+    let _bytes = root_node.to_bytes(&mut data);
+    let hex_string = hex::encode(&data);
+    assert_eq!(hex_string, TEST_PAYLOADS.washer_1_154);
 }
 
 fn test_round_trip (payload: &str)
