@@ -2,12 +2,13 @@ use crate::payloader::prelude::*;
 use crate::Dop2ParseTreeExpressible;
 
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
+#[derive(Debug, Clone, Copy, TryFromPrimitive, IntoPrimitive, PartialEq, Eq, EnumIter, EnumString, strum_macros::Display)]
 pub enum XkmRequestId {
-    None = 0,
-    ResetXkm = 1,
-    FactoryResetXkm = 2,
-    OpenSoftAccessPointEndUser = 3,
+    NoRequest = 0,
+    Reset = 1,
+    FactorySettings = 2,
+    SoftApCustomer = 3,
+    SystemCreate = 4,
     OpenSoftAccessPointCustomerService = 45,
     ShutdownXkm = 46,
     MieleSmartConnect = 47,

@@ -31,6 +31,8 @@ pub enum UserRequestOven {
     HoldingBreak = 68,
     HoldingStart = 69,
     WifiOff = 112,
+    SetInteriorLightOn = 12141,
+    SetInteriorLightOff = 12142,
 }
 
 crate::impl_tryfrom_wrapper!(UserRequestOven, E16);
@@ -39,6 +41,10 @@ crate::impl_tryfrom_wrapper!(UserRequestOven, E16);
 pub struct UserRequest {
     #[dop2field(1, Dop2Payloads::E16)]
     pub request_id: UserRequestOven,
+    #[dop2field(2, Dop2Payloads::U16)]
+    pub parameter0: Option<u16>,
+    #[dop2field(3, Dop2Payloads::U16)]
+    pub parameter1: Option<u16>,
 }
 
 impl_tryfrom_dop2struct!(UserRequest);

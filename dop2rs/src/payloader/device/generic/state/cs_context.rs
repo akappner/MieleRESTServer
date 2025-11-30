@@ -79,3 +79,13 @@ pub struct CSBarcode {
 
 impl_tryfrom_dop2struct!(CSBarcode);
 
+#[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+pub struct PartName {
+    #[dop2field(1, Dop2Payloads::ArrayU8)]
+    pub part_name: String,
+    #[dop2field(2, Dop2Payloads::ArrayU8)]
+    pub code: String,
+}
+
+impl_tryfrom_dop2struct!(PartName);
+

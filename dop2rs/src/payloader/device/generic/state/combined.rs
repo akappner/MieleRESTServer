@@ -14,43 +14,56 @@ pub struct DeviceCombiState {
 impl_tryfrom_dop2struct!(DeviceCombiState);
 
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
-enum ApplianceState
+#[derive(Debug, Clone, Copy, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
+pub enum ApplianceState
 {
-    Unknown,
-    Off,
-    Synchronizing,
-    Initializing,
-    Normal,
-    Demonstration,
-    Service,
-    Error,
-    CheckAppliance,
-    Standby,
-    Supervisory,
-    ShowWindow
+    Unknown = 0,
+    Off = 1,
+    Synchronizing = 2,
+    Initializing = 3,
+    Normal = 4,
+    Demonstration = 5,
+    Service = 6,
+    Error = 7,
+    Check = 8,
+    Standby = 9,
+    Supervisory = 10,
+    ShowWindow = 11,
 }
+
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
-enum OperationState
+#[derive(Debug, Clone, Copy, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
+pub enum OperationState
 {
-    Unknown,
-    EndOfLine,
-    Service,
-    Settings,
-    InitialSettings,
-    SelectProgram,
-    RunDelay,
+    Unknown = 0,
+    EndOfLine = 1,
+    Service = 2,
+    Settings = 3,
+    InitialSettings = 4,
+    SelectProgram = 5,
+    RunProgram = 6,
+    RunDelay = 7,
+    RunMaintenanceProcess = 8,
+    VoltageBrownout = 9,
+    WelcomeScreen = 10,
+    Locked = 11,
+    TimeSettingScreen = 12,
+    DisplayOff = 15,
+    ColdRising = 21,
+    NormalRinsing = 22,
+    EmergencyStop = 32,
 }
+
 #[repr(u8)]
-#[derive(Debug, Clone, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
-enum ProcessState
+#[derive(Debug, Clone, Copy, TryFromPrimitive, PartialEq, Eq, IntoPrimitive)]
+pub enum ProcessState
 {
-    Unknown,
-    NoProgram,
-    ProgramSelected,
-    ProgramStart,
-    ProgramRunning
+    Unknown = 0,
+    NoProgram = 1,
+    ProgramSelected = 2,
+    ProgramStarted = 3,
+    ProgramRunning = 4,
+    ProgramStop = 5,
 }
 
 crate::impl_tryfrom_wrapper!(ApplianceState, E8);

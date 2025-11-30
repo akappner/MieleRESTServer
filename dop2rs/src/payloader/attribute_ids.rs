@@ -38,11 +38,13 @@ register_root_nodes! {
     // Oven types
     crate::payloader::device::oven::program_info::ProgramInfoOven => &[213],
     crate::payloader::device::oven::program_step_info::ProgramStepInfoOven => &[214],
+    crate::payloader::device::oven::program_instructions::ProgramInstructionsCA => &[257],
 
     // Washer types
     crate::payloader::device::washer::process::Process => &[6195],
     crate::payloader::device::washer::actuator::ActuatorData => &[6192],
     crate::payloader::device::washer::sensor::Sensor => &[6193],
+    crate::payloader::device::washer::software_build::SoftwareBuild => &[6194],
     
     // Device generic types
     crate::payloader::device::generic::failure::FailureList => &[148],
@@ -51,6 +53,8 @@ register_root_nodes! {
     crate::payloader::device::generic::ident::ident::DeviceIdent => &[144],
     crate::payloader::device::generic::ident::feature_list::FeatureList => &[348],
     crate::payloader::device::generic::settings::SfValueList => &[114],
+    crate::payloader::device::generic::settings_value::SfValue => &[105],
+    crate::payloader::device::generic::program_list::ProgramList => &[1584],
     crate::payloader::device::generic::notifications::DeviceNotifications => &[131, 392],
     crate::payloader::device::generic::program_selection::context::PSContext => &[1574],
     crate::payloader::device::generic::program_selection::select::PsSelect => &[1577],
@@ -61,6 +65,8 @@ register_root_nodes! {
     crate::payloader::device::generic::state::combined::DeviceCombiState => &[1586],
     crate::payloader::device::generic::state::cs_context::CSContext => &[154],
     crate::payloader::device::generic::state::cs_context::CSBarcode => &[174],
+    crate::payloader::device::generic::state::cs_context::PartName => &[173],
+    crate::payloader::device::generic::state::device_state::DeviceState => &[256],
     crate::payloader::device::generic::state::hours::CSHoursOfOperation => &[119],
     
     // Communication module types
@@ -68,6 +74,8 @@ register_root_nodes! {
     crate::payloader::comm_module::state::state::XkmStateInfo => &[1568],
     crate::payloader::comm_module::request::request::XkmRequest => &[130],
     crate::payloader::comm_module::update::control::UpdateControl => &[170],
+    crate::payloader::comm_module::update::last::LastUpdateInfo => &[199],
+    crate::payloader::comm_module::update::container_info::UpdateContainerInformation => &[397],
     crate::payloader::comm_module::config::ip::XkmConfigIp => &[1573],
     crate::payloader::comm_module::config::ssid::XkmConfigSsidList => &[110],
     crate::payloader::comm_module::ident::ident::XkmIdent => &[1565],

@@ -10,8 +10,6 @@ use payloader::root::RootNode;
 mod crypto;
 mod device_api;
 mod attribute_registry;
-
-// Generic* and Annotated* types moved to payloader::helper::types
 pub use payloader::helper::types::*;
 
 // Re-export Dop types for macro usage
@@ -89,7 +87,11 @@ fn main() {
     else if let Ok(user_request_id)=UserRequestOven::from_str(&command)
     {
         eprintln!("Sending UserRequest command {:?}", user_request_id);
-        let _request = payloader::device::generic::request::UserRequest {request_id: user_request_id};
+        let _request = payloader::device::generic::request::UserRequest {
+            request_id: user_request_id,
+            parameter0: None,
+            parameter1: None,
+        };
     }
     else {
         let hex_str = match &args.hex_string {
