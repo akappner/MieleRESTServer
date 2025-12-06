@@ -1,0 +1,436 @@
+   Compiling dop2marshal v0.1.0 (/home/ak/MieleRESTServer/dop2rs/dop2marshal)
+warning: unnecessary parentheses around `if` condition
+   --> dop2marshal/src/lib.rs:111:20
+    |
+111 |                 if (is_option)
+    |                    ^         ^
+    |
+    = note: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+help: remove these parentheses
+    |
+111 -                 if (is_option)
+111 +                 if is_option 
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> dop2marshal/src/lib.rs:116:24
+    |
+116 |                     if (constructor_fragments.len() > 0 )
+    |                        ^                               ^^
+    |
+help: remove these parentheses
+    |
+116 -                     if (constructor_fragments.len() > 0 )
+116 +                     if constructor_fragments.len() > 0 
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> dop2marshal/src/lib.rs:130:20
+    |
+130 |                 if (constructor_fragments.len() > 0 )
+    |                    ^                               ^^
+    |
+help: remove these parentheses
+    |
+130 -                 if (constructor_fragments.len() > 0 )
+130 +                 if constructor_fragments.len() > 0 
+    |
+
+warning: unused variable: `trait_ident`
+  --> dop2marshal/src/lib.rs:11:9
+   |
+11 |     let trait_ident = format_ident!("Dop2ParseTreeExpressible");
+   |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_trait_ident`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `in_ty`
+  --> dop2marshal/src/lib.rs:93:5
+   |
+93 | let in_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_in_ty`
+
+warning: `dop2marshal` (lib) generated 5 warnings (run `cargo fix --lib -p dop2marshal` to apply 5 suggestions)
+   Compiling dop2rs v0.1.0 (/home/ak/MieleRESTServer/dop2rs)
+error[E0365]: `Dop2ParseTreeExpressible` is only public within the crate, and cannot be re-exported outside
+ --> src/payloader/prelude.rs:3:17
+  |
+3 | pub use crate::{Dop2ParseTreeExpressible, DopArray, TaggedDopField, Dop2Struct, Dop2PayloadsKind};
+  |                 ^^^^^^^^^^^^^^^^^^^^^^^^ re-export of crate public `Dop2ParseTreeExpressible`
+  |
+  = note: consider declaring type or module `Dop2ParseTreeExpressible` with `pub`
+
+warning: unused imports: `Struct` and `Type`
+  --> src/main.rs:10:18
+   |
+10 | use syn::token::{Struct, Type};
+   |                  ^^^^^^  ^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `paste::paste`
+  --> src/main.rs:14:5
+   |
+14 | use paste::paste;
+   |     ^^^^^^^^^^^^
+
+warning: unused import: `Client`
+ --> src/device_api.rs:1:15
+  |
+1 | use reqwest::{Client, Request, Response};
+  |               ^^^^^^
+
+warning: unused import: `ClientBuilder`
+ --> src/device_api.rs:2:26
+  |
+2 | use reqwest_middleware::{ClientBuilder, Middleware, Next, Result};
+  |                          ^^^^^^^^^^^^^
+
+warning: unused import: `E16`
+ --> src/payloader/prelude.rs:4:21
+  |
+4 | pub use crate::{E8, E16};
+  |                     ^^^
+
+warning: unused import: `crate::macros`
+ --> src/payloader/prelude.rs:9:9
+  |
+9 | pub use crate::macros;
+  |         ^^^^^^^^^^^^^
+
+warning: unused import: `crate::macros`
+  --> src/payloader/device/oven/program_info.rs:24:9
+   |
+24 |     use crate::macros;
+   |         ^^^^^^^^^^^^^
+
+warning: unused import: `E16`
+ --> src/payloader/device/oven/program_step_info.rs:4:17
+  |
+4 | use crate::{E8, E16};
+  |                 ^^^
+
+warning: unused import: `crate::macros`
+ --> src/payloader/device/oven/program_step_info.rs:7:5
+  |
+7 | use crate::macros;
+  |     ^^^^^^^^^^^^^
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:959:8
+    |
+959 |     if (payloads::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |        ^                                                                     ^
+    |
+    = note: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+help: remove these parentheses
+    |
+959 -     if (payloads::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+959 +     if payloads::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:964:9
+    |
+964 | else if (payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                                                    ^
+    |
+help: remove these parentheses
+    |
+964 - else if (payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+964 + else if payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:969:9
+    |
+969 | else if (payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                                                             ^
+    |
+help: remove these parentheses
+    |
+969 - else if (payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+969 + else if payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:974:9
+    |
+974 | else if (payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                   ^
+    |
+help: remove these parentheses
+    |
+974 - else if (payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
+974 + else if payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:979:13
+    |
+979 |     else if (payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |             ^                                                                    ^
+    |
+help: remove these parentheses
+    |
+979 -     else if (payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+979 +     else if payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:984:9
+    |
+984 | else if (payloads::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                ^
+    |
+help: remove these parentheses
+    |
+984 - else if (payloads::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+984 + else if payloads::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:989:9
+    |
+989 | else if (payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                ^
+    |
+help: remove these parentheses
+    |
+989 - else if (payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+989 + else if payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:994:9
+    |
+994 | else if (payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                              ^
+    |
+help: remove these parentheses
+    |
+994 - else if (payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
+994 + else if payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1000:13
+     |
+1000 |     else if (payloads::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                   ^
+     |
+help: remove these parentheses
+     |
+1000 -     else if (payloads::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1000 +     else if payloads::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1005:9
+     |
+1005 | else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |         ^                                                                   ^
+     |
+help: remove these parentheses
+     |
+1005 - else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1005 + else if payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1010:9
+     |
+1010 | else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |         ^                                                        ^
+     |
+help: remove these parentheses
+     |
+1010 - else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1010 + else if XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1015:9
+     |
+1015 | else if (payloads::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |         ^                                                                        ^
+     |
+help: remove these parentheses
+     |
+1015 - else if (payloads::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1015 + else if payloads::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1020:13
+     |
+1020 |     else if (payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                   ^
+     |
+help: remove these parentheses
+     |
+1020 -     else if (payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1020 +     else if payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1025:13
+     |
+1025 |     else if (payloads::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                 ^
+     |
+help: remove these parentheses
+     |
+1025 -     else if (payloads::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1025 +     else if payloads::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1030:13
+     |
+1030 |     else if (payloads::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                 ^
+     |
+help: remove these parentheses
+     |
+1030 -     else if (payloads::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1030 +     else if payloads::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1036:13
+     |
+1036 |     else if (payloads::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                               ^
+     |
+help: remove these parentheses
+     |
+1036 -     else if (payloads::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1036 +     else if payloads::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1042:13
+     |
+1042 |     else if (payloads::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                          ^
+     |
+help: remove these parentheses
+     |
+1042 -     else if (payloads::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1042 +     else if payloads::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1047:13
+     |
+1047 |     else if (payloads::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                   ^
+     |
+help: remove these parentheses
+     |
+1047 -     else if (payloads::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1047 +     else if payloads::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1052:13
+     |
+1052 |     else if (payloads::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                           ^
+     |
+help: remove these parentheses
+     |
+1052 -     else if (payloads::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1052 +     else if payloads::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: `#[macro_use]` attribute cannot be used on use statements
+ --> src/payloader/prelude.rs:8:1
+  |
+8 | #[macro_use]
+  | ^^^^^^^^^^^^
+  |
+  = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+  = help: `#[macro_use]` can be applied to crates, extern crates, and modules
+  = note: `#[warn(unused_attributes)]` (part of `#[warn(unused)]`) on by default
+
+warning: `#[macro_use]` attribute cannot be used on use statements
+  --> src/payloader/device/oven/program_info.rs:23:5
+   |
+23 |     #[macro_use]
+   |     ^^^^^^^^^^^^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = help: `#[macro_use]` can be applied to crates, extern crates, and modules
+
+warning: `#[macro_use]` attribute cannot be used on use statements
+ --> src/payloader/device/oven/program_step_info.rs:6:1
+  |
+6 | #[macro_use]
+  | ^^^^^^^^^^^^
+  |
+  = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+  = help: `#[macro_use]` can be applied to crates, extern crates, and modules
+
+warning: use of deprecated associated function `chrono::NaiveDateTime::from_timestamp`: use `DateTime::from_timestamp` instead
+  --> src/main.rs:79:36
+   |
+79 |         let naive = NaiveDateTime::from_timestamp(value as i64, 0);
+   |                                    ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated associated function `chrono::DateTime::<Tz>::from_utc`: Use TimeZone::from_utc_datetime() or DateTime::from_naive_utc_and_offset instead
+  --> src/main.rs:80:46
+   |
+80 |         Ok(Dop2TimestampUtc(DateTime::<Utc>::from_utc(naive, Utc)))
+   |                                              ^^^^^^^^
+
+warning: unused import: `Digest`
+ --> src/crypto.rs:8:20
+  |
+8 | use sha2::{Sha256, Digest};
+  |                    ^^^^^^
+
+warning: unused variable: `rng`
+   --> src/crypto.rs:174:13
+    |
+174 |         let rng = rand::rng();
+    |             ^^^ help: if this is intentional, prefix it with an underscore: `_rng`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `dop_array`
+   --> src/main.rs:646:37
+    |
+646 |             Dop2Payloads::ArrayBool(dop_array) => todo!(),
+    |                                     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dop_array`
+
+warning: unused variable: `dop_array`
+   --> src/main.rs:647:36
+    |
+647 |             Dop2Payloads::ArrayI64(dop_array) => todo!(),
+    |                                    ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dop_array`
+
+warning: unused variable: `dop_array`
+   --> src/main.rs:648:36
+    |
+648 |             Dop2Payloads::ArrayF32(dop_array) => todo!(),
+    |                                    ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dop_array`
+
+warning: unused variable: `dop_array`
+   --> src/main.rs:649:36
+    |
+649 |             Dop2Payloads::ArrayF64(dop_array) => todo!(),
+    |                                    ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dop_array`
+
+warning: unused variable: `request`
+   --> src/main.rs:907:13
+    |
+907 |         let request = payloads::UserRequest {request_id: userRequestId};
+    |             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+For more information about this error, try `rustc --explain E0365`.
+warning: `dop2rs` (bin "dop2rs" test) generated 40 warnings
+error: could not compile `dop2rs` (bin "dop2rs" test) due to 1 previous error; 40 warnings emitted

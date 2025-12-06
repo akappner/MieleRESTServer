@@ -106,9 +106,9 @@ pub struct DeviceAttributesCCA {
     #[dop2field(28, Dop2Payloads::Boolean)]
     initial_grinding: bool,
     #[dop2field(29, Dop2Payloads::U16)]
-    op_last_instance_changed: u16,
+    op_last_instance_changed: Option<u16>,
     #[dop2field(30, Dop2Payloads::U16)]
-    op_last_instance_changed_counter: u16,
+    op_last_instance_changed_counter: Option<u16>,
 }
 
 impl_tryfrom_dop2struct!(DeviceAttributesCCA);

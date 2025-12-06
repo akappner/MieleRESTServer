@@ -15,15 +15,15 @@ pub struct PSAttributesCCA {
     #[dop2field(7, Dop2Payloads::MStruct)]
     display_core_temperature: AnnotatedU16,
     #[dop2field(21, Dop2Payloads::MStruct)]
-    temperature_setpoint: AnnotatedU16,
+    temperature_setpoint: Option<AnnotatedU16>,
     #[dop2field(22, Dop2Payloads::MStruct)]
-    moisture_setpoint: AnnotatedU8,
+    moisture_setpoint: Option<AnnotatedU8>,
     #[dop2field(24, Dop2Payloads::MStruct)]
-    power_setpoint: AnnotatedU8,
+    power_setpoint: Option<AnnotatedU8>,
     #[dop2field(26, Dop2Payloads::MStruct)]
-    start_time: AnnotatedTimeStamp,
+    start_time: Option<AnnotatedTimeStamp>,
     #[dop2field(29, Dop2Payloads::MStruct)]
-    next_action_time: AnnotatedTimeStamp,
+    next_action_time: Option<AnnotatedTimeStamp>,
 }
 
 impl_tryfrom_dop2struct!(PSAttributesCCA);

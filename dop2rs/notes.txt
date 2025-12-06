@@ -1,0 +1,588 @@
+warning: unnecessary parentheses around `if` condition
+   --> dop2marshal/src/lib.rs:111:20
+    |
+111 |                 if (is_option)
+    |                    ^         ^
+    |
+    = note: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+help: remove these parentheses
+    |
+111 -                 if (is_option)
+111 +                 if is_option 
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> dop2marshal/src/lib.rs:116:24
+    |
+116 |                     if (constructor_fragments.len() > 0 )
+    |                        ^                               ^^
+    |
+help: remove these parentheses
+    |
+116 -                     if (constructor_fragments.len() > 0 )
+116 +                     if constructor_fragments.len() > 0 
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> dop2marshal/src/lib.rs:130:20
+    |
+130 |                 if (constructor_fragments.len() > 0 )
+    |                    ^                               ^^
+    |
+help: remove these parentheses
+    |
+130 -                 if (constructor_fragments.len() > 0 )
+130 +                 if constructor_fragments.len() > 0 
+    |
+
+warning: unused variable: `trait_ident`
+  --> dop2marshal/src/lib.rs:11:9
+   |
+11 |     let trait_ident = format_ident!("Dop2ParseTreeExpressible");
+   |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_trait_ident`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `in_ty`
+  --> dop2marshal/src/lib.rs:93:5
+   |
+93 | let in_ty: Type = syn::parse2(args[1].to_token_stream()).unwrap();
+   |     ^^^^^ help: if this is intentional, prefix it with an underscore: `_in_ty`
+
+warning: `dop2marshal` (lib) generated 5 warnings (run `cargo fix --lib -p dop2marshal` to apply 5 suggestions)
+   Compiling dop2rs v0.1.0 (/home/ak/MieleRESTServer/dop2rs)
+error: cannot find macro `impl_tryfrom_wrapper` in this scope
+  --> src/payloader/device/generic/state/combined.rs:60:1
+   |
+60 | impl_tryfrom_wrapper!(ApplianceState, E8);
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+help: consider importing this macro through its public re-export
+   |
+ 1 + use crate::impl_tryfrom_wrapper;
+   |
+
+error: cannot find macro `impl_tryfrom_wrapper` in this scope
+  --> src/payloader/device/generic/state/combined.rs:62:1
+   |
+62 | impl_tryfrom_wrapper!(ProcessState, E8);
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+help: consider importing this macro through its public re-export
+   |
+ 1 + use crate::impl_tryfrom_wrapper;
+   |
+
+error: cannot find macro `impl_tryfrom_wrapper` in this scope
+  --> src/payloader/device/generic/state/combined.rs:64:1
+   |
+64 | impl_tryfrom_wrapper!(OperationState, E8);
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: have you added the `#[macro_use]` on the module/import?
+help: consider importing this macro through its public re-export
+   |
+ 1 + use crate::impl_tryfrom_wrapper;
+   |
+
+error[E0433]: failed to resolve: could not find `DeviceCombiState` in `state`
+    --> src/main.rs:1017:45
+     |
+1017 | else if (payloader::device::generic::state::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |                                             ^^^^^^^^^^^^^^^^ could not find `DeviceCombiState` in `state`
+     |
+help: consider importing this struct through its public re-export
+     |
+   2 + use crate::DeviceCombiState;
+     |
+help: if you import `DeviceCombiState`, refer to it directly
+     |
+1017 - else if (payloader::device::generic::state::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1017 + else if (DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |
+
+warning: unused import: `payloader::device`
+ --> src/main.rs:9:5
+  |
+9 | use payloader::device;
+  |     ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `Struct` and `Type`
+  --> src/main.rs:12:18
+   |
+12 | use syn::token::{Struct, Type};
+   |                  ^^^^^^  ^^^^
+
+warning: unused import: `paste::paste`
+  --> src/main.rs:16:5
+   |
+16 | use paste::paste;
+   |     ^^^^^^^^^^^^
+
+warning: unused import: `Client`
+ --> src/device_api.rs:1:15
+  |
+1 | use reqwest::{Client, Request, Response};
+  |               ^^^^^^
+
+warning: unused import: `ClientBuilder`
+ --> src/device_api.rs:2:26
+  |
+2 | use reqwest_middleware::{ClientBuilder, Middleware, Next, Result};
+  |                          ^^^^^^^^^^^^^
+
+warning: unused import: `E16`
+ --> src/payloader/prelude.rs:4:21
+  |
+4 | pub use crate::{E8, E16};
+  |                     ^^^
+
+warning: unused import: `crate::macros`
+ --> src/payloader/prelude.rs:9:9
+  |
+9 | pub use crate::macros;
+  |         ^^^^^^^^^^^^^
+
+warning: unused import: `crate::macros`
+  --> src/payloader/device/oven/program_info.rs:25:9
+   |
+25 |     use crate::macros;
+   |         ^^^^^^^^^^^^^
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:961:8
+    |
+961 |     if (payloads::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |        ^                                                                     ^
+    |
+    = note: `#[warn(unused_parens)]` (part of `#[warn(unused)]`) on by default
+help: remove these parentheses
+    |
+961 -     if (payloads::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+961 +     if payloads::DeviceContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:966:9
+    |
+966 | else if (payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                                                    ^
+    |
+help: remove these parentheses
+    |
+966 - else if (payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+966 + else if payloader::device::oven::program_info::ProgramInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:971:9
+    |
+971 | else if (payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                                                             ^
+    |
+help: remove these parentheses
+    |
+971 - else if (payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute))
+971 + else if payloader::device::oven::program_step_info::ProgramStepInfoOven::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:976:9
+    |
+976 | else if (payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                   ^
+    |
+help: remove these parentheses
+    |
+976 - else if (payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute))
+976 + else if payloads::DeviceIdent::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:981:13
+    |
+981 |     else if (payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |             ^                                                                    ^
+    |
+help: remove these parentheses
+    |
+981 -     else if (payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+981 +     else if payloads::DateTimeInfo::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:986:9
+    |
+986 | else if (payloads::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                ^
+    |
+help: remove these parentheses
+    |
+986 - else if (payloads::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+986 + else if payloads::FileList::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:991:9
+    |
+991 | else if (payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                                ^
+    |
+help: remove these parentheses
+    |
+991 - else if (payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute))
+991 + else if payloads::FileInfo::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+   --> src/main.rs:996:9
+    |
+996 | else if (payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
+    |         ^                                                              ^
+    |
+help: remove these parentheses
+    |
+996 - else if (payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute))
+996 + else if payloads::RsaKey::ATTRIBUTE_IDS.contains(&root_node.attribute)
+    |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1002:13
+     |
+1002 |     else if (payloads::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                   ^
+     |
+help: remove these parentheses
+     |
+1002 -     else if (payloads::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1002 +     else if payloads::FailureList::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1007:9
+     |
+1007 | else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |         ^                                                                   ^
+     |
+help: remove these parentheses
+     |
+1007 - else if (payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1007 + else if payloads::UserRequest::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1012:9
+     |
+1012 | else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |         ^                                                        ^
+     |
+help: remove these parentheses
+     |
+1012 - else if (XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1012 + else if XkmRequest::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1017:9
+     |
+1017 | else if (payloader::device::generic::state::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |         ^                                                                                                 ^
+     |
+help: remove these parentheses
+     |
+1017 - else if (payloader::device::generic::state::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1017 + else if payloader::device::generic::state::DeviceCombiState::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1022:13
+     |
+1022 |     else if (payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                   ^
+     |
+help: remove these parentheses
+     |
+1022 -     else if (payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1022 +     else if payloads::SfValueList::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1027:13
+     |
+1027 |     else if (payloads::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                 ^
+     |
+help: remove these parentheses
+     |
+1027 -     else if (payloads::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1027 +     else if payloads::PSContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1032:13
+     |
+1032 |     else if (payloads::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                 ^
+     |
+help: remove these parentheses
+     |
+1032 -     else if (payloads::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1032 +     else if payloads::CSContext::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1038:13
+     |
+1038 |     else if (payloads::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                               ^
+     |
+help: remove these parentheses
+     |
+1038 -     else if (payloads::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1038 +     else if payloads::Failure::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1044:13
+     |
+1044 |     else if (payloads::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                          ^
+     |
+help: remove these parentheses
+     |
+1044 -     else if (payloads::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1044 +     else if payloads::CSHoursOfOperation::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1049:13
+     |
+1049 |     else if (payloads::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                   ^
+     |
+help: remove these parentheses
+     |
+1049 -     else if (payloads::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1049 +     else if payloads::FeatureList::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: unnecessary parentheses around `if` condition
+    --> src/main.rs:1054:13
+     |
+1054 |     else if (payloads::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute))
+     |             ^                                                                           ^
+     |
+help: remove these parentheses
+     |
+1054 -     else if (payloads::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute))
+1054 +     else if payloads::DeviceNotifications::ATTRIBUTE_IDS.contains(&root_node.attribute)
+     |
+
+warning: `#[macro_use]` attribute cannot be used on use statements
+ --> src/payloader/prelude.rs:8:1
+  |
+8 | #[macro_use]
+  | ^^^^^^^^^^^^
+  |
+  = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+  = help: `#[macro_use]` can be applied to crates, extern crates, and modules
+  = note: `#[warn(unused_attributes)]` (part of `#[warn(unused)]`) on by default
+
+warning: `#[macro_use]` attribute cannot be used on use statements
+  --> src/payloader/device/oven/program_info.rs:24:5
+   |
+24 |     #[macro_use]
+   |     ^^^^^^^^^^^^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = help: `#[macro_use]` can be applied to crates, extern crates, and modules
+
+warning: use of deprecated associated function `chrono::NaiveDateTime::from_timestamp`: use `DateTime::from_timestamp` instead
+  --> src/main.rs:81:36
+   |
+81 |         let naive = NaiveDateTime::from_timestamp(value as i64, 0);
+   |                                    ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated associated function `chrono::DateTime::<Tz>::from_utc`: Use TimeZone::from_utc_datetime() or DateTime::from_naive_utc_and_offset instead
+  --> src/main.rs:82:46
+   |
+82 |         Ok(Dop2TimestampUtc(DateTime::<Utc>::from_utc(naive, Utc)))
+   |                                              ^^^^^^^^
+
+error[E0277]: the trait bound `E8: TryFrom<ApplianceState>` is not satisfied
+   --> src/payloader/device/generic/state/combined.rs:4:39
+    |
+  4 | #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+    |                                       ^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `From<ApplianceState>` is not implemented for `E8`
+   --> src/main.rs:185:9
+    |
+185 |         pub struct $name($inner);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+219 | newtype_int!(E8, u8);
+    | -------------------- in this macro invocation
+    = help: the following other types implement trait `From<T>`:
+              `E8` implements `From<DeviceType>`
+              `E8` implements `From<NotificationAckOption>`
+              `E8` implements `From<ProtocolType>`
+              `E8` implements `From<SelectionType>`
+              `E8` implements `From<ValueInterpretation>`
+              `E8` implements `From<XkmRequestId>`
+              `E8` implements `From<u8>`
+    = note: required for `ApplianceState` to implement `Into<E8>`
+    = note: required for `E8` to implement `TryFrom<ApplianceState>`
+    = note: required for `ApplianceState` to implement `TryInto<E8>`
+    = note: this error originates in the derive macro `AssocTypes` which comes from the expansion of the macro `newtype_int` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `E8: TryFrom<OperationState>` is not satisfied
+   --> src/payloader/device/generic/state/combined.rs:4:39
+    |
+  4 | #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+    |                                       ^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `From<OperationState>` is not implemented for `E8`
+   --> src/main.rs:185:9
+    |
+185 |         pub struct $name($inner);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+219 | newtype_int!(E8, u8);
+    | -------------------- in this macro invocation
+    = help: the following other types implement trait `From<T>`:
+              `E8` implements `From<DeviceType>`
+              `E8` implements `From<NotificationAckOption>`
+              `E8` implements `From<ProtocolType>`
+              `E8` implements `From<SelectionType>`
+              `E8` implements `From<ValueInterpretation>`
+              `E8` implements `From<XkmRequestId>`
+              `E8` implements `From<u8>`
+    = note: required for `OperationState` to implement `Into<E8>`
+    = note: required for `E8` to implement `TryFrom<OperationState>`
+    = note: required for `OperationState` to implement `TryInto<E8>`
+    = note: this error originates in the derive macro `AssocTypes` which comes from the expansion of the macro `newtype_int` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `E8: TryFrom<ProcessState>` is not satisfied
+   --> src/payloader/device/generic/state/combined.rs:4:39
+    |
+  4 | #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+    |                                       ^^^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `From<ProcessState>` is not implemented for `E8`
+   --> src/main.rs:185:9
+    |
+185 |         pub struct $name($inner);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+219 | newtype_int!(E8, u8);
+    | -------------------- in this macro invocation
+    = help: the following other types implement trait `From<T>`:
+              `E8` implements `From<DeviceType>`
+              `E8` implements `From<NotificationAckOption>`
+              `E8` implements `From<ProtocolType>`
+              `E8` implements `From<SelectionType>`
+              `E8` implements `From<ValueInterpretation>`
+              `E8` implements `From<XkmRequestId>`
+              `E8` implements `From<u8>`
+    = note: required for `ProcessState` to implement `Into<E8>`
+    = note: required for `E8` to implement `TryFrom<ProcessState>`
+    = note: required for `ProcessState` to implement `TryInto<E8>`
+    = note: this error originates in the derive macro `AssocTypes` which comes from the expansion of the macro `newtype_int` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `ApplianceState: TryFrom<E8>` is not satisfied
+  --> src/payloader/device/generic/state/combined.rs:4:39
+   |
+ 4 | #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+   |                                       ^^^^^^^^^^ unsatisfied trait bound
+   |
+help: the trait `From<E8>` is not implemented for `ApplianceState`
+  --> src/payloader/device/generic/state/combined.rs:22:1
+   |
+22 | enum ApplianceState
+   | ^^^^^^^^^^^^^^^^^^^
+   = note: required for `E8` to implement `Into<ApplianceState>`
+   = note: required for `ApplianceState` to implement `TryFrom<E8>`
+   = note: required for `E8` to implement `TryInto<ApplianceState>`
+   = note: this error originates in the derive macro `AssocTypes` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `OperationState: TryFrom<E8>` is not satisfied
+  --> src/payloader/device/generic/state/combined.rs:4:39
+   |
+ 4 | #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+   |                                       ^^^^^^^^^^ unsatisfied trait bound
+   |
+help: the trait `From<E8>` is not implemented for `OperationState`
+  --> src/payloader/device/generic/state/combined.rs:39:1
+   |
+39 | enum OperationState
+   | ^^^^^^^^^^^^^^^^^^^
+   = note: required for `E8` to implement `Into<OperationState>`
+   = note: required for `OperationState` to implement `TryFrom<E8>`
+   = note: required for `E8` to implement `TryInto<OperationState>`
+   = note: this error originates in the derive macro `AssocTypes` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `ProcessState: TryFrom<E8>` is not satisfied
+  --> src/payloader/device/generic/state/combined.rs:4:39
+   |
+ 4 | #[derive(Debug, Clone, PartialEq, Eq, AssocTypes)]
+   |                                       ^^^^^^^^^^ unsatisfied trait bound
+   |
+help: the trait `From<E8>` is not implemented for `ProcessState`
+  --> src/payloader/device/generic/state/combined.rs:51:1
+   |
+51 | enum ProcessState
+   | ^^^^^^^^^^^^^^^^^
+   = note: required for `E8` to implement `Into<ProcessState>`
+   = note: required for `ProcessState` to implement `TryFrom<E8>`
+   = note: required for `E8` to implement `TryInto<ProcessState>`
+   = note: this error originates in the derive macro `AssocTypes` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `Digest`
+ --> src/crypto.rs:8:20
+  |
+8 | use sha2::{Sha256, Digest};
+  |                    ^^^^^^
+
+warning: unused variable: `rng`
+   --> src/crypto.rs:174:13
+    |
+174 |         let rng = rand::rng();
+    |             ^^^ help: if this is intentional, prefix it with an underscore: `_rng`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `dop_array`
+   --> src/main.rs:648:37
+    |
+648 |             Dop2Payloads::ArrayBool(dop_array) => todo!(),
+    |                                     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dop_array`
+
+warning: unused variable: `dop_array`
+   --> src/main.rs:649:36
+    |
+649 |             Dop2Payloads::ArrayI64(dop_array) => todo!(),
+    |                                    ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dop_array`
+
+warning: unused variable: `dop_array`
+   --> src/main.rs:650:36
+    |
+650 |             Dop2Payloads::ArrayF32(dop_array) => todo!(),
+    |                                    ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dop_array`
+
+warning: unused variable: `dop_array`
+   --> src/main.rs:651:36
+    |
+651 |             Dop2Payloads::ArrayF64(dop_array) => todo!(),
+    |                                    ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_dop_array`
+
+Some errors have detailed explanations: E0277, E0433.
+For more information about an error, try `rustc --explain E0277`.
+warning: `dop2rs` (bin "dop2rs" test) generated 37 warnings
+error: could not compile `dop2rs` (bin "dop2rs" test) due to 10 previous errors; 37 warnings emitted
