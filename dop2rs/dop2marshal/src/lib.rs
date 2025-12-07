@@ -137,12 +137,7 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                 });
               
                 
-                if is_option // skip fields that are empty optionals
-
                 {
-                    
-                }
-                else {
                     constructor_fragments.push(quote! {
                         #field_ident: #field_ident.try_into().unwrap()
                     });
