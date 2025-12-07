@@ -106,17 +106,17 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                 });
                 // TODO: Remove this "clone" -- should be avoidable by restructuring this loop
                 // let Dop2Payloads::E8(appliance_state) = x.fields[0].value 
-
+                if constructor_fragments.len() > 0
+                {
+                    constructor_fragments.push(quote!{,});
+                }
                 if is_option
                 {
                     
                     /*impls.push(quote! {
                         let #enum_expr(#field_ident) = x.get_payload(#number) && 
                     });*/
-                    if constructor_fragments.len() > 0
-                    {
-                        constructor_fragments.push(quote!{,});
-                    }
+                   
                     constructor_fragments.push(quote! {
                        #field_ident: match x.get_payload(#number)
                        {
@@ -135,10 +135,7 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                 impls.push(quote! {
                     let Some(#enum_expr(#field_ident)) = x.get_payload(#number) && 
                 });
-                if constructor_fragments.len() > 0
-                {
-                    constructor_fragments.push(quote!{,});
-                }
+              
                 
                 if is_option // skip fields that are empty optionals
 
