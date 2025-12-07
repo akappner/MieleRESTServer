@@ -31,7 +31,6 @@ pub fn derive_assoc_types(input: TokenStream) -> TokenStream {
     };
 
     let mut marker_defs = Vec::new();
-    let mut impls = Vec::new();
     let mut constructor_fragments = Vec::new();
 
     let mut marshalling_field_definitions = Vec::new();
@@ -132,15 +131,19 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                 else 
                 {
                     //println!("field_ident: {:?} is not an option", stringify!(#field_ident));
-                impls.push(quote! {
-                    let Some(#enum_expr(#field_ident)) = x.get_payload(#number) && 
-                });
-              
+               
                 
                 {
                     constructor_fragments.push(quote! {
-                        #field_ident: #field_ident.try_into().unwrap()
-                    });
+                        #field_ident: match x.get_payload(#number)
+                        {
+                          Some(test) => match test {
+                             #enum_expr(unwrapped) => unwrapped.try_into().unwrap(),
+                             _ => panic!("failed converting type: field #{} {} is invalid in struct {}", #number, stringify!(#field_ident), stringify!(#struct_name))
+                          },
+                          None => panic!("failed converting type: field #{} {} is missing from payload in struct {}", #number, stringify!(#field_ident), stringify!(#struct_name))
+                        }
+                     });
                 marshalling_field_definitions.push(quote!( { 
                //     let marshaling_payload_ident : Dop2Payloads = Dop2Payloads::U16(self.selection_parameter.clone().into());
                  //   let marshaling_payload_ident = (self.#field_ident).clone(); // this works
@@ -224,16 +227,12 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
          if let Dop2Payloads::MStruct(x)=payload 
          {
            // println!("{:?}", &x.fields.map(|x| s.field));
-            if #(#impls)* 1==1 {
+             
             let y = Self {#(#constructor_fragments)*  }; 
             return Ok(y);
             //return Err("success".to_string());
-            }
-            else
-            {
-               
-                return Err(format!("failed converting type: one or more field conversions failed in {}", stringify!(#struct_name)));
-            }
+            
+
          }
          else
          {
