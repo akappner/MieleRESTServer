@@ -39,13 +39,15 @@ impl RootNode {
         let unit = parser.take_u16()?;
         let attribute = parser.take_u16()?;
 
-        let idx1 = parser.take_u16().unwrap();
-        let idx2 = parser.take_u16().unwrap();
+        let idx1 = parser.take_u16()?;
+        let idx2 = parser.take_u16()?;
 
-        let root_struct = *Dop2Struct::parse(parser).unwrap();
+        let root_struct = *Dop2Struct::parse(parser)?;
 
-        let _padding = DopPadding::parse(parser).unwrap();
-        assert!(parser.is_empty()); // no trailing garbage
+        let _padding = DopPadding::parse(parser)?;
+        if !parser.is_empty() {
+            return Err("Trailing garbage found".to_string());
+        }
 
         Ok(RootNode {
             unit,
@@ -139,38 +141,38 @@ impl TaggedDopField {
     }
 
     pub fn parse(parser: &mut Dop2Parser) -> Result<TaggedDopField, String> {
-        let field_index = parser.take_u16().unwrap();
+        let field_index = parser.take_u16()?;
         let tag_byte = parser.take_u8()?;
         let tag = Dop2PayloadsKind::try_from_primitive(tag_byte)
             .map_err(|_| format!("Invalid Dop2Type value: 0x{:02X}", tag_byte))?;
         let value = match tag {
-            Dop2PayloadsKind::Boolean => Dop2Payloads::Boolean(*bool::parse(parser).unwrap()),
-            Dop2PayloadsKind::E8 => Dop2Payloads::E8(*E8::parse(parser).unwrap()),
-            Dop2PayloadsKind::U8 => Dop2Payloads::U8(*u8::parse(parser).unwrap()),
-            Dop2PayloadsKind::U16 => Dop2Payloads::U16(*u16::parse(parser).unwrap()),
-            Dop2PayloadsKind::U64 => Dop2Payloads::U64(*u64::parse(parser).unwrap()),
-            Dop2PayloadsKind::I8 => Dop2Payloads::I8(*i8::parse(parser).unwrap()),
-            Dop2PayloadsKind::I16 => Dop2Payloads::I16(*i16::parse(parser).unwrap()),
-            Dop2PayloadsKind::E16 => Dop2Payloads::E16(*E16::parse(parser).unwrap()),
-            Dop2PayloadsKind::U32 => Dop2Payloads::U32(*u32::parse(parser).unwrap()),
-            Dop2PayloadsKind::I32 => Dop2Payloads::I32(*i32::parse(parser).unwrap()),
-            Dop2PayloadsKind::E32 => Dop2Payloads::E32(*E32::parse(parser).unwrap()),
-            Dop2PayloadsKind::I64 => Dop2Payloads::I64(*i64::parse(parser).unwrap()),
-            Dop2PayloadsKind::E64 => Dop2Payloads::E64(*E64::parse(parser).unwrap()),
-            Dop2PayloadsKind::MString => Dop2Payloads::MString(*String::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayU8 => Dop2Payloads::ArrayU8(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayI8 => Dop2Payloads::ArrayI8(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayI16 => Dop2Payloads::ArrayI16(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayI32 => Dop2Payloads::ArrayI32(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayU32 => Dop2Payloads::ArrayU32(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayU16 => Dop2Payloads::ArrayU16(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayE8 => Dop2Payloads::ArrayE8(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayE16 => Dop2Payloads::ArrayE16(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayE32 => Dop2Payloads::ArrayE32(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayE64 => Dop2Payloads::ArrayE64(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::ArrayU64 => Dop2Payloads::ArrayU64(*DopArray::parse(parser).unwrap()),
-            Dop2PayloadsKind::MStruct => Dop2Payloads::MStruct(*Dop2Struct::parse(parser).unwrap()),
-            Dop2PayloadsKind::AStruct => Dop2Payloads::AStruct(*DopArray::parse(parser).unwrap()),
+            Dop2PayloadsKind::Boolean => Dop2Payloads::Boolean(*bool::parse(parser)?),
+            Dop2PayloadsKind::E8 => Dop2Payloads::E8(*E8::parse(parser)?),
+            Dop2PayloadsKind::U8 => Dop2Payloads::U8(*u8::parse(parser)?),
+            Dop2PayloadsKind::U16 => Dop2Payloads::U16(*u16::parse(parser)?),
+            Dop2PayloadsKind::U64 => Dop2Payloads::U64(*u64::parse(parser)?),
+            Dop2PayloadsKind::I8 => Dop2Payloads::I8(*i8::parse(parser)?),
+            Dop2PayloadsKind::I16 => Dop2Payloads::I16(*i16::parse(parser)?),
+            Dop2PayloadsKind::E16 => Dop2Payloads::E16(*E16::parse(parser)?),
+            Dop2PayloadsKind::U32 => Dop2Payloads::U32(*u32::parse(parser)?),
+            Dop2PayloadsKind::I32 => Dop2Payloads::I32(*i32::parse(parser)?),
+            Dop2PayloadsKind::E32 => Dop2Payloads::E32(*E32::parse(parser)?),
+            Dop2PayloadsKind::I64 => Dop2Payloads::I64(*i64::parse(parser)?),
+            Dop2PayloadsKind::E64 => Dop2Payloads::E64(*E64::parse(parser)?),
+            Dop2PayloadsKind::MString => Dop2Payloads::MString(*String::parse(parser)?),
+            Dop2PayloadsKind::ArrayU8 => Dop2Payloads::ArrayU8(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayI8 => Dop2Payloads::ArrayI8(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayI16 => Dop2Payloads::ArrayI16(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayI32 => Dop2Payloads::ArrayI32(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayU32 => Dop2Payloads::ArrayU32(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayU16 => Dop2Payloads::ArrayU16(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayE8 => Dop2Payloads::ArrayE8(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayE16 => Dop2Payloads::ArrayE16(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayE32 => Dop2Payloads::ArrayE32(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayE64 => Dop2Payloads::ArrayE64(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::ArrayU64 => Dop2Payloads::ArrayU64(*DopArray::parse(parser)?),
+            Dop2PayloadsKind::MStruct => Dop2Payloads::MStruct(*Dop2Struct::parse(parser)?),
+            Dop2PayloadsKind::AStruct => Dop2Payloads::AStruct(*DopArray::parse(parser)?),
 
             garbage => {
                 println!("unknown type {:?}", garbage);

@@ -70,7 +70,7 @@ where
 
 impl<T: Dop2PayloadExpressible + ToDop2Bytes> Dop2PayloadExpressible for DopArray<T> {
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
-        let count = parser.take_u16().unwrap();
+        let count = parser.take_u16()?;
         let mut elements: Vec<T> = Vec::new();
         for x in 0..count {
             let element = T::parse(parser);
@@ -92,7 +92,7 @@ impl<T: Dop2PayloadExpressible + ToDop2Bytes> ToDop2Bytes for DopArray<T> {
 
 impl Dop2PayloadExpressible for bool {
     fn parse(parser: &mut Dop2Parser) -> Result<Box<Self>, String> {
-        let payload_byte = parser.take_u8().unwrap();
+        let payload_byte = parser.take_u8()?;
         if payload_byte >= 0x02 {
             return Err("Invalid payload".to_string());
         }

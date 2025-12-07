@@ -138,11 +138,12 @@ let is_option = if let Type::Path(TypePath { path, .. }) = &field.ty {
                         #field_ident: match x.get_payload(#number)
                         {
                           Some(test) => match test {
-                             #enum_expr(unwrapped) => unwrapped.try_into().unwrap(),
-                             _ => panic!("failed converting type: field #{} {} is invalid in struct {}", #number, stringify!(#field_ident), stringify!(#struct_name))
+                             #enum_expr(unwrapped) => Ok(unwrapped.try_into().unwrap()),
+                             _ => Err(format!("failed converting type: field #{} {} is invalid in struct {}", #number, stringify!(#field_ident), stringify!(#struct_name)))
                           },
-                          None => panic!("failed converting type: field #{} {} is missing from payload in struct {}", #number, stringify!(#field_ident), stringify!(#struct_name))
-                        }
+                          None => Err(format!("failed converting type: field #{} {} is missing from payload in struct {}", #number, stringify!(#field_ident), stringify!(#struct_name)))
+                        }?
+                        
                      });
                 marshalling_field_definitions.push(quote!( { 
                //     let marshaling_payload_ident : Dop2Payloads = Dop2Payloads::U16(self.selection_parameter.clone().into());
