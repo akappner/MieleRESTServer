@@ -181,6 +181,7 @@ Users have reported the following devices to be compatible:
 | G7364        | Dishwasher   | X          | X            | ?    |
 | G7366        | Dishwasher   | X          | X            | No   |
 | G7607	       | Dishwasher   | X          | X            | No   |
+| H2465BP      | Oven         | X          | ?            | No   |
 | H7164        | Oven         | X          | ?            | ?    |
 | H7240BM      | Oven / MW    | X          | ?            | ?    |
 | H7560BP      | Oven         | X          | ?            | X    |
