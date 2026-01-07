@@ -186,13 +186,15 @@ Users have reported the following devices to be compatible:
 | H7240BM      | Oven / MW    | X          | ?            | ?    |
 | H7560BP      | Oven         | X          | ?            | X    |
 | TWD360       | Dryer        | X          | ?            | No   |
-| WTD-160      | Washer/Dryer | X          | X            | No   |
+| TWD640WP     | Dryer        | No         | No           | No   |
 | WSD663       | Washer       | X          | X            | No   |
+| WTD-160      | Washer/Dryer | X          | X            | No   |
+| WWD380 WCS   | Washer       | X          | ?            | ?    |
+| WWD660 WCS   | Washer       | X          | ?            | ?    |
 | WWE460-WPS   | Washer       | X          | X            | No   |
 | WWF360-WPS   | Washer       | X          | ?            | ?    |
-| WWD660 WCS   | Washer       | X          | ?            | ?    |
 | WXF660 (W1)  | Washer       | X          | X            | X    |
-
+| WWG760       | Washer       | X          | ?            | ?    |
 Additional reports appreciated.
 
 ## FURTHER READING
