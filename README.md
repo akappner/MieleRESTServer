@@ -65,7 +65,8 @@ prevented from doing so.
 
 Run the pairing script with the IP of your Miele device. Example:
 
-```./provision-wifi.sh 192.168.0.1
+```
+./provision-wifi.sh 192.168.0.1
 ```
 
 If successful, the Miele device will close its access point and connect to the
@@ -195,6 +196,7 @@ Users have reported the following devices to be compatible:
 | WWF360-WPS   | Washer       | X          | ?            | ?    |
 | WXF660 (W1)  | Washer       | X          | X            | X    |
 | WWG760       | Washer       | X          | ?            | X    |
+
 Additional reports appreciated.
 
 ## FURTHER READING
