@@ -133,6 +133,10 @@ class MieleEndpointConfig:
             pass;
         return j;
     def set_process_action (self):
+        command=json.dumps({"ProcessAction": 16});
+        print(command)
+        decrypted, response=self.cryptoProvider.sendHttpRequest(host=self.host, httpMethod="PUT", resourcePath=f"Devices/{self.device_route}/State", payload=command);
+
         command=json.dumps({"ProcessAction": 1});
         print(command)
         decrypted, response=self.cryptoProvider.sendHttpRequest(host=self.host, httpMethod="PUT", resourcePath=f"Devices/{self.device_route}/State", payload=command);
