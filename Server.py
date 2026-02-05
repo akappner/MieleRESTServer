@@ -132,8 +132,8 @@ class MieleEndpointConfig:
             j["ElapsedMinutes"]=-1
             pass;
         return j;
-    def set_process_action (self):
-        command=json.dumps({"ProcessAction": 1});
+    def set_process_action (self, action_code):
+        command=json.dumps({"ProcessAction": action_code});
         print(command)
         decrypted, response=self.cryptoProvider.sendHttpRequest(host=self.host, httpMethod="PUT", resourcePath=f"Devices/{self.device_route}/State", payload=command);
         print(decrypted);
@@ -261,7 +261,9 @@ class SetProcessActionAPI(Resource):
 
     def post (self, endpoint):
         endpoint=endpoints[endpoint];
-        j=endpoint.set_process_action();
+        j=endpoint.set_process_action(1);
+        j=endpoint.set_process_action(16);
+
         return j;
 class EndpointAPI(Resource):
     def __init__ (self):
