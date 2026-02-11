@@ -178,6 +178,7 @@ Users have reported the following devices to be compatible:
 |--------------|--------------|------------|--------------|------|
 | CM6360       | Coffee Maker | X          | ?            | No   |
 | G3385        | Dishwasher   | X          | ?            | ?    |
+| G7266        | Dishwasher   | X          | X            | No   |
 | G7360        | Dishwasher   | X          | X            | No   |
 | G7364        | Dishwasher   | X          | X            | ?    |
 | G7366        | Dishwasher   | X          | X            | No   |
@@ -197,6 +198,7 @@ Users have reported the following devices to be compatible:
 | WWF360-WPS   | Washer       | X          | ?            | ?    |
 | WWG760       | Washer       | X          | ?            | X    |
 | WXF660 (W1)  | Washer       | X          | X            | X    |
+| WXR860 WCS   | Washer       | X          | X            | No   |
 
 Additional reports appreciated.
 
