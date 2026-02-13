@@ -4,6 +4,11 @@ from setuptools import setup
 
 
 README = Path(__file__).with_name("README.md").read_text(encoding="utf-8")
+REQUIREMENTS = [
+    line.strip()
+    for line in Path(__file__).with_name("requirements.txt").read_text(encoding="utf-8").splitlines()
+    if line.strip() and not line.lstrip().startswith("#")
+]
 
 
 setup(
@@ -21,14 +26,7 @@ setup(
         "MieleErrors",
         "_version",
     ],
-    install_requires=[
-        "cryptography",
-        "Flask",
-        "flask_restful",
-        "numpy",
-        "PyYAML",
-        "Requests",
-    ],
+    install_requires=REQUIREMENTS,
     entry_points={
         "console_scripts": [
             "miele-rest-server=Server:main",
