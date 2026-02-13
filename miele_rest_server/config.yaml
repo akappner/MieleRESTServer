@@ -1,0 +1,22 @@
+name: Miele REST Server
+version: "1.0.0"
+slug: miele_rest_server
+description: Run MieleRESTServer as a Home Assistant add-on.
+url: https://github.com/akappner/MieleRESTServer
+startup: services
+boot: auto
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armv7
+  - i386
+ports:
+  5001/tcp: 5001
+ports_description:
+  5001/tcp: MieleRESTServer REST API
+map:
+  - type: config
+    read_only: false
+options: {}
+schema: {}
