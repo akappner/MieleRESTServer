@@ -1,5 +1,7 @@
 # Home Assistant add-on setup
 
+First, ensure you did **step 2 Provision cryptographic keys** from [`Standalone setup`](docs/standalone-setup.md)  
+
 ## Add repository and install
 
 1. In Home Assistant, open `Settings -> Add-ons -> Add-on Store -> menu -> Repositories`.
