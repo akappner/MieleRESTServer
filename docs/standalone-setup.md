@@ -35,6 +35,7 @@ Then provision WiFi credentials:
 cd helpers/
 ./provision-wifi.sh 192.168.0.1
 ```
+Where `192.168.0.1` is the IP of your Miele on the temporary network.
 
 Before provisioning, edit `helpers/wifi.json` with your target WiFi details.
 
@@ -52,6 +53,7 @@ cd helpers/
 ../generate-keys.py > ./keys.json
 ./provision-key.sh 192.168.1.50 ./keys.json
 ```
+Where `192.168.1.50` is the IP of your Miele on your LAN
 
 After this step, the appliance no longer accepts unsigned/unencrypted commands.
 
