@@ -6,8 +6,7 @@ The add-on runs MieleRESTServer and exposes the REST API on TCP port `5001`.
 
 ## Configuration
 
-### Preferred mode (add-on options)
-
+In Home Assistant, under the add-on options for this add-on.
 Set `endpoints` in the add-on configuration UI.
 
 Each item supports:
@@ -24,10 +23,7 @@ Optional:
 
 ### Compatibility mode (legacy file)
 
-If `endpoints` is empty, the add-on reads:
-
-- `/config/MieleRESTServer.config`
-
+If `endpoints` is empty, the add-on reads `/config/MieleRESTServer.config`
 Use `examples/MieleRESTServer-example-config.yaml` from the repository as a template.
 
 ## Logs
