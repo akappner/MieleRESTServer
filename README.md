@@ -9,9 +9,9 @@ REST-based server frontend to control the client. No official client exists for
 the Miele@home protocol, as Miele wants you to use its "cloud".
 
 ## Documentation
-[`Standalone setup`](docs/standalone-setup.md)  
-[`Home Assistant add-on setup`](docs/home-assistant.md)  
+[`Standalone setup`](docs/standalone-setup.md) Run a REST server without Home Assistant.  
+[`Home Assistant add-on setup`](docs/home-assistant.md) Instructions for the Home Assist add-on  
 [`API usage`](docs/api-usage.md)  
-[`Compatibility`](docs/compatibility.md)  
+[`Compatibility`](docs/compatibility.md) Supported Miele devices  
 [`References`](docs/references.md)  
 [`Disclaimer`](docs/disclaimer.md)  
