@@ -1,9 +1,17 @@
-# Documentation
+# Miele REST Server: Local Control for Miele@home Appliances
 
-- Standalone setup: [`docs/standalone-setup.md`](docs/standalone-setup.md)
-- Home Assistant add-on setup: [`docs/home-assistant.md`](docs/home-assistant.md)
-- API usage: [`docs/api-usage.md`](docs/api-usage.md)
-- Compatibility: [`docs/compatibility.md`](docs/compatibility.md)
-- References: [`docs/references.md`](docs/references.md)
-- Disclaimer: [`docs/disclaimer.md`](docs/disclaimer.md)
-- README restructuring plan: [`docs/README_RESTRUCTURE_PLAN.md`](docs/README_RESTRUCTURE_PLAN.md)
+[![Tests](https://github.com/akappner/MieleRESTServer/actions/workflows/rust.yml/badge.svg)](https://github.com/akappner/MieleRESTServer/actions/workflows/rust.yml)
+
+## Scope
+
+This project implements a client for "Miele@home" based appliances, and a
+REST-based server frontend to control the client. No official client exists for
+the Miele@home protocol, as Miele wants you to use its "cloud".
+
+## Documentation
+[`Standalone setup`](docs/standalone-setup.md)  
+[`Home Assistant add-on setup`](docs/home-assistant.md)  
+[`API usage`](docs/api-usage.md)  
+[`Compatibility`](docs/compatibility.md)  
+[`References`](docs/references.md)  
+[`Disclaimer`](docs/disclaimer.md)  
