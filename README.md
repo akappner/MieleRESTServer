@@ -130,13 +130,15 @@ configuration.
 
 ### 6b) Optional -- Home Assistant add-on repository
 
-This repository now includes Home Assistant add-on metadata so Home Assistant
-can build/run MieleRESTServer as an add-on.
+This repository includes Home Assistant add-on metadata so Home Assistant can
+build/run MieleRESTServer as an add-on.
 
-1. In Home Assistant, open **Settings → Add-ons → Add-on Store → ⋮ → Repositories**.
+1. In Home Assistant, open **Settings -> Add-ons -> Add-on Store -> menu -> Repositories**.
 2. Add this GitHub repository URL.
 3. Install the **Miele REST Server** add-on.
-4. Create `/config/MieleRESTServer.config` in Home Assistant using
+4. Configure endpoints in the add-on UI (`endpoints`).
+5. Optional compatibility mode: if `endpoints` is left empty, create
+   `/config/MieleRESTServer.config` in Home Assistant using
    `examples/MieleRESTServer-example-config.yaml` as a template.
 
 > Note: HACS does not install Home Assistant add-ons. HACS supports custom
@@ -144,7 +146,6 @@ can build/run MieleRESTServer as an add-on.
 > the Home Assistant Add-on Store.
 
 Relevant docs:
-
 - Home Assistant add-on repository layout:
   https://developers.home-assistant.io/docs/add-ons/presentation#repository-configuration
 - Home Assistant add-on `config.yaml` reference:
@@ -248,3 +249,4 @@ This program is licensed under GPLv3.
 This program is solely based on independent reverse engineering and is not in any way
 authorized, warranted or tested by Miele. Its use may void your warranty, or destroy
 your Miele machines.
+

@@ -2,11 +2,15 @@
 
 This add-on packages MieleRESTServer so Home Assistant can install and run it from the Add-on Store.
 
-## Required configuration file
+## Configuration
 
-Create `/config/MieleRESTServer.config` in Home Assistant, based on:
+Preferred: configure endpoints in the add-on UI (`options.endpoints`).
 
-- `examples/MieleRESTServer-example-config.yaml`
+Legacy fallback: if `options.endpoints` is empty, the add-on loads:
+
+- `/config/MieleRESTServer.config`
+
+You can use `examples/MieleRESTServer-example-config.yaml` as the template for legacy mode.
 
 ## Home Assistant YAML fragment
 

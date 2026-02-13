@@ -1,10 +1,21 @@
-FROM python:3.13-slim-bookworm
+ARG BUILD_FROM=python:3.13-slim-bookworm
+FROM ${BUILD_FROM}
 
 WORKDIR /app
 
 COPY requirements.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN if command -v apk >/dev/null 2>&1; then \
+      apk add --no-cache python3 py3-pip; \
+    elif command -v apt-get >/dev/null 2>&1; then \
+      apt-get update && apt-get install -y --no-install-recommends python3 python3-pip \
+      && rm -rf /var/lib/apt/lists/*; \
+    else \
+      echo "No supported package manager found (apk/apt-get)." >&2; \
+      exit 1; \
+    fi \
+    && pip3 install --no-cache-dir -r requirements.txt
 
 COPY . ./
+RUN chmod a+x /app/run.sh
 
-CMD ["python3", "Server.py", "-b", "0.0.0.0", "-p", "5001", "-c", "/config/MieleRESTServer.config"]
+CMD ["/app/run.sh"]

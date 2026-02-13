@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{{ endpointName }} -- {{ endpoint["DeviceIdentLabel"]["TechType"] }}</title>
+</head>
+<body>
+<div id="images"></div>
+ <label id="progress_label" for="progress">Dow</label>
+<progress id="progress" max="100" value="{{ endpoint["Progress"] }}"></progress>
+
+<table id="grid1"></table>
+
+Status: {{ endpoint["DecodedProgramPhase"] }}
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/free-jqgrid/4.15.5/jquery.jqgrid.min.js"></script>
+<script>
+    $(function () {
+        "use strict";
+        $("#grid1").jqGrid({
+            colModel: [
+                { name: "name", label: "Client", width: 53 },
+                { name: "invdate", label: "Date", width: 75, align: "center", sorttype: "date",
+                    formatter: "date", formatoptions: { newformat: "d-M-Y" } },
+                { name: "amount", label: "Amount", width: 65, template: "number" },
+                { name: "tax", label: "Tax", width: 41, template: "number" },
+                { name: "total", label: "Total", width: 51, template: "number" },
+                { name: "closed", label: "Closed", width: 59, template: "booleanCheckbox", firstsortorder: "desc" },
+                { name: "ship_via", label: "Shipped via", width: 87, align: "center", formatter: "select",
+                    formatoptions: { value: "FE:FedEx;TN:TNT;DH:DHL", defaultValue: "DH" } }
+            ],
+            data: [
+                { id: "10",  invdate: "2015-10-01", name: "test",   amount: "" },
+                { id: "20",  invdate: "2015-09-01", name: "test2",  amount: "300.00", tax:"20.00", closed:false, ship_via:"FE", total:"320.00"},
+            ],
+            iconSet: "fontAwesome",
+            idPrefix: "g1_",
+            rownumbers: true,
+            sortname: "invdate",
+            sortorder: "desc",
+            caption: "The grid, which uses predefined formatters and templates"
+        });
+    });
+</script>
+<script>
+function refreshFromApi() 
+{
+  var api = "../generate-summary/{{ endpointName }}";
+  $.getJSON( api, {} )
+    .done(function( data ) {
+    decoded=data;
+
+    $('#progress').val(100*decoded["Progress"]);
+    $('#progress_label').text("Remaining: " + decoded["RemainingMinutes"] + "min");
+    console.log(decoded);
+} )
+}
+setInterval(refreshFromApi, 2000);
+</script>
+</body>
+</html>

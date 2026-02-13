@@ -1,10 +1,10 @@
 # Home Assistant addon definition file
 
 name: Miele REST Server
-version: "1.0.0"
+version: "1.1.0"
 slug: miele_rest_server
 description: Run MieleRESTServer as a Home Assistant add-on.
-url: https://github.com/akappner/MieleRESTServer
+url: https://github.com/hannesdelbeke/MieleRESTServer
 startup: services
 boot: auto
 init: false
@@ -20,5 +20,14 @@ ports_description:
 map:
   - type: config
     read_only: false
-options: {}
-schema: {}
+options:
+  debug: false
+  endpoints: []
+schema:
+  debug: bool
+  endpoints:
+    - name: str
+      host: str
+      groupId: str
+      groupKey: password
+      route: str?
