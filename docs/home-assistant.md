@@ -1,6 +1,6 @@
 # Home Assistant add-on setup
 
-First, ensure you did **step 2 Provision cryptographic keys** from [`Standalone setup`](docs/standalone-setup.md)  
+First, ensure you did **step 2 Provision cryptographic keys** from [`Standalone setup`](standalone-setup.md)  
 
 ## Add repository and install
 
