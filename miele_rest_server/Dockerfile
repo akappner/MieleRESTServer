@@ -13,7 +13,7 @@ RUN if command -v apk >/dev/null 2>&1; then \
       echo "No supported package manager found (apk/apt-get)." >&2; \
       exit 1; \
     fi \
-    && pip3 install --no-cache-dir -r requirements.txt
+    && pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 
 COPY . ./
 RUN chmod a+x /app/run.sh
