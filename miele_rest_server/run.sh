@@ -99,4 +99,4 @@ if [ "$DEBUG_ENABLED" = "1" ]; then
   DEBUG_ARG="--debug"
 fi
 
-exec python3 /app/Server.py -b 0.0.0.0 -p 5001 -c "$CONFIG_PATH" $DEBUG_ARG
+exec miele-rest-server -b 0.0.0.0 -p 5001 -c "$CONFIG_PATH" $DEBUG_ARG

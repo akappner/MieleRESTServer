@@ -1,9 +1,8 @@
-ARG BUILD_FROM=python:3.13-slim-bookworm
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:latest
 FROM ${BUILD_FROM}
 
 WORKDIR /app
 
-COPY requirements.txt ./
 RUN if command -v apk >/dev/null 2>&1; then \
       apk add --no-cache python3 py3-pip; \
     elif command -v apt-get >/dev/null 2>&1; then \
@@ -13,7 +12,8 @@ RUN if command -v apk >/dev/null 2>&1; then \
       echo "No supported package manager found (apk/apt-get)." >&2; \
       exit 1; \
     fi \
-    && pip3 install --break-system-packages --no-cache-dir -r requirements.txt
+    && pip3 install --break-system-packages --no-cache-dir \
+      "https://github.com/hannesdelbeke/MieleRESTServer/archive/refs/heads/master.zip"
 
 COPY . ./
 RUN chmod a+x /app/run.sh

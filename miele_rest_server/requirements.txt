@@ -1,6 +1,0 @@
-cryptography
-Flask
-flask_restful
-numpy
-PyYAML
-Requests
