@@ -1,16 +1,9 @@
 name: Add-on Validation
 
 on:
-  pull_request:
-    paths:
-      - 'miele_rest_server/**'
-      - '.github/workflows/addon.yml'
-  push:
-    branches:
-      - main
-    paths:
-      - 'miele_rest_server/**'
-      - '.github/workflows/addon.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   build-addon:
