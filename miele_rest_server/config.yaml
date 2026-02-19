@@ -13,6 +13,11 @@ arch:
   - amd64
   - armv7
   - i386
+build_from:
+  aarch64: "ghcr.io/home-assistant/aarch64-base:latest"
+  amd64: "ghcr.io/home-assistant/amd64-base:latest"
+  armv7: "ghcr.io/home-assistant/armv7-base:latest"
+  i386: "ghcr.io/home-assistant/i386-base:latest"
 ports:
   5001/tcp: 5001
 ports_description:
