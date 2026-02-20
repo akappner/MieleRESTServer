@@ -124,7 +124,34 @@ You should see a JSON file that shows information from all configured devices.
 ### 6) Optional -- Home Assistant integration
 
 If you want to use Home Assistant to query and display the device status, paste
-the configuration fragment into your home assistant config.
+the configuration fragment from
+`examples/homeassistant-configuration-fragment.yaml` into your Home Assistant
+configuration.
+
+### 6b) Optional -- Home Assistant add-on repository
+
+This repository includes Home Assistant add-on metadata so Home Assistant can
+build/run MieleRESTServer as an add-on.
+
+1. In Home Assistant, open **Settings -> Add-ons -> Add-on Store -> menu -> Repositories**.
+2. Add this GitHub repository URL.
+3. Install the **Miele REST Server** add-on.
+4. Configure endpoints in the add-on UI (`endpoints`).
+5. Optional compatibility mode: if `endpoints` is left empty, create
+   `/config/MieleRESTServer.config` in Home Assistant using
+   `examples/MieleRESTServer-example-config.yaml` as a template.
+
+> Note: HACS does not install Home Assistant add-ons. HACS supports custom
+> integrations, dashboards, templates, etc., while add-ons are installed via
+> the Home Assistant Add-on Store.
+
+Relevant docs:
+- Home Assistant add-on repository layout:
+  https://developers.home-assistant.io/docs/add-ons/presentation#repository-configuration
+- Home Assistant add-on `config.yaml` reference:
+  https://developers.home-assistant.io/docs/add-ons/configuration
+- HACS documentation:
+  https://hacs.xyz/docs/use/
 
 ## QUERYING AND SETTING DEVICE INFORMATION
 

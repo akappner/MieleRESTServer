@@ -218,74 +218,71 @@ class Dop2LeafAPI(Resource):
 #       b="00070002062f0000000000010001070000000020202020202020202020202020" #user request message has only ONE byte
 #        b="000e0002062f0001000100010001070000002020202020202020202020202020"
   ##      payload=binascii.unhexlify(b);
-        [decrypted, response] =endpoint.writeDop2Leaf(unit, attribute, payload);
-        return {"StatusCode" : response.status_code }
-#        try:
-#           return json.loads(response);
-#        except:
-#            parser=MieleAttributeParser();
-#            return [str(x) for x in parser.parseBytes(response)];
-    def get(self, endpoint, unit, attribute, idx1=0, idx2=0):
-#        return self.put(endpoint, unit, attribute);
+        [attributes, data] = endpoint.writeDop2Leaf(unit, attribute, payload);
+        return [str(x) for x in attributes];
+    def get (self, endpoint, unit, attribute, idx1=0, idx2=0):
         endpoint=endpoints[endpoint];
-        print(f"GET {unit}/attribute?idx1={idx1}&idx2={idx2}")
-#        response=endpoint.readDop2Leaf(unit, attribute, b"", idx1=12037, idx2=0);
-        leaf, data = endpoint.readDop2Leaf(unit, attribute, idx1=idx1, idx2=idx2);
-        return {"decoded": [str(x) for x in leaf], "binary":str(binascii.hexlify(data))}
-#        try:
-#           return json.loads(response);
-#        except:
-#            parser=MieleAttributeParser();
-#            return [str(x) for x in parser.parseBytes(response)];
-
-
-class SetDeviceActionAPI(Resource):
-    def __init__ (self):
-        self.reqparse = reqparse.RequestParser();
-        self.reqparse.add_argument('endpoint', type=str, required=False, help='',location='json');
-    def get (self, endpoint):
-        endpoint=endpoints[endpoint];
-        j=endpoint.set_device_action();
-        return j;
-
-
+        [attributes, data] = endpoint.readDop2Leaf(unit, attribute, idx1, idx2);
+        return {"decoded": attributes, "binary":str(binascii.hexlify(data, " "))};
 class SetProcessActionAPI(Resource):
-    def __init__ (self):
-        self.reqparse = reqparse.RequestParser();
-        self.reqparse.add_argument('endpoint', type=str, required=False, help='',location='json');
-    def get (self, endpoint):
+    def post(self, endpoint):
         endpoint=endpoints[endpoint];
-        summary=json.loads(endpoint.get_device_summary_raw())
-        return {"DeviceReadyToStart" : summary["Status"]==0x04,
-                "DeviceRemoteStartCapable" : (15 in summary["RemoteEnable"])  }
-
-    def post (self, endpoint):
+        return endpoint.set_process_action();
+    def get(self, endpoint):
         endpoint=endpoints[endpoint];
-        j=endpoint.set_process_action();
-        return j;
-class EndpointAPI(Resource):
-    def __init__ (self):
-        self.reqparse = reqparse.RequestParser();
-        self.reqparse.add_argument('endpoint', type=str, required=False, help='',location='json');
-        super(EndpointAPI,self).__init__()
-    def get (self, endpoint=""):
-        if (endpoint==""):
-            return {x: endpoints[x].serialize() for x in endpoints.keys() };
-        else:
-            return {endpoint: endpoints[endpoint].serialize() };
-
+        summary=endpoint.get_device_summary_annotated();
+        is_remote_start_capable = summary["RemoteEnable"][2];
+        is_remote_start_enabled = summary["ProgramType"]==2 and summary["ProgramID"] != ProgramId.UNKNOWN.value
+        return {"DeviceRemoteStartCapable": is_remote_start_capable,
+                "DeviceRemoteStartEnabled": is_remote_start_enabled,
+                "message":"Set and start timer first on device if not currently enabled" }
+class SetDeviceActionAPI(Resource):
+    def post(self, endpoint):
+        endpoint=endpoints[endpoint];
+        return endpoint.set_device_action();
 class WalkDOP2TreeAPI(Resource):
-    def __init__ (self):
-        self.reqparse = reqparse.RequestParser();
-        self.reqparse.add_argument('endpoint', type=str, required=False, help='',location='json');
-        super(WalkDOP2TreeAPI,self).__init__()
-    def get (self, endpoint):
+    def get(self, endpoint):
         endpoint=endpoints[endpoint];
-        try:
-            t=endpoint.walkdop2tree();
-        except MieleRESTException as e:
-            return e.asdict(), 400;
-        return t;
+        return endpoint.walkdop2tree();
+class EndpointAPI(Resource):
+    def get(self, endpoint=None):
+        if endpoint==None:
+            return { e: json.loads(x.serialize()) for e, x in endpoints.items()}
+        return json.loads(endpoints[endpoint].serialize())
+
+
+def handle_invalid_usage(e):
+    return jsonify(e.asdict()), e.status_code
+
+class JSON_Val:
+    def __init__(self, key, expectedType=None):
+        self.key=key;
+        self.expectedType=expectedType;
+
+def parseAndValidateJSON(request, vals):
+    j=request.get_json();
+    if (j==None):
+        raise MieleRESTException("No valid JSON in request", 400);
+    for v in vals:
+        if not (v.key in j):
+            raise MieleRESTException(f'Required key "{v.key}" missing from payload', 400)
+        if (v.expectedType !=None):
+            t=type(j[v.key]);
+            if (t!=v.expectedType):
+                raise MieleRESTException(f'Unexpected type for field "{v.key}": expected "{v.expectedType}", got "{t}"', 400)
+
+
+def parseJSONrequest(*vals):
+    def _parseJSONrequest(f):
+        def inner(*args, **kwargs):
+            try:
+                parseAndValidateJSON(request, vals);
+                t=f(*args, **kwargs)
+            except MieleRESTException as e:
+                return e.asdict(), 400;
+            return t;
+        return inner;
+    return _parseJSONrequest;
 class DeviceSummaryAPI(Resource):
     def __init__ (self):
         self.reqparse = reqparse.RequestParser();
@@ -301,7 +298,8 @@ class DevicesSummaryAPI(Resource):
         j={e: x.get_device_summary_annotated() for e, x in endpoints.items() }
         return j;
 
-if __name__ == '__main__':
+
+def main(argv=None):
     parser = argparse.ArgumentParser(
                     prog=PRODUCTNAME,
                     description='Provides RESTful interface to Miele@home devices')
@@ -314,7 +312,7 @@ if __name__ == '__main__':
     parser.add_argument('--webui', action='store_true', help="enable experimental web UI, default off")
     parser.add_argument('--debug', action='store_true', help="run REST server in debug mode, default off")
 
-    cmdargs=parser.parse_args()
+    cmdargs=parser.parse_args(argv)
 
     with open(cmdargs.config) as stream:
         try:
@@ -322,11 +320,15 @@ if __name__ == '__main__':
         except yaml.YAMLError as exc:
             print(exc)
             print ("Error loading configuration file, exiting");
+            return 1
+
+    endpoints.clear()
     for key, value in config_file["endpoints"].items():
         endpoints[key]=MieleEndpointConfig(value);
 
 
     app = Flask(__name__, static_url_path="")
+    app.register_error_handler(MieleRESTException, handle_invalid_usage)
     api = Api(app)
     api.add_resource(DevicesSummaryAPI, '/generate-summary')
     api.add_resource(DeviceSummaryAPI, '/generate-summary/<string:endpoint>')
@@ -336,7 +338,7 @@ if __name__ == '__main__':
     api.add_resource(SetDeviceActionAPI, '/wakeup/<string:endpoint>')
     api.add_resource(CommandPassthroughAPI, '/command/<string:endpoint>/<string:command>')
 
-    api.add_resource(Dop2LeafAPI, 
+    api.add_resource(Dop2LeafAPI,
         '/dop2leaf/<string:endpoint>/<int:unit>/<int:attribute>',
         '/dop2leaf/<string:endpoint>/<int:unit>/<int:attribute>/<int:idx1>',
         '/dop2leaf/<string:endpoint>/<int:unit>/<int:attribute>/<int:idx1>/<int:idx2>'
@@ -358,3 +360,8 @@ if __name__ == '__main__':
         print("WebUI disabled.")
 
     app.run(debug=cmdargs.debug, host=cmdargs.bind, port=cmdargs.port);
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
