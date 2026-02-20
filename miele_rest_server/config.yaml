@@ -4,7 +4,7 @@ name: Miele REST Server
 version: "1.1.1"
 slug: miele_rest_server
 description: Run MieleRESTServer as a Home Assistant add-on.
-url: https://github.com/hannesdelbeke/MieleRESTServer
+url: https://github.com/akappner/MieleRESTServer
 startup: services
 boot: auto
 init: false
