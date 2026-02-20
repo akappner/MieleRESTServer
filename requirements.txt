@@ -1,6 +1,8 @@
+black
 cryptography
 Flask
 flask_restful
 numpy
+pylint
 PyYAML
 Requests
