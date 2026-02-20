@@ -13,7 +13,7 @@ RUN if command -v apk >/dev/null 2>&1; then \
       exit 1; \
     fi && \
     pip3 install --break-system-packages --no-cache-dir \
-      "https://github.com/hannesdelbeke/MieleRESTServer/archive/refs/heads/master.zip"
+      "https://github.com/akappner/MieleRESTServer/archive/refs/heads/master.zip"
 
 COPY . ./
 RUN chmod a+x /app/run.sh
