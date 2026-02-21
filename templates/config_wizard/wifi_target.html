@@ -1,0 +1,61 @@
+{% extends "config_wizard/base.html" %}
+{% block content %}
+<h2>{{ title }}</h2>
+<p class="muted">Miele AP host: <code>{{ state.get('miele_ap_host', 'unknown') }}</code>. Select target Wi-Fi to connect the appliance to.</p>
+
+{% if networks %}
+<table>
+    <thead>
+    <tr>
+        <th>SSID</th>
+        <th>Signal</th>
+        <th>Security</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for network in networks %}
+    <tr>
+        <td>{{ network.SSID }}</td>
+        <td>{% if network.RSSI is not none %}{{ network.RSSI }}{% else %}N/A{% endif %}</td>
+        <td>{{ network.Sec }}</td>
+        <td>
+            <form method="post">
+                <input type="hidden" name="action" value="select">
+                <input type="hidden" name="selected_ssid" value="{{ network.ssid }}">
+                <input type="hidden" name="selected_security" value="{{ network.security }}">
+                <button class="btn alt" type="submit">Use</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No target Wi-Fi networks were detected. Enter values manually below.</p>
+{% endif %}
+
+<form method="post">
+    <input type="hidden" name="action" value="provision">
+
+    <div class="field">
+        <label for="target_ssid">Target Wi-Fi SSID</label>
+        <input id="target_ssid" name="target_ssid" type="text" value="{{ state.get('target_ssid', '') }}" required>
+    </div>
+
+    <div class="field">
+        <label for="target_security">Security Protocol (inferred, editable)</label>
+        <input id="target_security" name="target_security" type="text" value="{{ state.get('target_security', 'WPA2') }}" required>
+    </div>
+
+    <div class="field">
+        <label for="target_wifi_key">Wi-Fi Password (blank only for OPEN)</label>
+        <input id="target_wifi_key" name="target_wifi_key" type="password" value="{{ state.get('target_wifi_key', '') }}">
+    </div>
+
+    <div class="actions">
+        <button class="btn" type="submit">Run Wi-Fi Provisioning Request</button>
+        <a class="btn alt" href="{{ url_for('wifi_target') }}">Rescan</a>
+    </div>
+</form>
+{% endblock %}

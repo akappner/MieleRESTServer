@@ -20,7 +20,7 @@ the device if necessary through the local control panel.
 ### 1) Connecting Miele device to WiFi
 
 Select "Miele@home" on the control panel of the Miele device. If the device offers
-you a choice between "Via WPS" or "Via App", choose "Via App". 
+you a choice between "Via WPS" or "Via App", choose "Via App".
 
 The device will open its own access point with an SSID starting with "Miele@home".
 
@@ -30,7 +30,7 @@ Observe the SSID of the local access point:
 
 #### 1b) If the SSID is "Miele@home-{some suffix}", e.g. "Miele@home-TAA1234", connect to the network with your device's serial number shown on its sticker.
 
-Some Miele devices run their own DHCP server. Try to receive an IP from the Miele device by running 
+Some Miele devices run their own DHCP server. Try to receive an IP from the Miele device by running
 
 ```
 dhclient -v -i <your_wifi_interface_here>
@@ -74,7 +74,7 @@ new WiFi. Some Miele devices will use an HTTPS endpoint for provisioning. The
 provisioning script attempts both, HTTP first -- one or the other will fail.
 
 ### 2) Provisioning Miele Device with Cryptographic Keys
-   
+
    Connect to the same WiFi as the Miele device.
 
 Generate device keys using the provided "generate-keys.py" script.
@@ -108,7 +108,7 @@ Specify the device route as "auto" if you do not know. If "auto", the
 server will detect it upon startup, and print it in the log. You can update the
 config to include the route to save the auto-detection step on startup.
 
-### 4) Install the server 
+### 4) Install the server
 
 ```
 cd ../
@@ -157,7 +157,7 @@ Relevant docs:
 
 After a period of inactivity, the device will go into a sleep mode. When in
 sleep mode, it returns invalid data through the DOP2 endpoint. To wake the
-device up from sleep, use the /wakeup/<device name> endpoint. 
+device up from sleep, use the /wakeup/<device name> endpoint.
 
 Some Miele devices expose an internal binary protocol under the endpoint "DOP2".
 
@@ -165,7 +165,7 @@ DOP2 information can be retrieved from the /walkdop2tree/<device name>
 endpoint. Not all DOP2 data structures can be decoded yet.
 
 Individual DOP2 attributes can be read from, and written, by GET and POST
-to the /dop2leaf/<device name> endpoint. 
+to the /dop2leaf/<device name> endpoint.
 
 ## USING REMOTE START
 
@@ -183,7 +183,7 @@ Once the timer is running, send a POST request to /start/<device name>.
 Your device should start immediately, cutting the timer short.
 
 Some devices require a configuration option ("Mode 97") set on the local control panel to allow remote start.
-Counter-intuitively, this is true even if the selector knob is turned to "Remote Start". 
+Counter-intuitively, this is true even if the selector knob is turned to "Remote Start".
 If remote start does not work, and the /start endpoint reports "DeviceRemoteStartCapable"
 as "false", this is an indication that the additional configuration option is required.
 

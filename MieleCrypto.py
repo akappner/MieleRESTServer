@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Copyright (c) 2025 Alexander Kappner.
 #
-# This file is part of MieleRESTServer 
+# This file is part of MieleRESTServer
 # (see github).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@ import sys
 import json
 import pprint
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from MieleDop2 import MieleAttributeParser 
+from MieleDop2 import MieleAttributeParser
 from MieleDop2Structures import *
 
 import requests
@@ -67,16 +67,28 @@ class MieleProvisioningInfo:
     def get_aes_key (self):
         return self.groupkey[0:32];
     def get_signature_key(self):
-        return self.groupkey;
+        return self.groupkey
+
+    @staticmethod
     def generate_random():
         return MieleProvisioningInfo(groupid=secrets.token_hex(8), groupkey=secrets.token_hex(64))
     def to_dict(self):
         return { "GroupID": self.groupid, "GroupKey": str(self.groupkey.hex().upper()) }
     def __str__(self):
-        return f'''groupId: "{self.groupid}"
-        groupKey: {str(self.groupkey.hex())}'''
+        return f"""groupId: "{self.groupid}"
+        groupKey: {str(self.groupkey.hex().upper())}"""
+
     def to_pairing_json(self):
-        return json.dumps(self.to_dict(), sort_keys=True);
+        return json.dumps(self.to_dict(), sort_keys=True, indent=4)
+
+    @staticmethod
+    def from_paring_json(payload: str):
+        data = json.loads(payload)
+        return MieleProvisioningInfo(
+            groupid=data["GroupID"],
+            groupkey=data["GroupKey"],
+        )
+
 
 class MieleAuthHeader:
     def __init__ (self, groupid, iv, signature):
@@ -209,10 +221,10 @@ class MieleCryptoProvider:
     def readDop2Node (self, host, deviceRoute, node=""):
 #        deviceRoute="000187683192"
         resourcePath=f"Devices/{deviceRoute}/DOP2/{node}"
-        [response, r]=self.sendHttpRequest(httpMethod="GET", host=host, resourcePath=resourcePath); 
+        [response, r]=self.sendHttpRequest(httpMethod="GET", host=host, resourcePath=resourcePath);
         return json.loads(response);
 #        if (node==""): #we are reading root node
-#            
+#
     def readDop2Recursive (self, host, deviceRoute):
         try:
             rootNode=self.readDop2Node(host, deviceRoute) #get root node
@@ -317,7 +329,7 @@ class MieleCryptoProvider:
 #             payload_hmm=(payload[5] << 0) ; # 8 byte header
 #             print(f"{payload_hmm} data type:");
 
-#             print(response[8:].decode("ascii", errors='ignore')) 
+#             print(response[8:].decode("ascii", errors='ignore'))
 
 #             # first field header starts at byte 6
 #             cursor=5;
@@ -433,7 +445,7 @@ class MieleCryptoProvider:
 
 #                         cursor=cursor+4;
 #                     case 0x01:
-#                         arrayLength=(payload[cursor+1]<<0) 
+#                         arrayLength=(payload[cursor+1]<<0)
 #                         cursor=cursor+1;
 #                         arrayData=payload[cursor:cursor+arrayLength]
 #                         print(f"array length {arrayLength}, data={binascii.hexlify(arrayData)}");
@@ -515,7 +527,7 @@ if __name__ == '__main__':
             payload_hmm=(payload[5] << 0) ; # 8 byte header
             print(f"{payload_hmm} data type:");
 
-            print(response[8:].decode("ascii", errors='ignore')) 
+            print(response[8:].decode("ascii", errors='ignore'))
 
             # first field header starts at byte 6
             cursor=5;
@@ -577,7 +589,7 @@ if __name__ == '__main__':
                         print(f"4-byte mystery");
                         cursor=cursor+4;
                     case 0x01:
-                        arrayLength=(payload[cursor+1]<<0) 
+                        arrayLength=(payload[cursor+1]<<0)
                         cursor=cursor+1;
                         arrayData=payload[cursor:cursor+arrayLength]
                         print(f"array length {arrayLength}, data={binascii.hexlify(arrayData)}");
@@ -590,7 +602,7 @@ if __name__ == '__main__':
                         cursor=cursor+5;
                     case 0x21:
                         print("string array?") # Devices/000187683192/DOP2/1/17
-                        
+
                     case _:
                         print("unknown");
                         break;
