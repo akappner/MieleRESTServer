@@ -149,6 +149,11 @@ class MieleEndpointConfig:
         print(command)
         decrypted, response=self.cryptoProvider.sendHttpRequest(host=self.host, httpMethod="PUT", resourcePath=f"Devices/{self.device_route}/State", payload=command);
         print(decrypted);
+        for bla in range(3,30):
+            command=json.dumps({"DeviceAction": bla});
+            print(command)
+            decrypted, response=self.cryptoProvider.sendHttpRequest(host=self.host, httpMethod="PUT", resourcePath=f"Devices/{self.device_route}/State", payload=command);
+
         return json.loads(decrypted)
 
     def send_get (self, path):
