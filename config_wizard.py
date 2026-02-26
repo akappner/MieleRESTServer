@@ -731,7 +731,7 @@ def create_app():
                 diagnostics.append(wlan_message)
                 if not wlan_ok:
                     errors.append(
-                        "HEAD /WLAN did not look available on the inferred host."
+                        "GET /WLAN did not look available on the inferred host."
                     )
 
             if not errors:

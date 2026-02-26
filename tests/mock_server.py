@@ -3,7 +3,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
 class MockHandler(BaseHTTPRequestHandler):
-    def do_HEAD(self) -> None:
+    def do_GET(self) -> None:
         if self.path in ("/WLAN", "/Security/Commissioning"):
             self.send_response(200)
         else:
