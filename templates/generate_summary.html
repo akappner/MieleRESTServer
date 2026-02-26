@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>{{ endpointName }} -- {{ endpoint["DeviceIdentLabel"]["TechType"] }}</title>
+<title>{% if endpoint is defined %} {{ endpointName }} -- {{ endpoint["DeviceIdentLabel"]["TechType"] }} {% else %} Miele WebUI {% endif %}</title>
 </head>
 <body>
 <div id="images"></div>
+
+{% if endpoint is defined %}
  <label id="progress_label" for="progress">Dow</label>
 <progress id="progress" max="100" value="{{ endpoint["Progress"] }}"></progress>
 
@@ -44,7 +46,7 @@ Status: {{ endpoint["DecodedProgramPhase"] }}
     });
 </script>
 <script>
-function refreshFromApi() 
+function refreshFromApi()
 {
   var api = "../generate-summary/{{ endpointName }}";
   $.getJSON( api, {} )
@@ -58,5 +60,13 @@ function refreshFromApi()
 }
 setInterval(refreshFromApi, 2000);
 </script>
+{% else %}
+<h2>Available devices</h2>
+<il>
+{% for endpoint_name in endpoint_names %}
+<li><a href="/webui/{{ endpoint_name }}">{{ endpoint_name }}</a></li>
+{% endfor %}
+</il>
+{% endif %}
 </body>
 </html>
