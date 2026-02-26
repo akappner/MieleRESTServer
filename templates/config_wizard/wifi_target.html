@@ -4,6 +4,8 @@
 <p class="muted">Miele AP host: <code>{{ state.get('miele_ap_host', 'unknown') }}</code>. Select target Wi-Fi to connect the appliance to.</p>
 
 {% if networks %}
+<details {% if not state.get('target_ssid', '') %} open {% endif %}>
+<summary>Click to expand or collapse the WiFi list</summary>
 <table>
     <thead>
     <tr>
@@ -22,8 +24,8 @@
         <td>
             <form method="post">
                 <input type="hidden" name="action" value="select">
-                <input type="hidden" name="selected_ssid" value="{{ network.ssid }}">
-                <input type="hidden" name="selected_security" value="{{ network.security }}">
+                <input type="hidden" name="selected_ssid" value="{{ network.SSID }}">
+                <input type="hidden" name="selected_security" value="{{ network.Sec }}">
                 <button class="btn alt" type="submit">Use</button>
             </form>
         </td>
@@ -31,6 +33,7 @@
     {% endfor %}
     </tbody>
 </table>
+</details>
 {% else %}
 <p>No target Wi-Fi networks were detected. Enter values manually below.</p>
 {% endif %}
@@ -45,7 +48,7 @@
 
     <div class="field">
         <label for="target_security">Security Protocol (inferred, editable)</label>
-        <input id="target_security" name="target_security" type="text" value="{{ state.get('target_security', 'WPA2') }}" required>
+        <input id="target_security" name="target_security" type="text" value="{{ state.get('target_security', 'WPA') }}" required>
     </div>
 
     <div class="field">

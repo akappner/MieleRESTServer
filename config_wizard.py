@@ -5,7 +5,6 @@
 
 import argparse
 import json
-import logging
 import os
 import re
 import secrets
@@ -476,12 +475,12 @@ def _tcp_port_open(host, port=80, timeout=3):
         return False, f"TCP {host}:{port} check failed: {exc}"
 
 
-def _head_uri_available(host, path, use_https=False, headers=None):
+def _check_uri_available(host, path, use_https=False, headers=None):
     scheme = "https" if use_https else "http"
     url = f"{scheme}://{host}{path}"
 
     try:
-        response = requests.head(
+        response = requests.get(
             url,
             headers=headers or {},
             timeout=5,
@@ -489,28 +488,28 @@ def _head_uri_available(host, path, use_https=False, headers=None):
             verify=not use_https,
         )
     except requests.RequestException as exc:
-        return False, f"HEAD {url} failed: {exc}"
+        return False, f"GET {url} failed: {exc}"
 
     status = response.status_code
     if status in URI_AVAILABLE_STATUSES:
-        return True, f"HEAD {url} -> HTTP {status}"
+        return True, f"GET {url} -> HTTP {status}"
 
-    return False, f"HEAD {url} -> HTTP {status}"
+    return False, f"GET {url} -> HTTP {status}"
 
 
 def check_wlan_uri(host):
-    return _head_uri_available(host, "/WLAN", use_https=False)
+    return _check_uri_available(host, "/WLAN", use_https=False)
 
 
 def check_commissioning_uri(host):
     checks = []
 
-    ok, message = _head_uri_available(host, "/Security/Commissioning", use_https=False)
+    ok, message = _check_uri_available(host, "/Security/Commissioning", use_https=False)
     checks.append(message)
     if ok:
         return True, checks
 
-    ok, message = _head_uri_available(
+    ok, message = _check_uri_available(
         host,
         "/Security/Commissioning",
         use_https=True,
@@ -857,7 +856,7 @@ def create_app():
                         keys_file = f"keys-{now.strftime("%Y%m%dT%H%M%S")}.json"
                     with open(keys_file, "wt") as fp:
                         fp.write(keys_payload)
-                    logging.info(f"Saved keys into {keys_file} in {Path.cwd()}")
+                    print(f"Saved keys into {keys_file} in {Path.cwd()}")
 
                 except ValueError as exc:
                     errors.append(str(exc))
@@ -906,7 +905,7 @@ def create_app():
         if not _require_state_fields(*keys_required) and _require_state_fields(
             "key_provisioned"
         ):
-            # shortcut, try to load keys
+            # shortcut, attempt to load keys from KEYS_FILE
             try:
                 with open(KEYS_FILE, "rt") as fp:
                     payload = fp.read()
@@ -914,6 +913,7 @@ def create_app():
                 mpi_dict = mpi.to_dict()
                 state["group_id"] = mpi_dict["GroupID"]
                 state["group_key"] = mpi_dict["GroupKey"]
+                state["keys_json"] = payload
                 _save_state(state)
             except Exception as exc:
                 errors.append(str(exc))
@@ -979,9 +979,9 @@ def create_app():
             except Exception as exc:
                 errors.append(f"Getting device route failed: {exc}")
 
-        device_route = state.get(
-            "route_override", state.get("derived_device_route", "auto")
-        )
+        device_route = state.get("route_override")
+        if not device_route:
+            device_route = state.get("derived_device_route", "auto")
         state["device_route"] = device_route
         _save_state(state)
 
@@ -1007,24 +1007,6 @@ def create_app():
             keys_json=keys_json,
             keys_file=KEYS_FILE,
             cur_dir=Path.cwd(),
-        )
-
-    @app.route("/download/wifi", methods=["GET"])
-    def download_wifi():
-        if not _require_state_fields("target_ssid"):
-            return redirect(url_for("wifi_target"))
-
-        state = _get_state()
-        payload = build_wifi_payload(
-            ssid=state.get("target_ssid", ""),
-            security=state.get("target_security", "WPA2"),
-            wifi_key=state.get("target_wifi_key", ""),
-        )
-
-        return Response(
-            json.dumps(payload, indent=4),
-            mimetype="application/json",
-            headers={"Content-Disposition": "attachment; filename=wifi.json"},
         )
 
     return app

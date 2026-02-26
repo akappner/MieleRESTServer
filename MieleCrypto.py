@@ -180,7 +180,7 @@ class MieleCryptoProvider:
         date="Thu, 01 Jan 1970 02:09:22 GMT" # the device is not looking at this either
         if (isinstance (payload, str)):
             payload=self.pad_body_str(payload);
-            print(f"STring payload: " + payload);
+            print(f"String payload: " + payload);
         else:
             payload=self.pad_body_bytes(payload);
         authHeader=self.get_auth_header(host=host, httpMethod=httpMethod, date=date, resourcePath=resourcePath, acceptHeader=acceptHeader, contentTypeHeader=contentTypeHeader, body=payload)
@@ -197,7 +197,7 @@ class MieleCryptoProvider:
             response=requests.put("http://"+host+"/"+resourcePath, headers={"Content-Type": "application / vnd.miele.v1 + json; charset = utf - 8", "Host" : host, "User-Agent": "Miele@mobile 2.3.3 iOS", "Authorization": authHeader, "Date": date, "Accept":acceptHeader},  data=body_encrypted )
 
 #            response=requests.put("http://"+host+"/"+resourcePath, data={"Authorization": authHeader, "Date": "Fri, 25 Jan 2025 19:57:40 GMT", "Accept": "application/vnd.miele.v2+json; charset=utf-8"})
-        print(response);
+        print(response.status_code);
         print(response.headers);
 
         if (response.status_code == 200):

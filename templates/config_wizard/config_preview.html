@@ -5,6 +5,14 @@
 
 <form method="post">
     <input type="hidden" name="action" value="submit">
+
+    {% if 'device_ip' not in state %}
+    <div class="field">
+        <label for="device_ip">Appliance IP on Main Wi-Fi</label>
+        <input id="device_ip" name="device_ip" type="text" placeholder="192.168.1.50" required>
+    </div>
+    {% endif %}
+
     <div class="field">
         <label for="appliance_type">Appliance Type (used as endpoint key)</label>
         <select id="appliance_type" name="appliance_type">
@@ -25,13 +33,6 @@
         <input id="route_override" name="route_override" type="text" placeholder="auto or 12 digits">
         <div class="muted">Default route is derived from serial <code>{{ state.get('device_route', '') }}</code>.</div>
     </div>
-
-    {% if 'device_ip' not in state %}
-    <div class="field">
-        <label for="device_ip">Appliance IP on Main Wi-Fi</label>
-        <input id="device_ip" name="device_ip" type="text" placeholder="192.168.1.50" required>
-    </div>
-    {% endif %}
 
     <div class="actions">
         <button class="btn" type="submit">Submit parameters</button>
@@ -54,16 +55,13 @@
 <p>Keys info missing in the state, and here is no {{ keys_file }} in the current dir {{ cur_dir }}</p>
 {% endif %}
 
-
-<div class="actions">
-    <a class="btn alt" href="{{ url_for('download_wifi') }}">Download wifi.json</a>
-</div>
+<hr/>
 
 <h3>Install Command</h3>
 Save config as <code>MieleRESTServer.config</code> and run the command below. See <code>docx/INSTALL.md</code> for details.
 <pre>sudo install -m 0644 MieleRESTServer.config /etc/MieleRESTServer.config</pre>
-{% endblock %}
 
+<hr/>
 
 <form method="POST">
     <input type="hidden" name="action" value="submit">
@@ -72,3 +70,4 @@ Save config as <code>MieleRESTServer.config</code> and run the command below. Se
         <button class="btn" type="submit">Finish and Cleanup session</button>
     </div>
 </form>
+{% endblock %}
