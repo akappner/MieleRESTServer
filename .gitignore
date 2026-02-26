@@ -3,3 +3,4 @@ venv_MieleRESTServer/
 dop2rs/target/
 dop2rs/Cargo.lock
 dop2rs/dop2marshal/target
+.vscode

@@ -1,0 +1,48 @@
+{% extends "config_wizard/base.html" %}
+{% block content %}
+<h2>{{ title }}</h2>
+<p>These instructions assume a blank configuration.
+If step 2, 3 (WiFi setup) or step 4 (Commissioning) were performed before,
+or the appliance was connected to the app, reset from the appliance panel first.
+The reset sequence depends on device, refer the appliance manual.
+</p>
+<form method="post">
+    <input type="hidden" name="action" value="initial-setup">
+    <div class="field">
+        <input type="checkbox" name="reset_confirmed" id="reset_confirmed_id" value="yes">
+        <label for="reset_confirmed_id">I confirm the device is ready for new provisioning.</label>
+    </div>
+    <div class="actions">
+        <button class="btn" type="submit">Continue to Step 2</button>
+    </div>
+</form>
+<hr/>
+<p>
+    If the device is already on a home WiFi and commissioning needed
+<form method="post">
+    <input type="hidden" name="action" value="commissioning">
+    <div class="field">
+        <input type="checkbox" name="commissioning" id="commissioning_id" value="yes">
+        <label for="commissioning_id">I confirm the device connected to home WiFi and commissioning needed.</label>
+    </div>
+    <div class="actions">
+        <button class="btn" type="submit">Continue to Step 4 (Commissioning)</button>
+    </div>
+</form>
+</p>
+<hr/>
+<p>
+    If the device was previously commissioned using this wizard and only config files are needed
+<form method="post">
+    <input type="hidden" name="action" value="config_preview">
+    <div class="field">
+        <input type="checkbox" name="config_preview" id="config_preview_id" value="yes">
+        <label for="config_preview_id">I confirm the device was previously commissioned and only config is needed.</label>
+    </div>
+    <div class="actions">
+        <button class="btn" type="submit">Continue to Step 5 (Save Config)</button>
+    </div>
+</form>
+</p>
+
+{% endblock %}

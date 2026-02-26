@@ -1,0 +1,23 @@
+{% extends "config_wizard/base.html" %}
+{% block content %}
+<h2>{{ title }}</h2>
+<p>After successful Wi-Fi setup, connect this host to the main Wi-Fi network. Then provide the appliance IP and run keys provisioning.</p>
+
+<form method="post">
+    <div class="field">
+        <label>
+            <input type="checkbox" name="connected_main_wifi" value="yes">
+            I connected this host to the same main Wi-Fi network as the appliance.
+        </label>
+    </div>
+
+    <div class="field">
+        <label for="device_ip">Appliance IP on Main Wi-Fi</label>
+        <input id="device_ip" name="device_ip" type="text" value="{{ state.get('device_ip', '') }}" placeholder="192.168.1.50" required>
+    </div>
+
+    <div class="actions">
+        <button class="btn" type="submit">Verify Commissioning URI and Provision Keys</button>
+    </div>
+</form>
+{% endblock %}

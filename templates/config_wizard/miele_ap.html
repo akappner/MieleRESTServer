@@ -1,0 +1,66 @@
+{% extends "config_wizard/base.html" %}
+{% block content %}
+<h2>{{ title }}</h2>
+
+
+<div class="quote">
+<p>
+    Select "Miele@home" on the control panel of the Miele device. If the device offers
+    you a choice between "Via WPS" or "Via App", choose "Via App".
+</p>
+<p>
+    The device will open its own access point with an SSID starting with "Miele@home".
+</p>
+<p>
+    If the SSID is "Miele@home" with no suffix, connect to the network with the PSK "secured-by-tls".
+</p>
+<p>
+    If the SSID is "Miele@home-{some suffix}", e.g. "Miele@home-TAA1234",
+    connect to the network with your device's serial number shown on its sticker.
+</p>
+</div>
+
+<p class="muted">Available Miele APs. Only SSIDs with prefix <code>Miele@home</code> are shown. If no results click <b>Rescan</b> below</p>
+
+{% if networks %}
+<table>
+    <thead>
+    <tr>
+        <th>SSID</th>
+        <th>Suggested Password</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for network in networks %}
+    <tr>
+        <td>{{ network.SSID }}</td>
+        <td>{% if network.SSID == "Miele@home" %}secured-by-tls{% else %} {% if "Miele@home-" in network.SSID %}Use Device Serial Number{% else %}N/A{% endif %}{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No Miele SSID found from scan. Click Rescan below.</p>
+{% endif %}
+
+<p>
+<form method="post">
+    <div class="actions">
+        <a class="btn alt" href="{{ url_for('miele_ap') }}">Rescan</a>
+    </div>
+</form>
+</p>
+
+<form method="post">
+    <div class="field">
+        <label>
+            <input type="checkbox" name="ap_connected_confirmed" value="yes">
+            I connected this host to the Miele@home access point.
+        </label>
+    </div>
+
+    <div class="actions">
+        <button class="btn" type="submit">Verify AP Connection and Continue</button>
+    </div>
+</form>
+{% endblock %}

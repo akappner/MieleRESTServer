@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }} - Miele Config Wizard</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "DejaVu Sans", "Liberation Sans", sans-serif;
+            background: #f4f7fa;
+            color: #112030;
+        }
+        header {
+            background: linear-gradient(120deg, #12364f, #2b5f7e);
+            color: #f3f8fc;
+            padding: 1rem 1.2rem;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 1.35rem;
+        }
+        header p {
+            margin: 0.35rem 0 0;
+            color: #d8e7f3;
+        }
+        nav {
+            margin-top: 0.8rem;
+            display: flex;
+            gap: 0.55rem;
+            flex-wrap: wrap;
+        }
+        nav a {
+            color: #f3f8fc;
+            text-decoration: none;
+            border: 1px solid #89a8bd;
+            border-radius: 999px;
+            padding: 0.24rem 0.62rem;
+            font-size: 0.92rem;
+        }
+        main {
+            max-width: 980px;
+            margin: 1.2rem auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(18, 54, 79, 0.12);
+            padding: 1.2rem;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        h3 {
+            margin-bottom: 0.5rem;
+        }
+        .error {
+            border: 1px solid #c82f25;
+            background: #ffebe9;
+            color: #8a1d16;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .diag {
+            border: 1px solid #6f8495;
+            background: #edf3f8;
+            color: #264355;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .field {
+            margin-bottom: 0.85rem;
+        }
+        .field label {
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+        .field input,
+        .field select,
+        .field textarea {
+            box-sizing: border-box;
+            border: 1px solid #9db1c2;
+            border-radius: 7px;
+            padding: 0.5rem 0.58rem;
+            font-size: 0.97rem;
+        }
+        .actions {
+            margin-top: 0.9rem;
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: #1c4f73;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.56rem 0.92rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.95rem;
+        }
+        .btn.alt {
+            background: #5f7588;
+        }
+        .muted {
+            color: #5f7385;
+            font-size: 0.91rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.7rem;
+        }
+        th, td {
+            border-bottom: 1px solid #d6e0e8;
+            text-align: left;
+            padding: 0.45rem;
+            vertical-align: top;
+        }
+        code, pre {
+            font-family: "DejaVu Sans Mono", "Liberation Mono", monospace;
+        }
+        pre {
+            background: #0c1117;
+            color: #dde9f2;
+            padding: 0.75rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .quote {
+            border-left: 4px solid #8ea7ba;
+            background: #f2f7fb;
+            padding: 0.6rem 0.8rem;
+            margin: 0.55rem 0;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>MieleRESTServer Configuration Wizard</h1>
+    <p>Guided setup for README steps 1-5 with direct provisioning requests.</p>
+    <p>It is recommended to run this wizard as a Private window because it stores device keys and your WiFi SSID and key in session cookies.</p>
+    <nav>
+        <a href="{{ url_for('precond') }}">Precondition</a>
+        <a href="{{ url_for('miele_ap') }}">Connect to Miele@home WiFi AP</a>
+        <a href="{{ url_for('wifi_target') }}">Connect Miele to home WiFi</a>
+        <a href="{{ url_for('commissioning') }}">Commissioning</a>
+        <a href="{{ url_for('config_preview') }}">Save config</a>
+    </nav>
+</header>
+<main>
+    {% if errors|default([]) %}
+    <div class="error">
+        {% for error in errors %}
+        <div>{{ error }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if diagnostics|default([]) %}
+    <div class="diag">
+        {% for message in diagnostics %}
+        <div>{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>
