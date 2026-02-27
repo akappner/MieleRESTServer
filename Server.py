@@ -17,6 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+import argparse
+import binascii
+import json
+import logging
+import sys
+import time
+from pathlib import Path
+
+import yaml
+from flask import Flask, abort, jsonify, make_response, render_template, request
+from flask_restful import Api, Resource, fields, marshal, reqparse
+
 from _version import __version__
 from flask import Flask, jsonify, abort, make_response
 from flask_restful import Api, Resource, reqparse, fields, marshal
@@ -35,8 +47,20 @@ import argparse
 
 import binascii
 
-PRODUCTNAME="MieleRESTServer"
-endpoints={};
+PRODUCTNAME = "MieleRESTServer"
+endpoints = {}
+logger = logging.getLogger(__name__)
+
+
+def resolve_template_dir():
+    for candidate in (
+        Path.cwd() / "templates",
+        Path(__file__).resolve().parent / "templates",
+    ):
+        if candidate.is_dir():
+            return str(candidate)
+    return "templates"
+
 
 class MieleHelpers:
     def tuple_to_min (t):
@@ -69,8 +93,10 @@ class MieleEndpointConfig:
         if ("route" in d and d["route"] != "auto"):
             self.device_route=d["route"];
         else:
-            self.autodetect_route();
-            print(f'Autodetected device route for host {self.host}; please add "deviceRoute: "{self.device_route}" in your config file');
+            self.autodetect_route()
+            logger.info(
+                f'Autodetected device route for host {self.host}; please add "deviceRoute: "{self.device_route}" in your config file'
+            )
 
     def tryDecodeAndAdd (j, key, e):
         try:
@@ -80,11 +106,11 @@ class MieleEndpointConfig:
         except:
             return j;
     def autodetect_route(self):
-        response=self.send_get(f"Devices")
-        j=json.loads(response)
-        print(j)
-        if (len(j.keys())==1):
-            self.device_route=list(j.keys())[0];
+        response = self.send_get(f"Devices")
+        j = json.loads(response)
+        logger.debug(j)
+        if len(j.keys()) == 1:
+            self.device_route = list(j.keys())[0]
         else:
             raise Exception("Error autodetecting route");
     def readDop2Leaf (self, unit, attribute, idx1, idx2):
@@ -121,41 +147,55 @@ class MieleEndpointConfig:
             if (total < 0.1):
                 progress=0.0;
             else:
-                progress=elapsed/(elapsed+remaining);
-                print(f"Progress: {100*progress:.2f}%");
-            j["RemainingMinutes"]=remaining;
-            j["ElapsedMinutes"]=elapsed;
-            j["Progress"]=str(progress);
+                progress = elapsed / (elapsed + remaining)
+                logger.debug(f"Progress: {100 * progress:.2f}%")
+            j["RemainingMinutes"] = remaining
+            j["ElapsedMinutes"] = elapsed
+            j["Progress"] = str(progress)
         except:
-            j["Progress"]=-1;
-            j["RemainingMinutes"]=-1
-            j["ElapsedMinutes"]=-1
-            pass;
-        return j;
-    def set_process_action (self):
-        command=json.dumps({"ProcessAction": 1});
-        print(command)
-        decrypted, response=self.cryptoProvider.sendHttpRequest(host=self.host, httpMethod="PUT", resourcePath=f"Devices/{self.device_route}/State", payload=command);
-        print(decrypted);
+            j["Progress"] = -1
+            j["RemainingMinutes"] = -1
+            j["ElapsedMinutes"] = -1
+            pass
+        return j
+
+    def set_process_action(self):
+        command = json.dumps({"ProcessAction": 1})
+        logger.debug(command)
+        decrypted, response = self.cryptoProvider.sendHttpRequest(
+            httpMethod="PUT",
+            host=self.host,
+            resourcePath=f"Devices/{self.device_route}/State",
+            payload=command,
+        )
+        logger.debug(decrypted)
         return json.loads(decrypted)
 
     def set_device_action(self):
-        command=json.dumps({"DeviceAction": 2});
-#        command=json.dumps({"StandbyState": 0});
-        print(command)
-        decrypted, response=self.cryptoProvider.sendHttpRequest(host=self.host, httpMethod="PUT", resourcePath=f"Devices/{self.device_route}/State", payload=command);
-        print(decrypted);
+        command = json.dumps({"DeviceAction": 2})
+        # command=json.dumps({"StandbyState": 0});
+        logger.debug(command)
+        decrypted, response = self.cryptoProvider.sendHttpRequest(
+            httpMethod="PUT",
+            host=self.host,
+            resourcePath=f"Devices/{self.device_route}/State",
+            payload=command,
+        )
+        logger.debug(decrypted)
         return json.loads(decrypted)
 
     def send_get (self, path):
         try:
-            response= self.cryptoProvider.sendHttpRequest(host=self.host, resourcePath=path)[0];
-            print(response)
-            self.last_comm.reset();
-            return response;
+            response = self.cryptoProvider.sendHttpRequest(
+                httpMethod="GET", host=self.host, resourcePath=path
+            )[0]
+            logger.debug("response body: %s", response)
+            self.last_comm.reset()
+            return response
         except:
-            print("Communication error");
-            raise;
+            logger.exception("Communication error")
+            raise
+
     def serialize(self):
         return json.dumps( {"host":self.host, "groupid": self.provisioningInfo.groupid, "route":self.device_route, "last_comm": self.last_comm.__str__()} )
     def last_comm (self):
@@ -189,13 +229,13 @@ class Dop2SettingAPI(Resource):
         [leafData, leafBytes] = endpoint.readDop2LeafRaw(2, 105, idx1=settingInt, idx2=0);
         leaf={}
         for fieldId, fieldData in enumerate(leafData):
-            fieldId=fieldId+1 #DOP uses one-based index
-            leaf[fieldId]=fieldData;
-        print(leaf)
-        ann=DOP2_SF_Value(leaf);
-        ann.readFields();
-        return ann;
-#        return {"decoded": [str(x) for x in leaf], "binary":str(binascii.hexlify(data))}
+            fieldId = fieldId + 1  # DOP uses one-based index
+            leaf[fieldId] = fieldData
+        logger.debug(leaf)
+        ann = DOP2_SF_Value(leaf)
+        ann.readFields()
+        return ann
+        # return {"decoded": [str(x) for x in leaf], "binary":str(binascii.hexlify(data))}
 
 
 class Dop2LeafAPI(Resource):
@@ -205,25 +245,28 @@ class Dop2LeafAPI(Resource):
         self.reqparse.add_argument('unit', type=int, required=True, help='',location='json');
         self.reqparse.add_argument('attribute', type=int, required=True, help='',location='json');
     def post(self, endpoint, unit, attribute, idx1=0, idx2=0):
-        endpoint=endpoints[endpoint];
-        payload=request.get_data();
-        if (request.headers.get("Content-Type","")=="text/plain"):
-            payload=binascii.unhexlify(payload);
-        print(f"PUT {unit}/{attribute}, payload={binascii.hexlify(payload)}")
-##        b="000e000e008200010001000100010400";
-#        b="FFFF000e007a00010001000200010b0000000000000000000209000000002020"
-##        b="001c000e007a00010001000200010b000000000010000000020900001000" #this sets the time 14/122
-#       b="00190002062f0000000000030001070000000205000000030500002020202020" #test user request
-#        b="00070002062f0000000000010001070000000020202020202020202020202020" #user request message has only ONE byte
-#       b="00070002062f0000000000010001070000000020202020202020202020202020" #user request message has only ONE byte
-#        b="000e0002062f0001000100010001070000002020202020202020202020202020"
-  ##      payload=binascii.unhexlify(b);
-        [attributes, data] = endpoint.writeDop2Leaf(unit, attribute, payload);
-        return [str(x) for x in attributes];
-    def get (self, endpoint, unit, attribute, idx1=0, idx2=0):
-        endpoint=endpoints[endpoint];
-        [attributes, data] = endpoint.readDop2Leaf(unit, attribute, idx1, idx2);
-        return {"decoded": attributes, "binary":str(binascii.hexlify(data, " "))};
+        endpoint = endpoints[endpoint]
+        payload = request.get_data()
+        if request.headers.get("Content-Type", "") == "text/plain":
+            payload = binascii.unhexlify(payload)
+        logger.debug(f"PUT {unit}/{attribute}, payload={binascii.hexlify(payload)}")
+        ##        b="000e000e008200010001000100010400";
+        #        b="FFFF000e007a00010001000200010b0000000000000000000209000000002020"
+        ##        b="001c000e007a00010001000200010b000000000010000000020900001000" #this sets the time 14/122
+        #       b="00190002062f0000000000030001070000000205000000030500002020202020" #test user request
+        #        b="00070002062f0000000000010001070000000020202020202020202020202020" #user request message has only ONE byte
+        #       b="00070002062f0000000000010001070000000020202020202020202020202020" #user request message has only ONE byte
+        #        b="000e0002062f0001000100010001070000002020202020202020202020202020"
+        ##      payload=binascii.unhexlify(b);
+        [attributes, data] = endpoint.writeDop2Leaf(unit, attribute, payload)
+        return [str(x) for x in attributes]
+
+    def get(self, endpoint, unit, attribute, idx1=0, idx2=0):
+        endpoint = endpoints[endpoint]
+        [attributes, data] = endpoint.readDop2Leaf(unit, attribute, idx1, idx2)
+        return {"decoded": attributes, "binary": str(binascii.hexlify(data, " "))}
+
+
 class SetProcessActionAPI(Resource):
     def post(self, endpoint):
         endpoint=endpoints[endpoint];
@@ -306,20 +349,48 @@ def main(argv=None):
 
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
 
-    parser.add_argument('-c', '--config', default=f"/etc/{PRODUCTNAME}.config", help="path to configuration file")
-    parser.add_argument('-b', '--bind', default=f"127.0.0.1", help="IP address to bind to, default is local only")
-    parser.add_argument('-p', '--port', default=5001, help="port to bind to, default is port 5001")
-    parser.add_argument('--webui', action='store_true', help="enable experimental web UI, default off")
-    parser.add_argument('--debug', action='store_true', help="run REST server in debug mode, default off")
+    parser.add_argument(
+        "-c",
+        "--config",
+        default=f"/etc/{PRODUCTNAME}.config",
+        help="path to configuration file",
+    )
+    parser.add_argument(
+        "-b",
+        "--bind",
+        default=f"127.0.0.1",
+        help="IP address to bind to, default is local only",
+    )
+    parser.add_argument(
+        "-p", "--port", default=5001, help="port to bind to, default is port 5001"
+    )
+    parser.add_argument(
+        "--webui", action="store_true", help="enable experimental web UI, default off"
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="run REST server in debug mode, default off",
+    )
+    parser.add_argument(
+        "-l", "--log-level",
+        default="INFO",
+        type=str.upper,
+        choices=["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"],
+        help="set Python logging level (default: INFO)",
+    )
 
-    cmdargs=parser.parse_args(argv)
+    cmdargs = parser.parse_args(argv)
+    logging.basicConfig(
+        level=getattr(logging, cmdargs.log_level),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
 
     with open(cmdargs.config) as stream:
         try:
-            config_file=yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
-            print ("Error loading configuration file, exiting");
+            config_file = yaml.safe_load(stream)
+        except yaml.YAMLError:
+            logger.exception("Error loading configuration file, exiting")
             return 1
 
     endpoints.clear()
@@ -352,12 +423,15 @@ def main(argv=None):
             return render_template("generate_summary.html", endpoint_names=list(endpoints.keys()));
         @app.route("/webui/<string:endpoint>")
         def webui_endpoint(endpoint):
-    #        context=EndpointAPI.get(endpoint);
-            context=endpoints[endpoint].get_device_summary_annotated();
-            print(context);
-            return render_template("generate_summary.html", endpoint=context, endpointName=endpoint);
+            #        context=EndpointAPI.get(endpoint);
+            context = endpoints[endpoint].get_device_summary_annotated()
+            logger.debug(context)
+            return render_template(
+                "generate_summary.html", endpoint=context, endpointName=endpoint
+            )
+
     else:
-        print("WebUI disabled.")
+        logger.info("WebUI disabled.")
 
     app.run(debug=cmdargs.debug, host=cmdargs.bind, port=cmdargs.port);
     return 0
