@@ -163,8 +163,8 @@ class MieleEndpointConfig:
         command = json.dumps({"ProcessAction": 1})
         logger.debug(command)
         decrypted, response = self.cryptoProvider.sendHttpRequest(
-            host=self.host,
             httpMethod="PUT",
+            host=self.host,
             resourcePath=f"Devices/{self.device_route}/State",
             payload=command,
         )
@@ -176,8 +176,8 @@ class MieleEndpointConfig:
         # command=json.dumps({"StandbyState": 0});
         logger.debug(command)
         decrypted, response = self.cryptoProvider.sendHttpRequest(
-            host=self.host,
             httpMethod="PUT",
+            host=self.host,
             resourcePath=f"Devices/{self.device_route}/State",
             payload=command,
         )
@@ -187,9 +187,9 @@ class MieleEndpointConfig:
     def send_get (self, path):
         try:
             response = self.cryptoProvider.sendHttpRequest(
-                host=self.host, resourcePath=path
+                httpMethod="GET", host=self.host, resourcePath=path
             )[0]
-            logger.debug(response)
+            logger.debug("response body: %s", response)
             self.last_comm.reset()
             return response
         except:

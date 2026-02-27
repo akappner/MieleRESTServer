@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import os
-import struct
 import numpy as np
 import hmac
 import hashlib
@@ -26,8 +24,12 @@ import binascii
 import sys
 import json
 import logging
-import os
-import pprint
+import secrets
+import sys
+
+from typing import Dict, Tuple, Union
+
+import requests
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from MieleDop2 import MieleAttributeParser
 from MieleDop2Structures import *
@@ -66,11 +68,13 @@ class Dop2StringField:
     def __repr__ (self):
         return self.__str__();
 class MieleProvisioningInfo:
-    def __init__ (self, groupid="", groupkey=""):
-        self.groupkey=bytearray.fromhex(groupkey);
-        self.groupid=groupid.upper();
-    def get_aes_key (self):
-        return self.groupkey[0:32];
+    def __init__(self, groupid: str, groupkey: str):
+        self.groupkey = bytearray.fromhex(groupkey)
+        self.groupid = groupid.upper()
+
+    def get_aes_key(self):
+        return self.groupkey[0:32]
+
     def get_signature_key(self):
         return self.groupkey
 
@@ -80,8 +84,7 @@ class MieleProvisioningInfo:
     def to_dict(self):
         return { "GroupID": self.groupid, "GroupKey": str(self.groupkey.hex().upper()) }
     def __str__(self):
-        return f"""groupId: "{self.groupid}"
-        groupKey: {str(self.groupkey.hex().upper())}"""
+        return f"groupId: {self.groupid}, groupKey: {self.groupkey.hex().upper()}"
 
     def to_pairing_json(self):
         return json.dumps(self.to_dict(), sort_keys=True, indent=4)
@@ -95,93 +98,110 @@ class MieleProvisioningInfo:
         )
 
 
-class MieleAuthHeader:
-    def __init__ (self, groupid, iv, signature):
-        self.groupid=groupid; #string
-        self.signature=signature; #bytearray
-        self.iv = iv;
-    def __str__ (self):
-        return
-    @classmethod
-    def from_string (cls, auth_header):
-        return;
-
 class MieleCryptoProvider:
-    def __init__(self, provisioningInfo):
-        self.provisioningInfo = provisioningInfo
+    def __init__(self, provisioningInfo: MieleProvisioningInfo):
+        self.provisioningInfo: MieleProvisioningInfo = provisioningInfo
 
-    def iv_from_auth_header(self, authHeader):
-        response_groupid, response_signature = authHeader[len("MieleH256 ") :].split(
-            ":"
-        )
-        response_signature = bytearray.fromhex(response_signature)
-        response_iv = response_signature[0:16]
-        logger.debug(response_iv)
+    def iv_from_auth_header(self, authHeader: str) -> bytes:
+        _, response_signature = authHeader[len("MieleH256 ") :].split(":")
+        return self.iv_from_signature(response_signature)
+
+    def iv_from_signature(self, signature: str) -> bytes:
+        signature_bytes = bytearray.fromhex(signature)
+        response_iv = signature_bytes[0:16]
         return response_iv
 
-    def decrypt_response (self, response):
-        authHeader=response.headers["X-Signature"]
-        response_iv=self.iv_from_auth_header(authHeader);
-        response_plaintext = MieleCryptoProvider.decrypt_bytes(response.content, self.provisioningInfo.get_aes_key(), response_iv);
-        #print(response_plaintext);
-        return response_plaintext;
-    def decrypt_bytes (ciphertext, key, iv):
+    def decrypt_response(self, response: requests.Response):
+        authHeader = response.headers["X-Signature"]
+        response_iv = self.iv_from_auth_header(authHeader)
+        response_plaintext = MieleCryptoProvider.decrypt_bytes(
+            response.content, self.provisioningInfo.get_aes_key(), response_iv
+        )
+        return response_plaintext
+
+    @staticmethod
+    def decrypt_bytes(ciphertext: bytes, key: bytes, iv: bytes):
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         decryptor = cipher.decryptor()
         plaintext = decryptor.update(ciphertext) + decryptor.finalize()
-        return plaintext;
-    def encrypt_bytes (plaintext, key, iv):
+        return plaintext
+
+    @staticmethod
+    def encrypt_bytes(plaintext: bytes, key: bytes, iv: bytes):
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(plaintext) + encryptor.finalize()
         return ciphertext;
 
-    def sign (self, httpMethod="PUT", host="127.0.0.1", date="Fri, 25 Jan 2025 19:57:40 GMT", acceptHeader="application/vnd.miele.v2+json; charset=utf-8",resourcePath="", contentTypeHeader="",body=""):
-#        payload=f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n{body}";
-#        payload_bytes=payload.encode('utf-8');
-        if (isinstance(body,str)):
-            body_bytes=body.encode('utf-8');
+    def sign(
+        self,
+        httpMethod: str,
+        host: str,
+        resourcePath: str,
+        contentTypeHeader: str,
+        acceptHeader: str,
+        date: str,
+        body: Union[str, bytes]
+    ) -> str:
+
+        if isinstance(body, str):
+            body_bytes = body.encode("utf-8")
         else:
             body_bytes=body
 
-        payload=f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n";
-        payload_bytes=payload.encode('utf-8')+ body_bytes;
-#        if (isinstance(body), str):
-#            body=bytes(body, 'utf-8');
-#        payload=f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n";
-#        payload_bytes=payload.encode('utf-8') + body;
+        # payload = f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n"
+        payload = "\n".join([
+            httpMethod,
+            f"{host}/{resourcePath}",
+            contentTypeHeader,
+            acceptHeader,
+            date,
+        ])
+        payload += "\n"
+
+        payload_bytes = payload.encode("utf-8") + body_bytes
 
         hmac_obj = hmac.new(
             self.provisioningInfo.get_signature_key(), payload_bytes, hashlib.sha256
         )
         digest = hmac_obj.hexdigest().upper()
-        logger.debug(digest)
+        logger.debug("signature: %s", digest)
         return digest
 
-    def get_auth_header(
+    def get_headers_with_auth(
         self,
-        httpMethod="PUT",
-        host="127.0.0.1",
-        date="Fri, 25 Jan 2025 19:57:40 GMT",
-        acceptHeader="application/vnd.miele.v2+json; charset=utf-8",
-        resourcePath="",
-        contentTypeHeader="",
-        body="",
-    ):
+        httpMethod: str,
+        host: str,
+        resourcePath: str,
+        contentTypeHeader: str,
+        acceptHeader: str,
+        date: str,
+        body: Union[str, bytes],
+    ) -> Tuple[Dict[str, str], str]:
+
         signature = self.sign(
             httpMethod,
             host,
-            date,
-            acceptHeader,
             resourcePath,
             contentTypeHeader,
-            body=body,
+            acceptHeader,
+            date,
+            body,
         )
-        header = f"Authorization: MieleH256 {self.provisioningInfo.groupid}:{signature}"
-        header = f"MieleH256 {self.provisioningInfo.groupid}:{signature}"
-        return header
+        headerValue = f"MieleH256 {self.provisioningInfo.groupid}:{signature}"
 
-    def pad_body_bytes(self, payload):
+        headers={
+            "Content-Type": contentTypeHeader,
+            "Host": host,
+            "User-Agent": "Miele@mobile 2.3.3 iOS",
+            "Authorization": headerValue,
+            "Date": date,
+            "Accept": acceptHeader,
+        }
+
+        return headers, signature
+
+    def pad_body_bytes(self, payload: bytes) -> bytes:
         blocksize = 16
         if len(payload) % blocksize == 0:  # no alignment needed
             return payload
@@ -189,17 +209,15 @@ class MieleCryptoProvider:
         logger.debug(f"padding with {padding} bytes")
         return payload.ljust(len(payload) + padding, b"\x20")
 
-    #        return payload;
-    def pad_body_str(self, payload):
+    def pad_body_str(self, payload: str) -> str:
         if len(payload) == 0:
             return ""
         if payload[-1] != "}":
             raise Exception("Plaintext must be terminated with literal '}'")
         payload = payload[0:-1] + " " * (64 - len(payload)) + "}"
-        #        payload=payload.encode('ascii')
         return payload
 
-    def encrypt_payload(self, payload, iv):
+    def encrypt_payload(self, payload: Union[str, bytes], iv: bytes):
         if isinstance(payload, str):
             payload = payload.encode("utf-8")
         return MieleCryptoProvider.encrypt_bytes(
@@ -207,36 +225,57 @@ class MieleCryptoProvider:
         )
 
     def sendHttpRequest(
-        self, httpMethod="GET", host="10.0.0.11", resourcePath="Devices/", payload=""
+        self, httpMethod: str, host: str, resourcePath: str, payload: Union[str, bytes]="",
     ):
-        logger.debug(f"Sending HTTP request to {host}, resourcePath={resourcePath}")
+        logger.debug(
+            "Sending HTTP %s request to %s, resourcePath=%s",
+            httpMethod,
+            host,
+            resourcePath,
+        )
         acceptHeader = "application/vnd.miele.v1+json"
-        # the device is not looking at this
         contentTypeHeader = "application / vnd.miele.v1 + json; charset = utf - 8"
         date = (
-            "Thu, 01 Jan 1970 02:09:22 GMT"  # the device is not looking at this either
+            "Thu, 01 Jan 1970 02:09:22 GMT"  # the device is not looking at this
         )
         if isinstance(payload, str):
             payload = self.pad_body_str(payload)
-            logger.debug(f"String payload: " + payload)
+            if len(payload) > 0 :
+                logger.debug("String payload: %s", payload)
         else:
-            payload=self.pad_body_bytes(payload);
-        authHeader=self.get_auth_header(host=host, httpMethod=httpMethod, date=date, resourcePath=resourcePath, acceptHeader=acceptHeader, contentTypeHeader=contentTypeHeader, body=payload)
-        if (len (payload) > 0):
-            iv = self.iv_from_auth_header(authHeader);
-            body_encrypted=self.encrypt_payload (payload, iv);
-        else:
-            body_encrypted=None;
+            payload = self.pad_body_bytes(payload)
 
-        if (httpMethod=="GET"):
-            response=requests.get("http://"+host+"/"+resourcePath, headers={"Content-Type": "application / vnd.miele.v1 + json; charset = utf - 8", "Host" : host, "User-Agent": "Miele@mobile 2.3.3 iOS", "Authorization": authHeader, "Date": date, "Accept":acceptHeader} , data=body_encrypted)
+        headers, signature = self.get_headers_with_auth(
+            httpMethod,
+            host,
+            resourcePath,
+            contentTypeHeader,
+            acceptHeader,
+            date,
+            body=payload,
+        )
 
-        elif (httpMethod=="PUT"):
-            response=requests.put("http://"+host+"/"+resourcePath, headers={"Content-Type": "application / vnd.miele.v1 + json; charset = utf - 8", "Host" : host, "User-Agent": "Miele@mobile 2.3.3 iOS", "Authorization": authHeader, "Date": date, "Accept":acceptHeader},  data=body_encrypted )
+        body_encrypted = None
+        if len(payload) > 0:
+            iv = self.iv_from_signature(signature)
+            body_encrypted = self.encrypt_payload(payload, iv)
 
-        #            response=requests.put("http://"+host+"/"+resourcePath, data={"Authorization": authHeader, "Date": "Fri, 25 Jan 2025 19:57:40 GMT", "Accept": "application/vnd.miele.v2+json; charset=utf-8"})
-        logger.debug(response.status_code)
-        logger.debug(response.headers)
+        if httpMethod == "GET":
+            response = requests.get(
+                f"http://{host}/{resourcePath}",
+                headers=headers,
+                data=body_encrypted,
+            )
+
+        elif httpMethod == "PUT":
+            response = requests.put(
+                f"http://{host}/{resourcePath}",
+                headers=headers,
+                data=body_encrypted,
+            )
+
+        logger.debug("response status: %d", response.status_code)
+        logger.debug("response headers: %s", response.headers)
 
         if (response.status_code == 200):
             decrypted=self.decrypt_response(response);
@@ -245,7 +284,6 @@ class MieleCryptoProvider:
             return [b"", response];
         return [b"", response];
 
-        raise Exception(f"HTTP Request failed" + str(response))
     def process_response(response):
         if (response.status_code != 200):
             raise Exception(f"Device sent error code: {response}");
