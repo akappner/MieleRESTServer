@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # Copyright (c) 2025 Alexander Kappner.
 #
-# This file is part of MieleRESTServer 
+# This file is part of MieleRESTServer
 # (see github).
 #
 # This program is free software: you can redistribute it and/or modify
@@ -569,6 +569,7 @@ class ProgramId (Enum): # EnumPrgId. TODO: fix overlaps with Prog IDs for non-la
         ProgramFortyCelsius = 59
         ExpressTwentyMinutes = 122
         DarkGarmentsDenim = 123
+        HandWash = 178
         EuropeanUnionEcoMode = 190
 
 class ProgramPhase(Enum):
