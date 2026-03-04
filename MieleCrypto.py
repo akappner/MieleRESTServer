@@ -17,15 +17,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import os
-import struct
 import numpy as np
 import hmac
 import hashlib
 import binascii
 import sys
 import json
-import pprint
+import logging
+import secrets
+import sys
+
+from typing import Dict, Tuple, Union
+
+import requests
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from MieleDop2 import MieleAttributeParser
 from MieleDop2Structures import *
@@ -34,6 +38,9 @@ import requests
 import secrets
 
 from MieleErrors import *
+
+logger = logging.getLogger(__name__)
+
 
 class Dop2DataField:
     def __init__ (self, fieldNumber, payload, cursor):
@@ -61,11 +68,13 @@ class Dop2StringField:
     def __repr__ (self):
         return self.__str__();
 class MieleProvisioningInfo:
-    def __init__ (self, groupid="", groupkey=""):
-        self.groupkey=bytearray.fromhex(groupkey);
-        self.groupid=groupid.upper();
-    def get_aes_key (self):
-        return self.groupkey[0:32];
+    def __init__(self, groupid: str, groupkey: str):
+        self.groupkey = bytearray.fromhex(groupkey)
+        self.groupid = groupid.upper()
+
+    def get_aes_key(self):
+        return self.groupkey[0:32]
+
     def get_signature_key(self):
         return self.groupkey
 
@@ -75,8 +84,7 @@ class MieleProvisioningInfo:
     def to_dict(self):
         return { "GroupID": self.groupid, "GroupKey": str(self.groupkey.hex().upper()) }
     def __str__(self):
-        return f"""groupId: "{self.groupid}"
-        groupKey: {str(self.groupkey.hex().upper())}"""
+        return f"groupId: {self.groupid}, groupKey: {self.groupkey.hex().upper()}"
 
     def to_pairing_json(self):
         return json.dumps(self.to_dict(), sort_keys=True, indent=4)
@@ -90,115 +98,184 @@ class MieleProvisioningInfo:
         )
 
 
-class MieleAuthHeader:
-    def __init__ (self, groupid, iv, signature):
-        self.groupid=groupid; #string
-        self.signature=signature; #bytearray
-        self.iv = iv;
-    def __str__ (self):
-        return
-    @classmethod
-    def from_string (cls, auth_header):
-        return;
-
 class MieleCryptoProvider:
-    def __init__ (self, provisioningInfo):
-        self.provisioningInfo = provisioningInfo;
-    def iv_from_auth_header (self, authHeader):
-        response_groupid, response_signature = authHeader[len("MieleH256 "):].split(":");
-        response_signature = bytearray.fromhex(response_signature);
-        response_iv=response_signature[0:16];
-        print(response_iv)
-        return response_iv;
+    def __init__(self, provisioningInfo: MieleProvisioningInfo):
+        self.provisioningInfo: MieleProvisioningInfo = provisioningInfo
 
-    def decrypt_response (self, response):
-        authHeader=response.headers["X-Signature"]
-        response_iv=self.iv_from_auth_header(authHeader);
-        response_plaintext = MieleCryptoProvider.decrypt_bytes(response.content, self.provisioningInfo.get_aes_key(), response_iv);
-        #print(response_plaintext);
-        return response_plaintext;
-    def decrypt_bytes (ciphertext, key, iv):
+    def iv_from_auth_header(self, authHeader: str) -> bytes:
+        _, response_signature = authHeader[len("MieleH256 ") :].split(":")
+        return self.iv_from_signature(response_signature)
+
+    def iv_from_signature(self, signature: str) -> bytes:
+        signature_bytes = bytearray.fromhex(signature)
+        response_iv = signature_bytes[0:16]
+        return response_iv
+
+    def decrypt_response(self, response: requests.Response):
+        authHeader = response.headers["X-Signature"]
+        response_iv = self.iv_from_auth_header(authHeader)
+        response_plaintext = MieleCryptoProvider.decrypt_bytes(
+            response.content, self.provisioningInfo.get_aes_key(), response_iv
+        )
+        return response_plaintext
+
+    @staticmethod
+    def decrypt_bytes(ciphertext: bytes, key: bytes, iv: bytes):
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         decryptor = cipher.decryptor()
         plaintext = decryptor.update(ciphertext) + decryptor.finalize()
-        return plaintext;
-    def encrypt_bytes (plaintext, key, iv):
+        return plaintext
+
+    @staticmethod
+    def encrypt_bytes(plaintext: bytes, key: bytes, iv: bytes):
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(plaintext) + encryptor.finalize()
         return ciphertext;
 
-    def sign (self, httpMethod="PUT", host="127.0.0.1", date="Fri, 25 Jan 2025 19:57:40 GMT", acceptHeader="application/vnd.miele.v2+json; charset=utf-8",resourcePath="", contentTypeHeader="",body=""):
-#        payload=f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n{body}";
-#        payload_bytes=payload.encode('utf-8');
-        if (isinstance(body,str)):
-            body_bytes=body.encode('utf-8');
+    def sign(
+        self,
+        httpMethod: str,
+        host: str,
+        resourcePath: str,
+        contentTypeHeader: str,
+        acceptHeader: str,
+        date: str,
+        body: Union[str, bytes]
+    ) -> str:
+
+        if isinstance(body, str):
+            body_bytes = body.encode("utf-8")
         else:
             body_bytes=body
 
-        payload=f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n";
-        payload_bytes=payload.encode('utf-8')+ body_bytes;
-#        if (isinstance(body), str):
-#            body=bytes(body, 'utf-8');
-#        payload=f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n";
-#        payload_bytes=payload.encode('utf-8') + body;
+        # payload = f"{httpMethod}\n{host}/{resourcePath}\n{contentTypeHeader}\n{acceptHeader}\n{date}\n"
+        payload = "\n".join([
+            httpMethod,
+            f"{host}/{resourcePath}",
+            contentTypeHeader,
+            acceptHeader,
+            date,
+        ])
+        payload += "\n"
 
-        hmac_obj = hmac.new(self.provisioningInfo.get_signature_key(), payload_bytes, hashlib.sha256);
-        digest=hmac_obj.hexdigest().upper();
-        print(digest);
-        return digest;
+        payload_bytes = payload.encode("utf-8") + body_bytes
 
-    def get_auth_header (self, httpMethod="PUT", host="127.0.0.1", date="Fri, 25 Jan 2025 19:57:40 GMT", acceptHeader="application/vnd.miele.v2+json; charset=utf-8",resourcePath="", contentTypeHeader="", body=""):
-        signature=self.sign(httpMethod, host, date, acceptHeader, resourcePath, contentTypeHeader, body=body);
-        header= f"Authorization: MieleH256 {self.provisioningInfo.groupid}:{signature}"
-        header= f"MieleH256 {self.provisioningInfo.groupid}:{signature}"
-        return header;
-    def pad_body_bytes (self, payload):
-        blocksize=16;
-        if (len(payload) % blocksize == 0): #no alignment needed
-            return payload;
-        padding=blocksize - (len(payload) % blocksize);
-        print (f"padding with {padding} bytes")
-        return payload.ljust(len(payload) + padding, b'\x20');
-#        return payload;
-    def pad_body_str (self, payload):
-        if (len(payload)==0):
-            return "";
-        if (payload[-1]!="}"):
+        hmac_obj = hmac.new(
+            self.provisioningInfo.get_signature_key(), payload_bytes, hashlib.sha256
+        )
+        digest = hmac_obj.hexdigest().upper()
+        logger.debug("signature: %s", digest)
+        return digest
+
+    def get_headers_with_auth(
+        self,
+        httpMethod: str,
+        host: str,
+        resourcePath: str,
+        contentTypeHeader: str,
+        acceptHeader: str,
+        date: str,
+        body: Union[str, bytes],
+    ) -> Tuple[Dict[str, str], str]:
+
+        signature = self.sign(
+            httpMethod,
+            host,
+            resourcePath,
+            contentTypeHeader,
+            acceptHeader,
+            date,
+            body,
+        )
+        headerValue = f"MieleH256 {self.provisioningInfo.groupid}:{signature}"
+
+        headers={
+            "Content-Type": contentTypeHeader,
+            "Host": host,
+            "User-Agent": "Miele@mobile 2.3.3 iOS",
+            "Authorization": headerValue,
+            "Date": date,
+            "Accept": acceptHeader,
+        }
+
+        return headers, signature
+
+    def pad_body_bytes(self, payload: bytes) -> bytes:
+        blocksize = 16
+        if len(payload) % blocksize == 0:  # no alignment needed
+            return payload
+        padding = blocksize - (len(payload) % blocksize)
+        logger.debug(f"padding with {padding} bytes")
+        return payload.ljust(len(payload) + padding, b"\x20")
+
+    def pad_body_str(self, payload: str) -> str:
+        if len(payload) == 0:
+            return ""
+        if payload[-1] != "}":
             raise Exception("Plaintext must be terminated with literal '}'")
-        payload=payload[0:-1] + " "* (64-len(payload)) + "}";
-#        payload=payload.encode('ascii')
-        return payload;
-    def encrypt_payload (self, payload, iv):
-        if (isinstance(payload, str)):
-            payload=payload.encode('utf-8');
-        return MieleCryptoProvider.encrypt_bytes(payload, self.provisioningInfo.get_aes_key(), iv)
-    def sendHttpRequest(self, httpMethod="GET", host="10.0.0.11", resourcePath="Devices/", payload=""):
-        print(f"Sending HTTP request to {host}, resourcePath={resourcePath}");
-        acceptHeader= "application/vnd.miele.v1+json"; #the device is not looking at this
-        contentTypeHeader="application / vnd.miele.v1 + json; charset = utf - 8"
-        date="Thu, 01 Jan 1970 02:09:22 GMT" # the device is not looking at this either
-        if (isinstance (payload, str)):
-            payload=self.pad_body_str(payload);
-            print(f"String payload: " + payload);
+        payload = payload[0:-1] + " " * (64 - len(payload)) + "}"
+        return payload
+
+    def encrypt_payload(self, payload: Union[str, bytes], iv: bytes):
+        if isinstance(payload, str):
+            payload = payload.encode("utf-8")
+        return MieleCryptoProvider.encrypt_bytes(
+            payload, self.provisioningInfo.get_aes_key(), iv
+        )
+
+    def sendHttpRequest(
+        self, httpMethod: str, host: str, resourcePath: str, payload: Union[str, bytes]="",
+    ):
+        logger.debug(
+            "Sending HTTP %s request to %s, resourcePath=%s",
+            httpMethod,
+            host,
+            resourcePath,
+        )
+        acceptHeader = "application/vnd.miele.v1+json"
+        contentTypeHeader = "application / vnd.miele.v1 + json; charset = utf - 8"
+        date = (
+            "Thu, 01 Jan 1970 02:09:22 GMT"  # the device is not looking at this
+        )
+        if isinstance(payload, str):
+            payload = self.pad_body_str(payload)
+            if len(payload) > 0 :
+                logger.debug("String payload: %s", payload)
         else:
-            payload=self.pad_body_bytes(payload);
-        authHeader=self.get_auth_header(host=host, httpMethod=httpMethod, date=date, resourcePath=resourcePath, acceptHeader=acceptHeader, contentTypeHeader=contentTypeHeader, body=payload)
-        if (len (payload) > 0):
-            iv = self.iv_from_auth_header(authHeader);
-            body_encrypted=self.encrypt_payload (payload, iv);
-        else:
-            body_encrypted=None;
+            payload = self.pad_body_bytes(payload)
 
-        if (httpMethod=="GET"):
-            response=requests.get("http://"+host+"/"+resourcePath, headers={"Content-Type": "application / vnd.miele.v1 + json; charset = utf - 8", "Host" : host, "User-Agent": "Miele@mobile 2.3.3 iOS", "Authorization": authHeader, "Date": date, "Accept":acceptHeader} , data=body_encrypted)
+        headers, signature = self.get_headers_with_auth(
+            httpMethod,
+            host,
+            resourcePath,
+            contentTypeHeader,
+            acceptHeader,
+            date,
+            body=payload,
+        )
 
-        elif (httpMethod=="PUT"):
-            response=requests.put("http://"+host+"/"+resourcePath, headers={"Content-Type": "application / vnd.miele.v1 + json; charset = utf - 8", "Host" : host, "User-Agent": "Miele@mobile 2.3.3 iOS", "Authorization": authHeader, "Date": date, "Accept":acceptHeader},  data=body_encrypted )
+        body_encrypted = None
+        if len(payload) > 0:
+            iv = self.iv_from_signature(signature)
+            body_encrypted = self.encrypt_payload(payload, iv)
 
-#            response=requests.put("http://"+host+"/"+resourcePath, data={"Authorization": authHeader, "Date": "Fri, 25 Jan 2025 19:57:40 GMT", "Accept": "application/vnd.miele.v2+json; charset=utf-8"})
-        print(response.status_code);
-        print(response.headers);
+        if httpMethod == "GET":
+            response = requests.get(
+                f"http://{host}/{resourcePath}",
+                headers=headers,
+                data=body_encrypted,
+            )
+
+        elif httpMethod == "PUT":
+            response = requests.put(
+                f"http://{host}/{resourcePath}",
+                headers=headers,
+                data=body_encrypted,
+            )
+
+        logger.debug("response status: %d", response.status_code)
+        logger.debug("response headers: %s", response.headers)
 
         if (response.status_code == 200):
             decrypted=self.decrypt_response(response);
@@ -207,7 +284,6 @@ class MieleCryptoProvider:
             return [b"", response];
         return [b"", response];
 
-        raise Exception(f"HTTP Request failed" + str(response))
     def process_response(response):
         if (response.status_code != 200):
             raise Exception(f"Device sent error code: {response}");
@@ -229,40 +305,42 @@ class MieleCryptoProvider:
         try:
             rootNode=self.readDop2Node(host, deviceRoute) #get root node
         except Exception as e:
-            print(f"Error obtaining DOP2 root node, perhaps device is not exposing DOP2 endpoint.");
-            raise MieleRESTException("DOP2 Root Node not found", host);
-#        j=json.loads(rootNode);
-        dopTreeBinary={}
-        dopTree={};
-        dopTreeAnnotated={};
+            logger.debug(
+                f"Error obtaining DOP2 root node, perhaps device is not exposing DOP2 endpoint."
+            )
+            raise MieleRESTException("DOP2 Root Node not found", host)
+        # j=json.loads(rootNode);
+        dopTreeBinary = {}
+        dopTree = {}
+        dopTreeAnnotated = {}
 
         flattened={}
         for x in rootNode:  # visit each child node
-            print(f"Exploring child node {x}");
-            dopTree[x]={};
-            dopTreeBinary[x]={};
+            logger.debug(f"Exploring child node {x}")
+            dopTree[x] = {}
+            dopTreeBinary[x] = {}
             try:
                 leaves=self.readDop2Node(host, deviceRoute, node=x); #read all leaves in child node
             except Exception as e:
-                dopTree[x]=f"Error reading child node {x}, exception {e}";
-                continue;
-            print(f"Leaves {leaves} for node {x}");
-            dopTreeAnnotated[x]={};
+                dopTree[x] = f"Error reading child node {x}, exception {e}"
+                continue
+            logger.debug(f"Leaves {leaves} for node {x}")
+            dopTreeAnnotated[x] = {}
 
             for leafId in set(leaves):
-                print(f"reading leaf {leafId} in node {x}");
+                logger.debug(f"reading leaf {leafId} in node {x}")
                 try:
                     dopTree[x][leafId]={};
                     [leafData, leafBytes]=self.readDop2Leaf(host, x, deviceRoute, leafId, 0, 0);
 
-                    dopTreeBinary[x][leafId]=str(binascii.hexlify(leafBytes));
-                    print(f"read leaf {leafId} in node {x}:");
+                    dopTreeBinary[x][leafId] = str(binascii.hexlify(leafBytes))
+                    logger.debug(f"read leaf {leafId} in node {x}:")
                     for fieldId, fieldData in enumerate(leafData):
-                        fieldId=fieldId+1 #DOP uses one-based index
-                        flattened[f"{x}_{leafId}_{fieldId}"]=str(fieldData);
-                        dopTree[x][leafId][fieldId]=fieldData;
-#                        dopTree[x][leafId][fieldId]=fieldData;
-                    print(f"successfully read {leafId} in node {x}")
+                        fieldId = fieldId + 1  # DOP uses one-based index
+                        flattened[f"{x}_{leafId}_{fieldId}"] = str(fieldData)
+                        dopTree[x][leafId][fieldId] = fieldData
+                        # dopTree[x][leafId][fieldId]=fieldData;
+                    logger.debug(f"successfully read {leafId} in node {x}")
                     for annotator in DOP2Annotators:
                         if (annotator.getLeaf()==[int(x), int(leafId)]):
 #                           raise Exception(f"found annotator for {leafId}, {fieldId}");
@@ -276,37 +354,56 @@ class MieleCryptoProvider:
                     for key, value in dopTree[x][leafId].items():
                         dopTree[x][leafId][key]=str(value);
                 except Exception as e:
-                    errorStr=f"Error reading node {x}, leaf {leafId}, error {str(e)}";
-                    dopTree[x][leafId]=errorStr;
-                    flattened[f"{x}_{leafId}"]=errorStr;
-        print(dopTree);
-#        dopTree=sorted(dopTree.items(), key=lambda kv: str(kv[1]));
-        dump=json.dumps(flattened,indent=4);
-#        with open("doptree.txt", "w+") as f:
-#            f.write(dump);
-#        print([x.keys() for x in dopTree.values()]);
-        return {"dopTreeAnnotated": dopTreeAnnotated, "dopTreeDecoded": dopTree, "dopTreeBinary":dopTreeBinary};
-    def writeDop2Leaf (self, host, deviceRoute, unit, attribute, payload, idx1=0, idx2=0):
-        response=self.sendHttpRequest(httpMethod="PUT", host=host, resourcePath=f"Devices/{deviceRoute}/DOP2/{unit}/{attribute}?idx1={idx1}&idx2={idx2}", payload=payload);
-        print(f"Sent PUT request to write {unit}/{attribute}, {len(payload)} bytes payload sent, got response {response}");
-        return response
-    def readDop2Leaf (self, host, node, deviceRoute, leaf, idx1=0, idx2=0):
-        parser=MieleAttributeParser();
-        fields=[];
-        response=self.sendHttpRequest(httpMethod="GET", host=host, resourcePath=f"Devices/{deviceRoute}/DOP2/{node}/{leaf}?idx1={idx1}&idx2={idx2}");
-        if (response):
-            response=response[0]
-        print(response)
-        x=("DOP2/{node}/{leaf}");
-        if (response):
-            return [parser.parseBytes(response), response];
+                    errorStr = f"Error reading node {x}, leaf {leafId}, error {str(e)}"
+                    dopTree[x][leafId] = errorStr
+                    flattened[f"{x}_{leafId}"] = errorStr
+        logger.debug(dopTree)
+        #        dopTree=sorted(dopTree.items(), key=lambda kv: str(kv[1]));
+        dump = json.dumps(flattened, indent=4)
+        #        with open("doptree.txt", "w+") as f:
+        #            f.write(dump);
+        #        print([x.keys() for x in dopTree.values()]);
+        return {
+            "dopTreeAnnotated": dopTreeAnnotated,
+            "dopTreeDecoded": dopTree,
+            "dopTreeBinary": dopTreeBinary,
+        }
 
-#         if (response):
-#             response=response[0]
-#             print (f"attempting to decode DOP2, {response}");
-#             first_byte=response[1] + (response[0] << 8);
-#             parent_attribute_id = (response[2] << 8) + response[3];
-#             attribute_id = ( ( response[4] << 8 )* 1 + response[5]);
+    def writeDop2Leaf(
+        self, host, deviceRoute, unit, attribute, payload, idx1=0, idx2=0
+    ):
+        response = self.sendHttpRequest(
+            httpMethod="PUT",
+            host=host,
+            resourcePath=f"Devices/{deviceRoute}/DOP2/{unit}/{attribute}?idx1={idx1}&idx2={idx2}",
+            payload=payload,
+        )
+        logger.debug(f"Sent PUT request to write {unit}/{attribute}, {
+                len(payload)
+            } bytes payload sent, got response {response}")
+        return response
+
+    def readDop2Leaf(self, host, node, deviceRoute, leaf, idx1=0, idx2=0):
+        parser = MieleAttributeParser()
+        fields = []
+        response = self.sendHttpRequest(
+            httpMethod="GET",
+            host=host,
+            resourcePath=f"Devices/{deviceRoute}/DOP2/{node}/{leaf}?idx1={idx1}&idx2={idx2}",
+        )
+        if response:
+            response = response[0]
+        logger.debug(response)
+        x = "DOP2/{node}/{leaf}"
+        if response:
+            return [parser.parseBytes(response), response]
+
+        #     if (response):
+        #         response=response[0]
+        #         print (f"attempting to decode DOP2, {response}");
+        #         first_byte=response[1] + (response[0] << 8);
+        #         parent_attribute_id = (response[2] << 8) + response[3];
+        #         attribute_id = ( ( response[4] << 8 )* 1 + response[5]);
 
 #             padding_bytes_expected=len(response)-first_byte-2;
 #             print(f"reading parent attribute {parent_attribute_id}, attribute {attribute_id}, expecting {first_byte} payload bytes and {padding_bytes_expected} padding bytes");
@@ -493,67 +590,76 @@ if __name__ == '__main__':
     response, full=c.sendHttpRequest(httpMethod=method, host=sys.argv[1], resourcePath=sys.argv[2], payload=payload);
     if (response != None):
         try:
-            if (full.headers["Content-Type"].find("json")!=-1):
-                j=json.loads(response);6
-                print(json.dumps(j,indent=2));
+            if full.headers["Content-Type"].find("json") != -1:
+                j = json.loads(response)
+                6
+                logger.debug(json.dumps(j, indent=2))
             else:
-                raise Exception("Exception");
-        except:
-            print(f"failed to decode as json, len={len(response)}");
-            print(binascii.hexlify(response, ' ', 1));
-            print ("attempting to decode DOP2");
-            print(r);
-            first_byte=response[1] + (response[0] << 8);
-            parent_attribute_id = (response[2] << 8) + response[3];
-            attribute_id = ( ( response[4] << 8 )* 1 + response[5]);
+                raise Exception("Exception")
+        except BaseException:
+            logger.debug(f"failed to decode as json, len={len(response)}")
+            logger.debug(binascii.hexlify(response, " ", 1))
+            logger.debug("attempting to decode DOP2")
+            logger.debug(r)
+            first_byte = response[1] + (response[0] << 8)
+            parent_attribute_id = (response[2] << 8) + response[3]
+            attribute_id = (response[4] << 8) * 1 + response[5]
 
-            padding_bytes_expected=len(response)-first_byte-2;
-            print(f"reading parent attribute {parent_attribute_id}, attribute {attribute_id}, expecting {first_byte} payload bytes and {padding_bytes_expected} padding bytes");
-            if (padding_bytes_expected > 0):
+            padding_bytes_expected = len(response) - first_byte - 2
+            logger.debug(
+                f"reading parent attribute {parent_attribute_id}, attribute {attribute_id}, expecting {first_byte} payload bytes and {padding_bytes_expected} padding bytes"
+            )
+            if padding_bytes_expected > 0:
                 for x in response[-padding_bytes_expected:]:
                     if (x!= 0x20):
                         raise Exception("Error decoding; DOP2 Protocol Violation.")
-            payload=response[8:len(response)-padding_bytes_expected]
-            print("payload:" + str(len(payload)) + " bytes");
-            print(binascii.hexlify(payload, ' ', 1))
+            payload = response[8 : len(response) - padding_bytes_expected]
+            logger.debug("payload:" + str(len(payload)) + " bytes")
+            logger.debug(binascii.hexlify(payload, " ", 1))
 
-            if (len(payload)==0):
-                print("empty response, returning");
-                payload_type=0;
+            if len(payload) == 0:
+                logger.debug("empty response, returning")
+                payload_type = 0
             else:
-                payload_type=(payload[3] << 0) + (payload[4] << 8); # 8 byte header
-            print(f"header indicates number of fields: {payload_type}");
+                payload_type = (payload[3] << 0) + (payload[4] << 8)
+                # 8 byte header
+            logger.debug(f"header indicates number of fields: {payload_type}")
 
-            payload_hmm=(payload[5] << 0) ; # 8 byte header
-            print(f"{payload_hmm} data type:");
+            payload_hmm = payload[5] << 0
+            # 8 byte header
+            logger.debug(f"{payload_hmm} data type:")
 
-            print(response[8:].decode("ascii", errors='ignore'))
+            logger.debug(response[8:].decode("ascii", errors="ignore"))
 
             # first field header starts at byte 6
-            cursor=5;
-            currentField=1;
-            if (payload[cursor]==0x02):
-                print("field 0x01 suppressed, skipping?!")
-                currentField=0x02;
-                payload_type=payload_type+1;
-#            fieldsLeft=payload_type;
-            while (currentField <= payload_type):
-                fieldHeader=payload[cursor];
-                if (currentField != fieldHeader):
-                    raise Exception(f"Protocol violation -- fields not sequentially numbered; expected {currentField}, found {fieldHeader}");
-                cursor=cursor+1;
-                fieldType = payload[cursor];
-                print (f"Field numbering correct. Decoding field {currentField}, type={fieldType}");
+            cursor = 5
+            currentField = 1
+            if payload[cursor] == 0x02:
+                logger.debug("field 0x01 suppressed, skipping?!")
+                currentField = 0x02
+                payload_type = payload_type + 1
+            #            fieldsLeft=payload_type;
+            while currentField <= payload_type:
+                fieldHeader = payload[cursor]
+                if currentField != fieldHeader:
+                    raise Exception(
+                        f"Protocol violation -- fields not sequentially numbered; expected {currentField}, found {fieldHeader}"
+                    )
+                cursor = cursor + 1
+                fieldType = payload[cursor]
+                logger.debug(
+                    f"Field numbering correct. Decoding field {currentField}, type={fieldType}"
+                )
                 match fieldType:
                     case 0x02:
-                        print("2-byte mystery")
-                        cursor=cursor+3;
+                        logger.debug("2-byte mystery")
+                        cursor = cursor + 3
                     case 0x07:
-                        print ("3-byte mystery");
-                        cursor=cursor+4;
+                        logger.debug("3-byte mystery")
+                        cursor = cursor + 4
                     case 0x03:
-                        print ("2-byte mystery");
-                        cursor=cursor+3;
+                        logger.debug("2-byte mystery")
+                        cursor = cursor + 3
                     case 0x04:
                         elements=0;
 #                        while (payload[cursor+elements]!= 0x00):
@@ -562,51 +668,55 @@ if __name__ == '__main__':
                         cursor=cursor+3;
 #                        print(f"variable-length mystery (2-byte array?), elements={elements}")
                     case 0x05:
-                        #contentBytes=payload[cursor+2] & 0xF;
-                        #elementLength=payload[cursor+5]
-                        print("4 byte mystery?")
-                        #print(f"variable length mystery {contentBytes} elements/content bytes (could be strings), {elementLength} bytes per element");
-                        cursor=cursor+ 4; #3 byte mystery?
+                        # contentBytes=payload[cursor+2] & 0xF;
+                        # elementLength=payload[cursor+5]
+                        logger.debug("4 byte mystery?")
+                        # print(f"variable length mystery {contentBytes} elements/content bytes (could be strings), {elementLength} bytes per element");
+                        cursor = cursor + 4
+                        # 3 byte mystery?
                     case 0x08:
-                        print(f"5-byte mystery");
-                        cursor=cursor+ 6;
+                        logger.debug(f"5-byte mystery")
+                        cursor = cursor + 6
                     case 23:
-                        print(f"64-byte array?");
-                        cursor=cursor+64;
+                        logger.debug(f"64-byte array?")
+                        cursor = cursor + 64
                     case 0x12:
-                        cursor=cursor+2;
-                        stringData=payload[cursor+1:cursor+stringLength]
-                        print(f"string length {stringLength}, data={stringData}");
-                        cursor=cursor+len(stringData)+1;
-                        if (cursor < len(payload) and payload[cursor]==0x00):
-                            cursor=cursor+1;
+                        cursor = cursor + 2
+                        stringData = payload[cursor + 1 : cursor + stringLength]
+                        logger.debug(f"string length {stringLength}, data={stringData}")
+                        cursor = cursor + len(stringData) + 1
+                        if cursor < len(payload) and payload[cursor] == 0x00:
+                            cursor = cursor + 1
                     case 0x19:
-                        byte0=payload[cursor+1]
-                        byte1=payload[cursor+2]
-                        print(f"4-byte (dynamic length?) mystery {byte0}, {byte1}");
-                        cursor=cursor+(byte1*4)+4;
+                        byte0 = payload[cursor + 1]
+                        byte1 = payload[cursor + 2]
+                        logger.debug(f"4-byte (dynamic length?) mystery {byte0}, {byte1}")
+                        cursor = cursor + (byte1 * 4) + 4
                     case 0x09:
-                        print(f"4-byte mystery");
-                        cursor=cursor+4;
+                        logger.debug(f"4-byte mystery")
+                        cursor = cursor + 4
                     case 0x01:
-                        arrayLength=(payload[cursor+1]<<0)
-                        cursor=cursor+1;
-                        arrayData=payload[cursor:cursor+arrayLength]
-                        print(f"array length {arrayLength}, data={binascii.hexlify(arrayData)}");
-                        cursor=cursor+arrayLength + 1 + (arrayLength==0) * 1;
-                    case 0x0b:
-                        print(f"9-byte mystery");
-                        cursor=cursor+10;
+                        arrayLength = payload[cursor + 1] << 0
+                        cursor = cursor + 1
+                        arrayData = payload[cursor : cursor + arrayLength]
+                        logger.debug(
+                            f"array length {arrayLength}, data={binascii.hexlify(arrayData)}"
+                        )
+                        cursor = cursor + arrayLength + 1 + (arrayLength == 0) * 1
+                    case 0x0B:
+                        logger.debug(f"9-byte mystery")
+                        cursor = cursor + 10
                     case 0x20:
-                        print("4 byte mystery") # Devices/000187683192/DOP2/1/17
-                        cursor=cursor+5;
+                        # Devices/000187683192/DOP2/1/17
+                        logger.debug("4 byte mystery")
+                        cursor = cursor + 5
                     case 0x21:
-                        print("string array?") # Devices/000187683192/DOP2/1/17
+                        logger.debug("string array?")  # Devices/000187683192/DOP2/1/17
 
                     case _:
-                        print("unknown");
-                        break;
-                currentField=currentField+1;
+                        logger.debug("unknown")
+                        break
+                currentField = currentField + 1
 #        elapsed=tuple_to_min(j["ElapsedTime"])
 #        remaining=tuple_to_min(j["RemainingTime"])
 #        total = elapsed + remaining;
