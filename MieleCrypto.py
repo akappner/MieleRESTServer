@@ -17,12 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-import numpy as np
+
 import hmac
 import hashlib
 import binascii
 import sys
 import json
+
 import logging
 import secrets
 import sys
@@ -30,6 +31,7 @@ import sys
 from typing import Dict, Tuple, Union
 
 import requests
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from MieleDop2 import MieleAttributeParser
 from MieleDop2Structures import *
