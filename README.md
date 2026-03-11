@@ -117,7 +117,7 @@ sudo ./install.sh
 
 ### 5) Test the server
 
-Test the server by navigating to: http://{YOUR_SERVER_IP}:5001/generate-summary/
+Test the server by navigating to: http://{YOUR_SERVER_IP}:5001/generate-summary
 
 You should see a JSON file that shows information from all configured devices.
 
