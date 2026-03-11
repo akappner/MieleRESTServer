@@ -117,7 +117,7 @@ sudo ./install.sh
 
 ### 5) Test the server
 
-Test the server by navigating to: http://{YOUR_SERVER_IP}:5001/generate-summary/
+Test the server by navigating to: http://{YOUR_SERVER_IP}:5001/generate-summary
 
 You should see a JSON file that shows information from all configured devices.
 
@@ -222,6 +222,7 @@ Users have reported the following devices to be compatible:
 | WWD380 WCS   | Washer       | X          | ?            | ?    |
 | WWD660 WCS   | Washer       | X          | ?            | ?    |
 | WWE460-WPS   | Washer       | X          | X            | No   |
+| WWE668       | Washer       | X          | ?            | ?    |
 | WWF360-WPS   | Washer       | X          | ?            | ?    |
 | WWG760       | Washer       | X          | ?            | X    |
 | WXF660 (W1)  | Washer       | X          | X            | X    |
