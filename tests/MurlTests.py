@@ -85,6 +85,50 @@ class MurlTests(unittest.TestCase):
         self.assertEqual(kwargs["resourcePath"], "State")
         self.assertEqual(stdout.getvalue().strip(), '{"ok":true}')
 
+    def test_main_data_binary_reads_stdin(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=True) as handle:
+            handle.write(
+                json.dumps(
+                    {
+                        "GroupID": "8E156D44B8587D36",
+                        "GroupKey": (
+                            "8E156D44B8587D365EB01CC111DAE14D2619D6E6BFA419E8"
+                            "8E156D44B8587D365EB01CC111DAE14D2619D6E6BFA419E8"
+                            "8E156D44B8587D365EB01CC111DAE14D"
+                        ),
+                    }
+                )
+            )
+            handle.flush()
+
+            provider_mock = MagicMock()
+            provider_mock.sendHttpRequest.return_value = [
+                b"",
+                DummyResponse(status_code=204, headers={}),
+            ]
+
+            stdin_stream = io.TextIOWrapper(
+                io.BytesIO(b'{"raw": true}\n\x00\x01'), encoding="utf-8"
+            )
+            with patch("murl.MieleCryptoProvider", return_value=provider_mock):
+                with patch("sys.stdin", stdin_stream):
+                    rc = murl.main(
+                        [
+                            "-X",
+                            "PUT",
+                            "--data-binary",
+                            "@-",
+                            "-k",
+                            handle.name,
+                            "http://127.0.0.1/State",
+                        ]
+                    )
+
+        self.assertEqual(rc, 0)
+        provider_mock.sendHttpRequest.assert_called_once()
+        kwargs = provider_mock.sendHttpRequest.call_args.kwargs
+        self.assertEqual(kwargs["payload"], b'{"raw": true}\n\x00\x01')
+
     def test_main_with_i_prints_status_headers_and_body(self):
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=True) as handle:
             handle.write(

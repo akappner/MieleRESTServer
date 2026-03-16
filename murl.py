@@ -21,6 +21,7 @@ import argparse
 import binascii
 from http import HTTPStatus
 import json
+import logging
 import sys
 from urllib.parse import urlparse
 
@@ -114,6 +115,32 @@ def _print_response(
         print(binascii.hexlify(body, sep=" ", bytes_per_sep=1).decode("ascii"))
 
 
+def _read_stdin_binary() -> bytes:
+    if hasattr(sys.stdin, "buffer"):
+        return sys.stdin.buffer.read()
+    return sys.stdin.read().encode("utf-8")
+
+
+def _resolve_payload(data: str | None, data_binary: str | None) -> str | bytes:
+    if data_binary is None:
+        return data if data is not None else ""
+
+    if data_binary == "@-":
+        return _read_stdin_binary()
+
+    if data_binary.startswith("@"):
+        data_path = data_binary[1:]
+        try:
+            with open(data_path, "rb") as handle:
+                return handle.read()
+        except OSError as exc:
+            raise ValueError(
+                f"Unable to read --data-binary file {data_path!r}: {exc}"
+            ) from exc
+
+    return data_binary.encode("utf-8")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="murl",
@@ -130,11 +157,17 @@ def build_parser() -> argparse.ArgumentParser:
         default="GET",
         help="HTTP method (default: GET)",
     )
-    parser.add_argument(
+    payload_group = parser.add_mutually_exclusive_group()
+    payload_group.add_argument(
         "-d",
         "--data",
         default=None,
         help="request body (string payload)",
+    )
+    payload_group.add_argument(
+        "--data-binary",
+        default=None,
+        help="request body as raw bytes (use @- to read from stdin)",
     )
     parser.add_argument(
         "-i",
@@ -149,6 +182,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="keys.json",
         help="path to keys JSON file (default: keys.json)",
     )
+    parser.add_argument(
+        "-l", "--log-level",
+        default="INFO",
+        type=str.upper,
+        choices=["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"],
+        help="set Python logging level (default: INFO)",
+    )
     parser.add_argument("url", help="target URL (http://host/path)")
     return parser
 
@@ -156,6 +196,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
 
     method = args.request.strip().upper()
     if len(method) == 0:
@@ -168,12 +213,12 @@ def main(argv=None):
     try:
         host, resource_path = _parse_url(args.url)
         provisioning_info = _load_provisioning_info(args.keys)
+        payload = _resolve_payload(args.data, args.data_binary)
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
 
     provider = MieleCryptoProvider(provisioning_info)
-    payload = args.data if args.data is not None else ""
 
     try:
         decrypted, response = provider.sendHttpRequest(
