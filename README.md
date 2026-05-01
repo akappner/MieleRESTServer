@@ -215,6 +215,8 @@ Users have reported the following devices to be compatible:
 | H7240BM      | Oven / MW    | X          | ?            | ?    |
 | H7560BP      | Oven         | X          | ?            | X    |
 | H7624BP      | Oven         | X          | No           | No   |
+| TEC575WPNDS  | Dryer        | X          | ?            | ?    |
+| TEL695WP     | Dryer        | X          | ?            | ?    |
 | TWD360       | Dryer        | X          | ?            | No   |
 | TWD640WP     | Dryer        | No         | No           | No   |
 | WSD663       | Washer       | X          | X            | No   |
