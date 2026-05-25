@@ -73,17 +73,17 @@ pub struct DeviceContext {
     #[dop2field(1, Dop2Payloads::MStruct)]
     state: DeviceCombiState,
     #[dop2field(7, Dop2Payloads::MStruct)]
-    prog: PSAttributesCCA,
+    prog: Option<PSAttributesCCA>,
     #[dop2field(8, Dop2Payloads::MStruct)]
-    device_attributes: DeviceAttributesCCA,
-    #[dop2field(9, Dop2Payloads::ArrayE16)]
-    supported_user_requests: Vec<UserRequestOven>,
+    device_attributes: Option<DeviceAttributesCCA>,
+//    #[dop2field(9, Dop2Payloads::ArrayE16)]
+//    supported_user_requests: Vec<UserRequestOven>,
     #[dop2field(11, Dop2Payloads::Boolean)]
     mobile_start_active: bool,
     #[dop2field(12, Dop2Payloads::E16)]
-    show_me_how_id: ShowMeHowId,
+    show_me_how_id: Option<ShowMeHowId>,
     #[dop2field(13, Dop2Payloads::Boolean)]
-    request_time_sync: bool,
+    request_time_sync: Option<bool>,
 }
 
 impl_tryfrom_dop2struct!(DeviceContext);
