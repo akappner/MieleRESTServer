@@ -4,6 +4,7 @@ use crate::payloader::device::generic::state::combined::DeviceCombiState;
 use super::request::UserRequestOven;
 use super::program_selection::context::PSAttributesCCA;
 use super::attributes::DeviceAttributesCCA;
+use crate::payloader::device::washer::attributes::DeviceAttributesDWTDWM;
 
 #[repr(u16)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
@@ -72,6 +73,10 @@ crate::impl_tryfrom_wrapper!(ShowMeHowId, E16);
 pub struct DeviceContext {
     #[dop2field(1, Dop2Payloads::MStruct)]
     state: DeviceCombiState,
+//    #[dop2field(5, Dop2Payloads::MStruct)]
+//    prog: Option<PSAttributesDWTDWM>,
+    #[dop2field(6, Dop2Payloads::MStruct)]
+    device_attributes_dwtdwm: Option<DeviceAttributesDWTDWM>,
     #[dop2field(7, Dop2Payloads::MStruct)]
     prog: Option<PSAttributesCCA>,
     #[dop2field(8, Dop2Payloads::MStruct)]

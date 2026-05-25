@@ -37,6 +37,31 @@ pub enum Light {
 
 crate::impl_tryfrom_wrapper!(Light, E8);
 
+/// GLOBAL_EnumDoorState - Door open/closed state
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
+pub enum DoorState {
+    Unknown = 0,
+    Open = 1,
+    Closed = 2,
+    Locked = 3,
+    DryingPlus = 4,
+}
+
+crate::impl_tryfrom_wrapper!(DoorState, E8);
+
+/// GLOBAL_EnumEcoFeedbackFilterState - Eco feedback filter state
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
+pub enum EcoFeedbackFilterState {
+    Off = 0,
+    Clean = 1,
+    LightlySoiled = 2,
+    Soiled = 4,
+}
+
+crate::impl_tryfrom_wrapper!(EcoFeedbackFilterState, E8);
+
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, IntoPrimitive)]
 pub enum ProgramType {

@@ -146,6 +146,8 @@ impl From<Dop2IpV4Adress> for DopArray<u8> {
 
 MakeAnnotatedValueType!(AnnotatedU8, U8, u8);
 MakeAnnotatedValueType!(AnnotatedU16, U16, u16);
+MakeAnnotatedValueType!(AnnotatedU32, U32, u32);
+MakeAnnotatedValueType!(AnnotatedI8, I8, i8);
 MakeAnnotatedValueType!(AnnotatedI16, I16, i16);
 MakeAnnotatedValueType!(AnnotatedI32, I32, i32);
 MakeAnnotatedValueType!(AnnotatedU64, U64, u64);
@@ -154,9 +156,13 @@ MakeAnnotatedValueType!(AnnotatedTimeStamp, U64, Dop2TimestampUtc);
 
 MakeGenericValueType!(GenericU8, U8, u8);
 MakeGenericValueType!(GenericU16, U16, u16);
+MakeGenericValueType!(GenericU32, U32, u32);
+MakeGenericValueType!(GenericBool, Boolean, bool);
 
 impl_tryfrom_dop2struct!(AnnotatedU8);
 impl_tryfrom_dop2struct!(AnnotatedU16);
+impl_tryfrom_dop2struct!(AnnotatedU32);
+impl_tryfrom_dop2struct!(AnnotatedI8);
 impl_tryfrom_dop2struct!(AnnotatedI16);
 impl_tryfrom_dop2struct!(AnnotatedI32);
 impl_tryfrom_dop2struct!(AnnotatedU64);
@@ -165,6 +171,8 @@ impl_tryfrom_dop2struct!(AnnotatedTimeStamp);
 
 impl_tryfrom_dop2struct!(GenericU8);
 impl_tryfrom_dop2struct!(GenericU16);
+impl_tryfrom_dop2struct!(GenericU32);
+impl_tryfrom_dop2struct!(GenericBool);
 
 // Implement traits for primitive integer types
 impl_to_bytes!(u8);
