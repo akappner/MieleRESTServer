@@ -17,6 +17,11 @@ currently connected to WiFi. If the device has already had step 2 or step 3
 performed, it will not accept a new configuration without a reset. You can reset
 the device if necessary through the local control panel.
 
+Some devices appear to come from the factory in a "locked" state. To clear this
+state, add the device to an account on the official app and then remove it from
+the account. If the locked state is not cleared, step 2 will fail at the
+provisioning of the key with Error 403. TWD640WP is known to have this problem.
+
 ### 1) Connecting Miele device to WiFi
 
 Select "Miele@home" on the control panel of the Miele device. If the device offers
@@ -218,7 +223,7 @@ Users have reported the following devices to be compatible:
 | TEC575WPNDS  | Dryer        | X          | ?            | ?    |
 | TEL695WP     | Dryer        | X          | ?            | ?    |
 | TWD360       | Dryer        | X          | ?            | No   |
-| TWD640WP     | Dryer        | No         | No           | No   |
+| TWD640WP     | Dryer        | X          | ?            | ?    |
 | WSD663       | Washer       | X          | X            | No   |
 | WSF363       | Washer       | X          | ?            | No   |
 | WTD-160      | Washer/Dryer | X          | X            | No   |
