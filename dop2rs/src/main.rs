@@ -17,17 +17,12 @@ pub use payloader::root::{Dop2Payloads, Dop2PayloadsKind, Dop2Struct, TaggedDopF
 pub use payloader::parser::{DopArray, ToDop2Bytes, Dop2PayloadExpressible, Dop2Parser};
 
 #[derive(Parser, Debug)]
+#[command(about = "Decode and encode DOP2 payloads.\n\n\
+    DECODE: pass a hex string, or pipe raw binary data via stdin.\n\
+    ENCODE: pass a command name (e.g. an XKM request or program ID) to produce a hex-encoded DOP2 payload.")]
 struct Args {
-    /// The hex string to parse
+    /// Hex string to decode, or command name to encode. If omitted, reads raw binary from stdin.
     hex_string: Option<String>,
-    
-    // Unit parameter (optional)
-   // #[arg(short, long)]
-    //unit: Option<u16>,
-    
-    // Attribute parameter (optional)
-   // #[arg(short, long)]
-   // attribute: Option<u16>,
 }
 
 mod payloader;
@@ -37,6 +32,7 @@ pub mod macros;
 
 use crate::payloader::comm_module::request::request::{XkmRequestId, XkmRequest};
 use strum::IntoEnumIterator;
+use std::io::Read;
 use std::str::FromStr;
 
 fn main() {
@@ -94,32 +90,38 @@ fn main() {
         };
     }
     else {
-        let hex_str = match &args.hex_string {
-            Some(s) => s,
+        let bytes = match &args.hex_string {
+            Some(hex_str) => {
+                match hex::decode(hex_str) {
+                    Ok(bytes) => bytes,
+                    Err(e) => {
+                        println!("Available commands are:");
+                        println!("*** Program Selection: {:?}\n", command_verbs_program.collect::<Vec<String>>());
+                        println!("*** Communications Module: {:?}\n", command_verbs_xkm.collect::<Vec<String>>());
+                        eprintln!("Error decoding hex string: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
             None => {
-                println!("Available commands are:\n");
-                println!("*** Program Selection: {:?}\n", command_verbs_program.collect::<Vec<_>>());
-                println!("*** Communications Module: {:?}\n", command_verbs_xkm.collect::<Vec<_>>());
-                eprintln!("Error: no hex string provided");
-                std::process::exit(1);
+                use std::io::IsTerminal;
+                if std::io::stdin().is_terminal() {
+                    println!("Available commands are:\n");
+                    println!("*** Program Selection: {:?}\n", command_verbs_program.collect::<Vec<_>>());
+                    println!("*** Communications Module: {:?}\n", command_verbs_xkm.collect::<Vec<_>>());
+                    eprintln!("Error: no hex string provided and stdin is a terminal");
+                    std::process::exit(1);
+                }
+                let mut buf = Vec::new();
+                std::io::stdin().read_to_end(&mut buf).expect("Failed to read from stdin");
+                buf
             }
         };
 
-    let bytes = match hex::decode(hex_str) {
-        Ok(bytes) => bytes,
-        Err(e) => {
-            println!("Available commands are:");
-            println!("*** Program Selection: {:?}\n", command_verbs_program.collect::<Vec<String>>());
-            println!("*** Communications Module: {:?}\n", command_verbs_xkm.collect::<Vec<String>>());
-            eprintln!("Error decoding hex string: {}", e);
-            std::process::exit(1);
-        }
-    };
     let mut parser = Dop2Parser::new(bytes);
     let root_node = RootNode::parse(&mut parser).unwrap();
     println!("{root_node:#?}");
-    
-    // Use Registry Pattern to handle attribute decoding
+
     let registry = attribute_registry::AttributeRegistry::new();
     if let Err(e) = registry.handle(root_node.attribute, root_node.root_struct) {
         eprintln!("Warning: {}", e);
