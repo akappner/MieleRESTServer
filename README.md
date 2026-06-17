@@ -233,6 +233,7 @@ Users have reported the following devices to be compatible:
 | WWE460-WPS   | Washer       | X          | X            | No   |
 | WWE668       | Washer       | X          | ?            | ?    |
 | WWF360-WPS   | Washer       | X          | ?            | ?    |
+| WWF364 WPS   | Washer       | X          | No           | No   |
 | WWG760       | Washer       | X          | ?            | X    |
 | WWJ880-WPS   | Washer       | X          | X            | X    |
 | WXF660 (W1)  | Washer       | X          | X            | X    |
